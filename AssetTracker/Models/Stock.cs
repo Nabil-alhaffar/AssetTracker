@@ -11,6 +11,7 @@ namespace AssetTracker.Models
         public double High52Week { get; set; }
         public double Low52Week { get; set; }
         public double EPS { get; set; }
+
         public enum Sector
         {
             Energy,
@@ -27,10 +28,12 @@ namespace AssetTracker.Models
         }
 
         public double Quantity { get; set; }
-		public double PurchasePrice { get; set; }
+		public double AveragePurchasePrice { get; set; }
 		public DateTime DateEstablished { get; set; }
+        public double MarketValue => Quantity * CurrentPrice;
+
 		
-        public double PNL=>(CurrentPrice-PurchasePrice)*Quantity;
+        public double PNL=>(CurrentPrice-AveragePurchasePrice)*Quantity;
         public Stock()
 		{
 			

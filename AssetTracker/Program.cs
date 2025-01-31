@@ -1,6 +1,11 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using AssetTracker.Services;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+//services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddHttpClient();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
