@@ -5,6 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 //services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<IPositionService, PositionService>();
+builder.Services.AddScoped<IPortfolioService, PortfolioService>();
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddControllers();
