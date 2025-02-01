@@ -6,11 +6,11 @@ namespace AssetTracker.Services
     public class PositionService : IPositionService
     {
         private readonly StockService _stockService;
-        private readonly List<Position> _positions;
+        private static readonly List<Position> _positions = new List<Position>();
 
-        public PositionService()
+        public  PositionService()
         {
-            _positions = new List<Position>();
+            //_positions = new List<Position>();
         }
 
         // Create a new position by fetching stock data from Alpha Vantage

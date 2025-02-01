@@ -3,8 +3,9 @@ namespace AssetTracker.Models
 {
 	public class Portfolio
 	{
-
-		public static List<Position> Positions { get; set; } = new List<Position>();
+		public int Id { get; set; }
+		public int Owner { get; set; }
+		public List<Position> Positions { get; set; } = new List<Position>();
 		//public double PNL = Assets.Sum(s=>s.PNL);
 		public double GetTotalValue()
 		{
@@ -14,19 +15,7 @@ namespace AssetTracker.Models
 		{
 			return Positions.Sum(p => p.GetProfitLoss());
 		}
-        //public void AddPosition(Position position)
-        //{
-        //    Positions.Add(position);
-        //}
-
-        //// Remove a position from the portfolio by stock symbol
-        //public void RemovePosition(string stockSymbol)
-        //{
-        //    var position = Positions.FirstOrDefault(p => p.Stock.Symbol == stockSymbol);
-        //    if (position != null)
-        //    {
-        //        Positions.Remove(position);
-        //    }
+        
 		
         
 
