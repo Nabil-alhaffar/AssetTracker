@@ -4,13 +4,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 //services.AddScoped<IStockService, StockService>();
-builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddSingleton<IStockService, StockService>();
 
-builder.Services.AddScoped<IPositionService, PositionService>();
-builder.Services.AddScoped<IPositionRepository, PositionRepository>();
+builder.Services.AddSingleton<IPositionService, PositionService>();
+builder.Services.AddSingleton<IPositionRepository, PositionRepository>();
 
-builder.Services.AddScoped<IPortfolioService, PortfolioService>();
-builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+builder.Services.AddSingleton<IPortfolioService, PortfolioService>();
+builder.Services.AddSingleton<IPortfolioRepository, PortfolioRepository>();
 builder.Services.AddHttpClient();
 
 builder.Services.AddControllers();

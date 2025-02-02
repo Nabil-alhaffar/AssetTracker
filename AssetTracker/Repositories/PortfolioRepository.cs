@@ -34,9 +34,9 @@ namespace AssetTracker.Repositories
             return await Task.FromResult(_portfolios); // Simulate async behavior
         }
 
-        public async Task<Portfolio> GetPortfolioAsync(int portfolioId)
+        public async Task<Portfolio> GetUserPortfolioAsync(int userId)
         {
-            var portfolio = _portfolios.FirstOrDefault(p => p.Id == portfolioId);
+            var portfolio = _portfolios.FirstOrDefault(p => p.Id == userId);
             return await Task.FromResult(portfolio); // Simulate async behavior
 
         }

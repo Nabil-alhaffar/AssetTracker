@@ -6,12 +6,12 @@ namespace AssetTracker.Services
 {
 	public class PortfolioService:IPortfolioService
 	{
-        private static readonly IPositionRepository _positionRepository = new PositionRepository();
+        private readonly IPositionRepository _positionRepository;
         //private readonly IPositionService _positionService;
 		//private readonly IP
         public PortfolioService(IPositionRepository positionRepository)
 		{
-			//_positionRepository = positionRepository;
+			_positionRepository = positionRepository;
 		}
 		public async Task<double> GetTotalValueAsync() {
 			var positions = await _positionRepository.GetAllPositionsAsync();
