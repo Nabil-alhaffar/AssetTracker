@@ -19,9 +19,15 @@ namespace AssetTracker.Repositories
             await Task.CompletedTask; // Simulate async task
         }
 
-        public async Task AddPositionToPortfolioAsync(int portfolioId, Position position)
+        public async Task AddPositionToPortfolioAsync( Position position, int userId)
         {
-            var portfolio = _portfolios.FirstOrDefault(p => p.Id == portfolioId);
+            
+            var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
+            if (portfolio == null)
+            {
+                // Handle null case here
+                throw new InvalidOperationException("Portfolio not found.");
+            }
             if (portfolio != null)
             {
                 portfolio.Positions.Add(position); // Add the position to the portfolio
@@ -36,14 +42,19 @@ namespace AssetTracker.Repositories
 
         public async Task<Portfolio> GetUserPortfolioAsync(int userId)
         {
-            var portfolio = _portfolios.FirstOrDefault(p => p.Id == userId);
+            var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
             return await Task.FromResult(portfolio); // Simulate async behavior
 
         }
-
-        public async Task RemovePortfolioAsync(int portfolioId)
+        public async Task<ICollection<Position>>GetPositionsByUserId(int userId)
         {
-            var portfolio = _portfolios.FirstOrDefault(p => p.Id == portfolioId);
+            var positions = _portfolios.FirstOrDefault(p => p.UserId == userId).Positions;
+            return await Task.FromResult(positions);
+        }
+
+        public async Task RemovePortfolioAsync(int userId)
+        {
+            var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
             if (portfolio != null)
             {
                 _portfolios.Remove(portfolio); // Remove portfolio from the in-memory list
@@ -71,7 +82,7 @@ namespace AssetTracker.Repositories
             if (existingPortfolio != null)
             {
                 // Update the portfolio's properties (you could add more business logic here)
-                existingPortfolio.Owner = portfolio.Owner;
+                //existingPortfolio.Name = portfolio.Name;
                 existingPortfolio.Positions = portfolio.Positions;
             }
             await Task.CompletedTask; // Simulate async task

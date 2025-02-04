@@ -11,8 +11,8 @@ namespace AssetTracker.Services
         //Task<List<Position>> GetAllPositionsAsync();
         public Task UpdatePositionAsync(int userId, string symbol, double additionalQuantity, double purchasePrice);
         public Task SplitPositionAsync(int userId, string symbol, int splitFactor);
-        public Task CheckPositionForStopLossAsync(int userId, string symbol, double stopLossPrice);
-        public Task UpdatePositionProfitLossAsync(int userId, string symbol)
+        public Task <bool> CheckPositionForStopLossAsync(int userId, string symbol, double stopLossPrice);
+        public Task UpdatePositionProfitLossAsync(int userId, string symbol);
 
 
 

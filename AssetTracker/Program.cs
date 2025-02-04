@@ -7,7 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IStockService, StockService>();
 
 builder.Services.AddSingleton<IPositionService, PositionService>();
-builder.Services.AddSingleton<IPositionRepository, PositionRepository>();
+//builder.Services.AddSingleton<IPositionRepository, PositionRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IUserService, UserService>();
 
 builder.Services.AddSingleton<IPortfolioService, PortfolioService>();
 builder.Services.AddSingleton<IPortfolioRepository, PortfolioRepository>();

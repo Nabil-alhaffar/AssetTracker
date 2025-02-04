@@ -6,29 +6,34 @@ namespace AssetTracker.Services
 {
 	public class PortfolioService:IPortfolioService
 	{
-        private readonly IPositionRepository _positionRepository;
+        private readonly IPortfolioRepository _portfolioRepository;
+        private readonly IStockService _stockService;  // To get the market price of the stock
+
         //private readonly IPositionService _positionService;
-		//private readonly IP
-        public PortfolioService(IPositionRepository positionRepository)
-		{
-			_positionRepository = positionRepository;
-		}
-		public async Task<double> GetTotalValueAsync() {
-			var positions = await _positionRepository.GetAllPositionsAsync();
-			return positions.Sum(p => p.GetMarketValue());
+        //private readonly IP
+        public PortfolioService(IPortfolioRepository portfolioRepository, IStockService stockService)
+        {
+            _portfolioRepository = portfolioRepository;
+            _stockService = stockService;
+        }
+        public async Task<double> GetTotalValueAsync(int userId) {
+			var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+
+			return (double)portfolio.Positions.Sum(p => p.GetMarketValue());
 		}
 
-        public async Task<List<Position>> GetAllPositionsAsync()
+        public async Task<ICollection<Position>> GetAllPositionsAsync(int userId)
         {
-            var positions = await _positionRepository.GetAllPositionsAsync();
-            return (List<Position>)positions;
+            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            var positions = portfolio.Positions;
+            return positions;
         }
-		public async Task <double> GetTotalProfitAndLossAsync()
+		public async Task <double> GetTotalProfitAndLossAsync(int userId)
 		{
-			var positions = await _positionRepository.GetAllPositionsAsync();
-			return positions.Sum(p => p.GetProfitLoss());
+			var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+			return (double) positions.Sum(p => p.GetProfitLoss());
 		}
-		public async Task  AddPositionToPortfolioAsync(Position position)
+		public async Task  AddPositionToPortfolioAsync(Position position,int userId)
 		{
             if (position == null)
             {
@@ -36,22 +41,33 @@ namespace AssetTracker.Services
             }
 
             // You might want to add additional checks, e.g., if the position already exists
-            await _positionRepository.AddPositionAsync(position);
+            await _portfolioRepository.AddPositionToPortfolioAsync( position, userId);
 
             //var currentStockprice = await _stockService.GetStockPriceAsync(symbol);
             //var stock = new Stock(symbol, quantity);
         }
-        public async Task RemovePositionAsync(string symbol)
+        public async Task RemovePositionAsync(int userId, string symbol) 
 		{
-            var position = await _positionRepository.GetPositionBySymbolAsync(symbol);
-            if (position == null)
+            try
+            {
+                await _portfolioRepository.RemovePositionFromPortfolioAsync(userId, symbol);
+            }
+            catch
             {
                 throw new Exception("Position not found");
             }
+            //if (position == null)
+            //{
+            //}
 
-            await _positionRepository.RemovePositionAsync(symbol);
+            //await _positionRepository.RemovePositionAsync(symbol);
+        }
+        public async Task<Portfolio> GetPortfolioAsync(int userId)
+        {
+            return await _portfolioRepository.GetUserPortfolioAsync(userId);  // Get the user's portfolio
+
         }
 
-	}
+    }
 }
 

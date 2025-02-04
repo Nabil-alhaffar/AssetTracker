@@ -53,38 +53,34 @@ namespace AssetTracker.Services
                 //await _portfolioRepository.SaveChangesAsync();  // Save changes to the database
             }
         }
-        public async Task CheckPositionForStopLossAsync(int userId, string symbol, double stopLossPrice)
+        public async Task<bool> CheckPositionForStopLossAsync(int userId, string symbol, double stopLossPrice)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol) ?? throw new InvalidOperationException("Position not found.");
 
-            if (position != null)
+            // Compare the current market price of the stock with the stop loss price
+            if (position.Stock.CurrentPrice <= stopLossPrice)
             {
-                Stock stock = await _stockService.GetStockOverviewAsync(symbol);
-                double currentPrice = stock.CurrentPrice;
-                if (currentPrice <= stopLossPrice)
-                {
-                    // Stop-loss triggered, take action
-                    Console.WriteLine($"Stop-loss triggered for {symbol}. Consider selling the position.");
-                    // Send notification, email, or trigger a sale
-                }
+                return true;  // Stop loss triggered
             }
+
+            return false;  // Stop loss not triggered
         }
         public async Task UpdatePositionProfitLossAsync(int userId, string symbol)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
 
-            if (position != null)
-            {
-                var stock = await _stockService.GetStockOverviewAsync(symbol);
-                double currentPrice = stock.CurrentPrice;
-                double currentProfitLoss = (currentPrice - position.AveragePurchasePrice) * position.Quantity;
+            if (position == null)
+                throw new InvalidOperationException("Position not found.");
 
-                position.PNL = currentProfitLoss;
+            // Calculate profit/loss based on the current price and purchase price
+            double? marketValue = position.Stock.CurrentPrice * position.Quantity;
+            double totalCost = position.AveragePurchasePrice * position.Quantity;
 
-                //await _portfolioRepository.SaveChangesAsync();  // Save changes to the database
-            }
+            //position.PNL = (double)(marketValue - totalCost);
+
+            //await _portfolioRepository.SaveChangesAsync();  // Commit changes
         }
         // Create a new position by fetching stock data from Alpha Vantage
 

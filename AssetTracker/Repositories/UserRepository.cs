@@ -6,10 +6,11 @@ namespace AssetTracker.Repositories
 {
 	public class UserRepository:IUserRepository
 	{
-        private readonly ICollection<User> users = new List<User>();
+        private readonly ICollection<User> users;
         //private readonly ApplicationDbContext _context;
 		public UserRepository()
 		{
+            users = new List<User>();
             //_context = context;
 		}
 
@@ -23,9 +24,13 @@ namespace AssetTracker.Repositories
         public async Task<User> GetUserAsync(int userId)
         {
             var user = users.FirstOrDefault(p => p.UserId == userId);
-            if (user != null)
-                return await Task.FromResult(user);
-            else return null;
+
+            if (user == null)
+            {
+                // Handle null case here
+                throw new InvalidOperationException("User not found.");
+            }
+            else return user;
             //return await users
             //            .Include(u => u.Portfolios)
             //                .ThenInclude(p => p.Positions)
@@ -48,6 +53,11 @@ namespace AssetTracker.Repositories
             {
                 users.Remove(user); // Remove position from the in-memory list (replace with DB delete logic)
             }
+            else
+            {
+               throw new InvalidOperationException("User not found."); ;
+
+            }
             await Task.CompletedTask; // S
         }
 
@@ -58,6 +68,11 @@ namespace AssetTracker.Repositories
             {
                 // Update the portfolio's properties (you could add more business logic here)
                 existingUser = user;
+            }
+            else
+            {
+                throw new InvalidOperationException("User not found."); ;
+
             }
             await Task.CompletedTask; // Simulate async task
             //_context.Users.Update(user);
