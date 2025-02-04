@@ -17,9 +17,16 @@ namespace AssetTracker.Services
             _stockService = stockService;
         }
         public async Task<double> GetTotalValueAsync(int userId) {
-			var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            try
+            {
+                var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+                return (double)portfolio.Positions.Sum(p => p.GetMarketValue());
 
-			return (double)portfolio.Positions.Sum(p => p.GetMarketValue());
+            }
+            catch
+            {
+                throw new ArgumentNullException(nameof(userId), "User cannot be null.");
+            }
 		}
 
         public async Task<ICollection<Position>> GetAllPositionsAsync(int userId)
@@ -30,14 +37,21 @@ namespace AssetTracker.Services
         }
 		public async Task <double> GetTotalProfitAndLossAsync(int userId)
 		{
-			var positions = await _portfolioRepository.GetPositionsByUserId(userId);
-			return (double) positions.Sum(p => p.GetProfitLoss());
+            try
+            {
+                var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+                return (double)positions.Sum(p => p.GetProfitLoss());
+            }
+            catch
+            {
+                throw new ArgumentException(nameof(userId), "No positions for provided userID.");
+            }
 		}
 		public async Task  AddPositionToPortfolioAsync(Position position,int userId)
 		{
             if (position == null)
             {
-                throw new ArgumentNullException(nameof(position), "Position cannot be null");
+                throw new ArgumentNullException(nameof(position), "Position cannot be null.");
             }
 
             // You might want to add additional checks, e.g., if the position already exists
@@ -64,8 +78,14 @@ namespace AssetTracker.Services
         }
         public async Task<Portfolio> GetPortfolioAsync(int userId)
         {
-            return await _portfolioRepository.GetUserPortfolioAsync(userId);  // Get the user's portfolio
-
+            try
+            {
+                return await _portfolioRepository.GetUserPortfolioAsync(userId);  // Get the user's portfolio
+            }
+            catch
+            {
+                throw new ArgumentNullException(nameof(userId), "Portfolio cannot be found");
+            }
         }
 
     }
