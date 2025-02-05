@@ -12,7 +12,7 @@ namespace AssetTracker.Services
     public class StockService : IStockService
     {
         private readonly HttpClient _httpClient;
-        private readonly string APIKey;
+        private readonly string APIKey ;
         private const string BaseURL = "https://www.alphavantage.co/query";
 
         public StockService(HttpClient httpClient, IConfiguration configuration)
@@ -95,6 +95,8 @@ namespace AssetTracker.Services
                 var url = $"{BaseURL}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={APIKey}";
                 var response = await _httpClient.GetStringAsync(url);
                 var json = JObject.Parse(response);
+                Console.WriteLine($"Response: {response}");
+
                 var timeSeries = json["Time Series (1min)"];
                 var latestTime = timeSeries?.First?.First;
                 var currentPrice = (float)latestTime?["4. close"];
@@ -226,3 +228,4 @@ namespace AssetTracker.Services
         public long Volume { get; set; }
     }
 }
+
