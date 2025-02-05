@@ -21,17 +21,14 @@ namespace AssetTracker.Repositories
 
         public async Task AddPositionToPortfolioAsync( Position position, int userId)
         {
-            
+
             var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
             if (portfolio == null)
             {
-                // Handle null case here
                 throw new InvalidOperationException("Portfolio not found.");
             }
-            if (portfolio != null)
-            {
-                portfolio.Positions.Add(position); // Add the position to the portfolio
-            }
+
+            portfolio.Positions.Add(position); // Just add the position to the portfolio
             await Task.CompletedTask; // Simulate async task
         }
 
@@ -46,6 +43,7 @@ namespace AssetTracker.Repositories
             return await Task.FromResult(portfolio); // Simulate async behavior
 
         }
+
         public async Task<ICollection<Position>>GetPositionsByUserId(int userId)
         {
             var positions = _portfolios.FirstOrDefault(p => p.UserId == userId).Positions;

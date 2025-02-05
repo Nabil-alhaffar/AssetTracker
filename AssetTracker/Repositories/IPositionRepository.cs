@@ -1,7 +1,7 @@
-﻿//using System;
-//using AssetTracker.Models;
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
+﻿using System;
+using AssetTracker.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 //namespace AssetTracker.Repositories
 //{
@@ -14,3 +14,12 @@
 //    }
 //}
 
+using AssetTracker.Models;
+
+public interface IPositionRepository
+{
+    Task<Position> GetPositionAsync(int userId, string symbol);  // Get position for the user
+    Task UpdatePositionAsync(Position position);  // Update position details
+    Task AddPositionAsync(Position position);  // Add new position
+    Task<bool> DeletePositionAsync(int userId, string symbol);  // Delete position
+}

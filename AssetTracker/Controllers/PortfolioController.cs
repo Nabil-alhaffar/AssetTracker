@@ -12,12 +12,13 @@ namespace AssetTracker.Controllers
     {
         private readonly IPortfolioService _portfolioService;
         private readonly IUserService _userService;
-
+        private readonly IPositionService _positionService;
         // Constructor with Dependency Injection
-        public PortfolioController(IPortfolioService portfolioService, IUserService userService)
+        public PortfolioController(IPortfolioService portfolioService, IUserService userService, IPositionService positionService)
         {
             _portfolioService = portfolioService;
             _userService = userService;
+            _positionService = positionService;
         }
 
         // Get the total portfolio value
@@ -75,8 +76,22 @@ namespace AssetTracker.Controllers
                 return NotFound("Portfolio not found.");
             }
             position.PortfolioId = portfolio.Id;
+            position.UserId = userId;
+            try
+            {
+                await _portfolioService.AddPositionToPortfolioAsync(position, userId);
+                //await _positionService.AddPositionAsync(position,userId);
+                return Ok("Position added or updated successfully.");
 
-           await _portfolioService.AddPositionToPortfolioAsync(position, userId);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error: {ex.Message}"); // Handle any unexpected errors
+
+            }
+
+
+
             // Add the position to the portfolio
 
             //user.Portfolio.Positions.Add(position);

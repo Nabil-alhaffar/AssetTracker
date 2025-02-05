@@ -54,11 +54,26 @@ namespace AssetTracker.Services
                 throw new ArgumentNullException(nameof(position), "Position cannot be null.");
             }
 
-            // You might want to add additional checks, e.g., if the position already exists
-            await _portfolioRepository.AddPositionToPortfolioAsync( position, userId);
+            // Get the portfolio from the repository
+            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            if (portfolio == null)
+            {
+                throw new InvalidOperationException("Portfolio not found.");
+            }
 
-            //var currentStockprice = await _stockService.GetStockPriceAsync(symbol);
-            //var stock = new Stock(symbol, quantity);
+            // Check if the position exists in the portfolio
+            var existingPosition = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == position.StockSymbol);
+            if (existingPosition != null)
+            {
+                // Update the position's quantity and price (or apply any other rule you need)
+                existingPosition.Quantity += position.Quantity; // Example: Adding more quantity
+                existingPosition.AveragePurchasePrice = position.AveragePurchasePrice; // Replace with your logic if needed
+            }
+            else
+            {
+                // If the position doesn't exist, add the new position
+                await _portfolioRepository.AddPositionToPortfolioAsync(position, userId);
+            }
         }
         public async Task RemovePositionAsync(int userId, string symbol) 
 		{

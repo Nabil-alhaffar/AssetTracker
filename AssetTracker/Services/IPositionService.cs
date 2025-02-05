@@ -5,7 +5,7 @@ namespace AssetTracker.Services
 {
 	public interface IPositionService
 	{
-        //Task AddPositionAsync(Position position);
+        Task AddPositionAsync(Position position, int userId);
         //Task RemovePositionAsync(string stockSymbol);
         //Task<Position> GetPositionAsync(string stockSymbol);
         //Task<List<Position>> GetAllPositionsAsync();

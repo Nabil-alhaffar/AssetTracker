@@ -29,7 +29,7 @@ namespace AssetTracker.Controllers
         //    return Ok("Position updated successfully.");
         //}
         [HttpPut("{userId}/split/{symbol}")]
-        public async Task<IActionResult> SplitPositionAsync(int userId, string symbol, [FromBody] int splitFactor)
+        public async Task<IActionResult> SplitPositionAsync(int userId, string symbol, int splitFactor)
         {
             if (splitFactor <= 0)
                 return BadRequest("Split factor must be a positive integer.");

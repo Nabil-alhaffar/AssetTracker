@@ -2,43 +2,55 @@
 //using System.Collections.Generic;
 //using System.Linq;
 //using System.Threading.Tasks;namespace AssetTracker.Repositories
-//{
-//    public class PositionRepository : IPositionRepository
-//    {
-//        private readonly List<Position> _positions; // Simulating an in-memory store (replace with actual DB logic)
-
-//        public PositionRepository()
-//        {
-//            _positions = new List<Position>(); // Initialize with an empty list
-
-//        }
-
-//        public async Task AddPositionAsync(Position position)
-//        {
-//            _positions.Add(position); // Add position to the in-memory list (replace with DB save logic)
-//            await Task.CompletedTask; // Simulate async task
-//        }
-
-//        public async Task<IEnumerable<Position>> GetAllPositionsAsync()
-//        {
-//            return await Task.FromResult(_positions); // Simulate async behavior
-//        }
-
-//        public async Task<Position> GetPositionBySymbolAsync(string symbol)
-//        {
-//            var position = _positions.FirstOrDefault(p => p.StockSymbol == symbol);
-//            return await Task.FromResult(position); // Simulate async behavio        
-//        }
-//        public async Task RemovePositionAsync(string symbol)
-//        {
-//            var position = _positions.FirstOrDefault(p => p.StockSymbol == symbol);
-//            if (position != null)
-//            {
-//                _positions.Remove(position); // Remove position from the in-memory list (replace with DB delete logic)
-//            }
-//            await Task.CompletedTask; // S
-//        }
-//    }
-//}
 
 
+using AssetTracker.Models;
+
+public class PositionRepository : IPositionRepository
+{
+    private static List<Position> _positions = new List<Position>();
+
+    //public PositionRepository (IPositionRepository positionRepository)
+    //{
+    //    _positions = ;
+    //}
+
+    public Task<Position> GetPositionAsync(int userId, string symbol)
+    {
+        var position = _positions.FirstOrDefault(p => p.UserId == userId && p.StockSymbol == symbol);
+        return Task.FromResult(position);
+    }
+    public async Task<List<Position>> GetAllPositions()
+    {
+         return await Task.FromResult(_positions);
+    }
+
+    public Task UpdatePositionAsync(Position position)
+    {
+        var existingPosition = _positions.FirstOrDefault(p => p.UserId == position.UserId && p.StockSymbol == position.StockSymbol);
+        if (existingPosition != null)
+        {
+            existingPosition.Quantity = position.Quantity;
+            existingPosition.AveragePurchasePrice = position.AveragePurchasePrice;
+            // Update other properties as needed
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task AddPositionAsync(Position position)
+    {
+        _positions.Add(position);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> DeletePositionAsync(int userId, string symbol)
+    {
+        var position = _positions.FirstOrDefault(p => p.UserId == userId && p.StockSymbol == symbol);
+        if (position != null)
+        {
+            _positions.Remove(position);
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
+    }
+}
