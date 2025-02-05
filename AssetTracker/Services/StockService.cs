@@ -5,36 +5,43 @@ using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using AssetTracker.Models;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace AssetTracker.Services
 {
-	public class StockService: IStockService
-	{
-		private readonly HttpClient _httpClient;
-		private readonly string APIKey = "0QRZHQL1XJD2F1GR";
-		private const string BaseURL = "https://www.alphavantage.co/query";
-		public StockService(HttpClient httpClient)
-		{
-			_httpClient = httpClient;
-		}
-		//public async  Task<double> GetStockPriceAsync (string symbol){
+    public class StockService : IStockService
+    {
+        private readonly HttpClient _httpClient;
+        private readonly string APIKey;
+        private const string BaseURL = "https://www.alphavantage.co/query";
 
-		//	//var url = $"{BaseURL}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={APIKey}";
-		//	//var response = await _httpClient.GetStringAsync(url);
-		//	//var json = JObject.Parse(response);
-		//	////var stockdata = JsonSerializer.Deserialize<AlphaVantageResponse>(response);
-		//	//var timeSeries = json["Time Series (1min)"];
-		//	//var latestTime = timeSeries?.First?.First;
-		//	//var closePrice = latestTime?["4. close"]?.ToString();
-
-		//	//return closePrice != null ? double.Parse(closePrice) : 0;
-		//}
+        public StockService(HttpClient httpClient, IConfiguration configuration)
+        {
+            _httpClient = httpClient;
+            APIKey = configuration["AlphaVantage:ApiKey"]; // Fetch API Key from appsettings.json
+        }
 
         public string GetCompanyLogoUrl(string website)
         {
             string domain = DomainExtractor(website);
-            string logoUrl = $"https://logo.clearbit.com/{domain}";
-            return logoUrl;
+            return $"https://logo.clearbit.com/{domain}";
+        }
+        public async Task<double> GetStockPriceAsync(string symbol)
+        {
+            var url = $"{BaseURL}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={APIKey}";
+            var response = await _httpClient.GetStringAsync(url);
+            var json = JObject.Parse(response);
+
+            var timeSeries = json["Time Series (1min)"];
+            if (timeSeries == null || !timeSeries.HasValues)
+            {
+                return 0; // Return 0 or handle error appropriately
+            }
+
+            var latestEntry = timeSeries.First;
+            var closePrice = latestEntry.First["4. close"]?.ToString();
+
+            return double.TryParse(closePrice, out double price) ? price : 0;
         }
 
         public async Task<IEnumerable<HistoricalData>> GetHistoricalDataAsync(string symbol, string interval = "daily")
@@ -48,37 +55,28 @@ namespace AssetTracker.Services
                 _ => "TIME_SERIES_DAILY"
             };
 
-            // Format URL properly for intraday intervals
             string intervalQuery = (function == "TIME_SERIES_INTRADAY") ? $"&interval={interval}" : "";
             var url = $"{BaseURL}?function={function}{intervalQuery}&symbol={symbol}&apikey={APIKey}";
 
-            Console.WriteLine($"Requesting URL: {url}"); // Debugging
+            Console.WriteLine($"Requesting URL: {url}");
             var response = await _httpClient.GetStringAsync(url);
-            Console.WriteLine($"Response: {response}"); // Debugging
+            Console.WriteLine($"Response: {response}");
 
             var data = JsonConvert.DeserializeObject<AlphaVantageTimeSeries>(response);
-            if (data == null)
-            {
-                return null;
-            }
+            if (data == null) return null;
 
-            // Dynamically map the correct time series property
             Dictionary<string, AlphaVantageTimeSeriesEntry> timeSeries = function switch
             {
                 "TIME_SERIES_DAILY" => data.DailyTimeSeries,
                 "TIME_SERIES_WEEKLY" => data.WeeklyTimeSeries,
                 "TIME_SERIES_MONTHLY" => data.MonthlyTimeSeries,
-                "TIME_SERIES_INTRADAY" => data.TimeSeries,  // Intraday data
+                "TIME_SERIES_INTRADAY" => data.TimeSeries,
                 _ => data.DailyTimeSeries
-            } ;
+            };
 
-            if (timeSeries == null || !timeSeries.Any())
-            {
-                return null;
-            }
+            if (timeSeries == null || !timeSeries.Any()) return null;
 
-            // Convert API response to HistoricalData format
-            var historicalData = timeSeries.Select(item => new HistoricalData
+            return timeSeries.Select(item => new HistoricalData
             {
                 Date = DateTime.Parse(item.Key),
                 ClosePrice = item.Value.Close,
@@ -88,38 +86,34 @@ namespace AssetTracker.Services
             })
             .OrderBy(d => d.Date)
             .ToList();
-
-            return historicalData;
         }
 
         public async Task<Stock> GetStockOverviewAsync(string symbol)
-
         {
-            
             try
             {
                 var url = $"{BaseURL}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={APIKey}";
                 var response = await _httpClient.GetStringAsync(url);
                 var json = JObject.Parse(response);
-                //var stockdata = JsonSerializer.Deserialize<AlphaVantageResponse>(response);
                 var timeSeries = json["Time Series (1min)"];
                 var latestTime = timeSeries?.First?.First;
                 var currentPrice = (float)latestTime?["4. close"];
+
                 string infoUrl = $"{BaseURL}?function=OVERVIEW&symbol={symbol}&apikey={APIKey}";
                 HttpResponseMessage infoResponse = await _httpClient.GetAsync(infoUrl);
                 infoResponse.EnsureSuccessStatusCode();
 
                 string jsonResponse = await infoResponse.Content.ReadAsStringAsync();
                 var stockInfo = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
-                
-                var stock = new Stock
+
+                return new Stock
                 {
                     Symbol = symbol,
                     CurrentPrice = currentPrice,
                     CompanyName = stockInfo["Name"] ?? symbol,
                     MarketCap = stockInfo["MarketCapitalization"] ?? 0,
                     EPS = stockInfo["EPS"] ?? 0,
-                    StockStatus = (Stock.Status)(stockInfo["52WeekHigh"] > currentPrice ? 0 : 1), // Bullish or Bearish
+                    StockStatus = (Stock.Status)(stockInfo["52WeekHigh"] > currentPrice ? 0 : 1),
                     StockSector = ParseSector(stockInfo["Sector"]?.ToString()),
                     Exchange = stockInfo["Exchange"]?.ToString() ?? "Unknown",
                     High52Week = stockInfo["52WeekHigh"] ?? 0,
@@ -129,13 +123,10 @@ namespace AssetTracker.Services
                     Country = stockInfo["Country"] ?? "Unknown",
                     DividendDate = stockInfo["DividendDate"] ?? DateTimeZoneHandling.Local,
                     ExDividendDate = stockInfo["ExDividendDate"] ?? DateTimeZoneHandling.Local,
-                    AnalystTargetPrice = stockInfo["AnalystTargetPrice"]??"Unknown",
-                    Description = stockInfo["Description"]?? "Unknown",
-                    OfficialSite = stockInfo["OfficialSite"]?? "Unknown",
-                    
+                    AnalystTargetPrice = stockInfo["AnalystTargetPrice"] ?? "Unknown",
+                    Description = stockInfo["Description"] ?? "Unknown",
+                    OfficialSite = stockInfo["OfficialSite"] ?? "Unknown"
                 };
-
-                return stock;
             }
             catch (Exception ex)
             {
@@ -144,20 +135,13 @@ namespace AssetTracker.Services
             }
         }
 
-
-
-
         private string DomainExtractor(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
-            {
                 throw new ArgumentException("URL cannot be null or empty", nameof(url));
-            }
 
-            // Ensure the URL has a scheme (http:// or https://)
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
-                // Prepend "http://" if the URL is missing a protocol
                 if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
                     !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
@@ -169,22 +153,13 @@ namespace AssetTracker.Services
             {
                 Uri uri = new Uri(url);
                 string host = uri.Host;
-
-                // Remove "www." prefix if it exists
-                if (host.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
-                {
-                    host = host.Substring(4);
-                }
-
-                return host;
+                return host.StartsWith("www.") ? host.Substring(4) : host;
             }
             catch (UriFormatException ex)
             {
-                throw new UriFormatException($"The provided URL '{url}' is not valid. Exception: {ex.Message}");
+                throw new UriFormatException($"Invalid URL '{url}'. Exception: {ex.Message}");
             }
         }
-
-
 
         private Stock.Sector ParseSector(string sector)
         {
@@ -201,10 +176,11 @@ namespace AssetTracker.Services
                 "communication services" => Stock.Sector.CommunicationServices,
                 "utilities" => Stock.Sector.Utilities,
                 "real estate" => Stock.Sector.RealEstate,
-                _ => Stock.Sector.InformationTechnology // Default to Information Technology
+                _ => Stock.Sector.InformationTechnology
             };
         }
     }
+
     public class AlphaVantageTimeSeries
     {
         [JsonProperty("Time Series (5min)")]
@@ -228,16 +204,9 @@ namespace AssetTracker.Services
         [JsonProperty("Time Series (Monthly)")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> MonthlyTimeSeries { get; set; }
 
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries
-        {
-            get
-            {
-                return TimeSeries5Min ?? TimeSeries15Min ?? TimeSeries30Min ?? TimeSeries60Min;
-            }
-        }
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries =>
+            TimeSeries5Min ?? TimeSeries15Min ?? TimeSeries30Min ?? TimeSeries60Min;
     }
-
-
 
     public class AlphaVantageTimeSeriesEntry
     {
@@ -257,5 +226,3 @@ namespace AssetTracker.Services
         public long Volume { get; set; }
     }
 }
-
-
