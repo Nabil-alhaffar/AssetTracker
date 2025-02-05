@@ -44,6 +44,17 @@ namespace AssetTracker.Controller
             //    LogoUrl = logoUrl
             //});
         }
+        [HttpGet("stock/{symbol}/historical")]
+        public async Task<ActionResult<IEnumerable<HistoricalData>>> GetHistoricalData(string symbol, string interval)
+        {
+            var historicalData = await _stockService.GetHistoricalDataAsync(symbol, interval);
+            if (historicalData == null || !historicalData.Any())
+            {
+                return NotFound("Historical data not found.");
+            }
+
+            return Ok(historicalData);
+        }
     }
 }
 

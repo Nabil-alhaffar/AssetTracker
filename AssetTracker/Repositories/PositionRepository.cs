@@ -20,7 +20,7 @@ public class PositionRepository : IPositionRepository
         var position = _positions.FirstOrDefault(p => p.UserId == userId && p.StockSymbol == symbol);
         return Task.FromResult(position);
     }
-    public async Task<List<Position>> GetAllPositions()
+    public async Task<IEnumerable<Position>> GetAllPositions()
     {
          return await Task.FromResult(_positions);
     }

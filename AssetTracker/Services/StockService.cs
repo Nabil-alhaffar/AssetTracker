@@ -36,12 +36,58 @@ namespace AssetTracker.Services
             string logoUrl = $"https://logo.clearbit.com/{domain}";
             return logoUrl;
         }
+
+        public async Task<IEnumerable<HistoricalData>> GetHistoricalDataAsync(string symbol, string interval = "daily")
+        {
+
+            var function = interval.ToLower() switch
+            {
+                "5min" or "15min" or "30min" or "60min" => $"TIME_SERIES_INTRADAY&interval={interval}",
+                "daily" => "TIME_SERIES_DAILY",
+                "weekly" => "TIME_SERIES_WEEKLY",
+                "monthly" => "TIME_SERIES_MONTHLY",
+                _ => "TIME_SERIES_DAILY" // Default to daily if invalid interval is given
+            };
+
+            var url = $"{BaseURL}?function={function}&symbol={symbol}&apikey={APIKey}";
+            var response = await _httpClient.GetStringAsync(url);
+
+            Console.WriteLine(response); // Debugging
+
+            var data = JsonConvert.DeserializeObject<AlphaVantageTimeSeries>(response);
+            if (data == null)
+            {
+                return null;
+            }
+
+            // Dynamically choose the correct time series property
+            Dictionary<string, AlphaVantageTimeSeriesEntry> timeSeries = function switch
+            {
+                "TIME_SERIES_DAILY" => data.DailyTimeSeries,
+                "TIME_SERIES_WEEKLY" => data.WeeklyTimeSeries,
+                "TIME_SERIES_MONTHLY" => data.MonthlyTimeSeries,
+                _ => data.TimeSeries // For intraday (5min, 15min, etc.)
+            };
+
+            if (timeSeries == null || !timeSeries.Any())
+            {
+                return null;
+            }
+
+            var historicalData = timeSeries.Select(item => new HistoricalData
+            {
+                Date = DateTime.Parse(item.Key),
+                ClosePrice = item.Value.Close
+            })
+            .OrderBy(d => d.Date)
+            .ToList();
+
+            return historicalData;
+        }
         public async Task<Stock> GetStockOverviewAsync(string symbol)
 
         {
             
-            
-
             try
             {
                 var url = $"{BaseURL}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={APIKey}";
@@ -89,6 +135,10 @@ namespace AssetTracker.Services
                 return null;
             }
         }
+
+
+
+
         private string DomainExtractor(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -147,5 +197,38 @@ namespace AssetTracker.Services
             };
         }
     }
+    public class AlphaVantageTimeSeries
+    {
+        [JsonProperty("Time Series (5min)")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries { get; set; }
+
+        [JsonProperty("Time Series (Daily)")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> DailyTimeSeries { get; set; }
+
+        [JsonProperty("Weekly Time Series")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> WeeklyTimeSeries { get; set; }
+
+        [JsonProperty("Monthly Time Series")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> MonthlyTimeSeries { get; set; }
+    }
+
+    public class AlphaVantageTimeSeriesEntry
+    {
+        [JsonProperty("1. open")]
+        public double Open { get; set; }
+
+        [JsonProperty("2. high")]
+        public double High { get; set; }
+
+        [JsonProperty("3. low")]
+        public double Low { get; set; }
+
+        [JsonProperty("4. close")]
+        public double Close { get; set; }
+
+        [JsonProperty("5. volume")]
+        public long Volume { get; set; }
+    }
 }
+
 
