@@ -39,20 +39,22 @@ namespace AssetTracker.Services
 
         public async Task<IEnumerable<HistoricalData>> GetHistoricalDataAsync(string symbol, string interval = "daily")
         {
-
             var function = interval.ToLower() switch
             {
-                "5min" or "15min" or "30min" or "60min" => $"TIME_SERIES_INTRADAY&interval={interval}",
+                "5min" or "15min" or "30min" or "60min" or "240min" => "TIME_SERIES_INTRADAY",
                 "daily" => "TIME_SERIES_DAILY",
                 "weekly" => "TIME_SERIES_WEEKLY",
                 "monthly" => "TIME_SERIES_MONTHLY",
-                _ => "TIME_SERIES_DAILY" // Default to daily if invalid interval is given
+                _ => "TIME_SERIES_DAILY"
             };
 
-            var url = $"{BaseURL}?function={function}&symbol={symbol}&apikey={APIKey}";
-            var response = await _httpClient.GetStringAsync(url);
+            // Format URL properly for intraday intervals
+            string intervalQuery = (function == "TIME_SERIES_INTRADAY") ? $"&interval={interval}" : "";
+            var url = $"{BaseURL}?function={function}{intervalQuery}&symbol={symbol}&apikey={APIKey}";
 
-            Console.WriteLine(response); // Debugging
+            Console.WriteLine($"Requesting URL: {url}"); // Debugging
+            var response = await _httpClient.GetStringAsync(url);
+            Console.WriteLine($"Response: {response}"); // Debugging
 
             var data = JsonConvert.DeserializeObject<AlphaVantageTimeSeries>(response);
             if (data == null)
@@ -60,30 +62,36 @@ namespace AssetTracker.Services
                 return null;
             }
 
-            // Dynamically choose the correct time series property
+            // Dynamically map the correct time series property
             Dictionary<string, AlphaVantageTimeSeriesEntry> timeSeries = function switch
             {
                 "TIME_SERIES_DAILY" => data.DailyTimeSeries,
                 "TIME_SERIES_WEEKLY" => data.WeeklyTimeSeries,
                 "TIME_SERIES_MONTHLY" => data.MonthlyTimeSeries,
-                _ => data.TimeSeries // For intraday (5min, 15min, etc.)
-            };
+                "TIME_SERIES_INTRADAY" => data.TimeSeries,  // Intraday data
+                _ => data.DailyTimeSeries
+            } ;
 
             if (timeSeries == null || !timeSeries.Any())
             {
                 return null;
             }
 
+            // Convert API response to HistoricalData format
             var historicalData = timeSeries.Select(item => new HistoricalData
             {
                 Date = DateTime.Parse(item.Key),
-                ClosePrice = item.Value.Close
+                ClosePrice = item.Value.Close,
+                Open = item.Value.Open,
+                Low = item.Value.Low,
+                High = item.Value.High
             })
             .OrderBy(d => d.Date)
             .ToList();
 
             return historicalData;
         }
+
         public async Task<Stock> GetStockOverviewAsync(string symbol)
 
         {
@@ -200,17 +208,36 @@ namespace AssetTracker.Services
     public class AlphaVantageTimeSeries
     {
         [JsonProperty("Time Series (5min)")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries { get; set; }
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries5Min { get; set; }
+
+        [JsonProperty("Time Series (15min)")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries15Min { get; set; }
+
+        [JsonProperty("Time Series (30min)")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries30Min { get; set; }
+
+        [JsonProperty("Time Series (60min)")]
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries60Min { get; set; }
 
         [JsonProperty("Time Series (Daily)")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> DailyTimeSeries { get; set; }
 
-        [JsonProperty("Weekly Time Series")]
+        [JsonProperty("Time Series (Weekly)")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> WeeklyTimeSeries { get; set; }
 
-        [JsonProperty("Monthly Time Series")]
+        [JsonProperty("Time Series (Monthly)")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> MonthlyTimeSeries { get; set; }
+
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries
+        {
+            get
+            {
+                return TimeSeries5Min ?? TimeSeries15Min ?? TimeSeries30Min ?? TimeSeries60Min;
+            }
+        }
     }
+
+
 
     public class AlphaVantageTimeSeriesEntry
     {
