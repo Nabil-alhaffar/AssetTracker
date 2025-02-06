@@ -6,6 +6,7 @@ using System.Text.Json;
 using AssetTracker.Models;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
+using System.Globalization;
 
 namespace AssetTracker.Services
 {
@@ -21,11 +22,50 @@ namespace AssetTracker.Services
             APIKey = configuration["AlphaVantage:ApiKey"]; // Fetch API Key from appsettings.json
         }
 
+        public async Task<Dictionary<string, Dictionary<string, decimal>>> GetStockIndicatorsAsync( string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14)
+        {
+            var results = new Dictionary<string, Dictionary<string, decimal>>();
+
+            foreach (var indicator in indicators)
+            {
+                string url = $"{BaseURL}?function={indicator}&symbol={symbol}&interval={interval}&time_period={timePeriod}&apikey={APIKey}";
+
+                Console.WriteLine($"Requesting Indicator: {indicator} - URL: {url}");
+                var response = await _httpClient.GetStringAsync(url);
+                Console.WriteLine($"Response: {response}");
+
+                try
+                {
+                    var technicalData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(response);
+                    var indicatorKey = technicalData.Keys.FirstOrDefault(k => k.StartsWith("Technical Analysis"));
+
+                    if (indicatorKey == null) continue; // Skip if the expected key is missing
+
+                    var indicatorData = technicalData[indicatorKey];
+
+                    var parsedData = indicatorData.ToDictionary(
+                        item => item.Key, // Date
+                        item => decimal.Parse(item.Value.Values.First(), CultureInfo.InvariantCulture) // Indicator Value
+                    );
+
+                    results[indicator] = parsedData;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error parsing {indicator}: {ex.Message}");
+                }
+            }
+
+            return results;
+        }
+
         public string GetCompanyLogoUrl(string website)
         {
             string domain = DomainExtractor(website);
             return $"https://logo.clearbit.com/{domain}";
         }
+
+
         public async Task<double> GetStockPriceAsync(string symbol)
         {
             var url = $"{BaseURL}?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1min&apikey={APIKey}";
