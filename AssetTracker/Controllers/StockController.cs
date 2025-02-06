@@ -62,11 +62,7 @@ namespace AssetTracker.Controller
         }
 
         [HttpGet("indicators")]
-        public async Task<IActionResult> GetStockIndicators(
-        [FromQuery] string symbol,
-        [FromQuery] string interval = "daily",
-        [FromQuery] int timePeriod = 14,
-        [FromQuery] string[] indicators = null)
+        public async Task<IActionResult> GetStockIndicators([FromQuery] string symbol,[FromQuery] string interval = "daily", [FromQuery] int timePeriod = 14, [FromQuery] string[] indicators = null)
         {
             if (string.IsNullOrEmpty(symbol))
                 return BadRequest("Symbol is required.");
@@ -76,6 +72,9 @@ namespace AssetTracker.Controller
 
            ;
             var data = await _stockService.GetStockIndicatorsAsync(symbol, indicators.ToList(), interval, timePeriod);
+
+            if (!data.Any())
+                return NotFound("Error Fetching Data.");
 
             return Ok(data);
         }

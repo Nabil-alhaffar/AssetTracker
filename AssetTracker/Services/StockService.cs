@@ -22,13 +22,22 @@ namespace AssetTracker.Services
             APIKey = configuration["AlphaVantage:ApiKey"]; // Fetch API Key from appsettings.json
         }
 
-        public async Task<Dictionary<string, Dictionary<string, decimal>>> GetStockIndicatorsAsync( string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14)
+
+
+        public async Task<Dictionary<string, Dictionary<string, object>>> GetStockIndicatorsAsync(
+    string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14)
         {
-            var results = new Dictionary<string, Dictionary<string, decimal>>();
+            var results = new Dictionary<string, Dictionary<string, object>>();
 
             foreach (var indicator in indicators)
             {
+                string seriesType = "close";
                 string url = $"{BaseURL}?function={indicator}&symbol={symbol}&interval={interval}&time_period={timePeriod}&apikey={APIKey}";
+
+                if (indicator is "RSI" or "MACD" or "BBANDS" or "SMA" or "EMA")
+                {
+                    url += $"&series_type={seriesType}";
+                }
 
                 Console.WriteLine($"Requesting Indicator: {indicator} - URL: {url}");
                 var response = await _httpClient.GetStringAsync(url);
@@ -36,19 +45,92 @@ namespace AssetTracker.Services
 
                 try
                 {
-                    var technicalData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(response);
-                    var indicatorKey = technicalData.Keys.FirstOrDefault(k => k.StartsWith("Technical Analysis"));
+                    var data = JsonConvert.DeserializeObject<AlphaVantageIndicatorResponse>(response);
+                    if (data == null) continue;
 
-                    if (indicatorKey == null) continue; // Skip if the expected key is missing
+                    // ✅ Ensure RSI values are ADDED, not overwritten
+                    if (indicator == "RSI" && data.RSI != null)
+                    {
+                        foreach (var entry in data.RSI)
+                        {
+                            Console.WriteLine($"🔍 Raw RSI entry: {JsonConvert.SerializeObject(entry)}");
 
-                    var indicatorData = technicalData[indicatorKey];
+                            if (!entry.Value.Value.HasValue)
+                            {
+                                Console.WriteLine($"⚠️ Skipping RSI entry {entry.Key}: Unable to parse value.");
+                                continue;
+                            }
 
-                    var parsedData = indicatorData.ToDictionary(
-                        item => item.Key, // Date
-                        item => decimal.Parse(item.Value.Values.First(), CultureInfo.InvariantCulture) // Indicator Value
-                    );
+                            if (!results.ContainsKey(entry.Key))
+                            {
+                                results[entry.Key] = new Dictionary<string, object>();
+                            }
 
-                    results[indicator] = parsedData;
+                            results[entry.Key]["RSI"] = entry.Value.Value;
+                            Console.WriteLine($"✅ Added RSI {entry.Value.Value} for {entry.Key}");
+                        }
+                    }
+
+                    // ✅ Ensure BBANDS values are ADDED, not overwritten
+                    if (indicator == "BBANDS" && data.BBANDS != null)
+                    {
+                        foreach (var entry in data.BBANDS)
+                        {
+                            if (!results.ContainsKey(entry.Key))
+                            {
+                                results[entry.Key] = new Dictionary<string, object>();
+                            }
+
+                            results[entry.Key]["BBANDS"] = new Dictionary<string, decimal?>
+                    {
+                        { "UpperBand", entry.Value.UpperBand },
+                        { "MiddleBand", entry.Value.MiddleBand },
+                        { "LowerBand", entry.Value.LowerBand }
+                    };
+                        }
+                    }
+
+                    // ✅ Ensure EMA values are ADDED
+                    if (indicator == "EMA" && data.EMA != null)
+                    {
+                        foreach (var entry in data.EMA)
+                        {
+                            if (!entry.Value.Value.HasValue)
+                            {
+                                Console.WriteLine($"⚠️ Skipping EMA entry {entry.Key}: Unable to parse value.");
+                                continue;
+                            }
+
+                            if (!results.ContainsKey(entry.Key))
+                            {
+                                results[entry.Key] = new Dictionary<string, object>();
+                            }
+
+                            results[entry.Key]["EMA"] = entry.Value.Value;
+                            Console.WriteLine($"✅ Added EMA {entry.Value.Value} for {entry.Key}");
+                        }
+                    }
+
+                    // ✅ Ensure SMA values are ADDED
+                    if (indicator == "SMA" && data.SMA != null)
+                    {
+                        foreach (var entry in data.SMA)
+                        {
+                            if (!entry.Value.Value.HasValue)
+                            {
+                                Console.WriteLine($"⚠️ Skipping SMA entry {entry.Key}: Unable to parse value.");
+                                continue;
+                            }
+
+                            if (!results.ContainsKey(entry.Key))
+                            {
+                                results[entry.Key] = new Dictionary<string, object>();
+                            }
+
+                            results[entry.Key]["SMA"] = entry.Value.Value;
+                            Console.WriteLine($"✅ Added SMA {entry.Value.Value} for {entry.Key}");
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -56,8 +138,184 @@ namespace AssetTracker.Services
                 }
             }
 
+            Console.WriteLine($"Final results (before returning): {JsonConvert.SerializeObject(results, Formatting.Indented)}");
             return results;
         }
+
+
+        //  public async Task<Dictionary<string, Dictionary<string, object>>> GetStockIndicatorsAsync(
+        //string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14)
+        //  {
+        //      var results = new Dictionary<string, Dictionary<string, object>>();
+
+        //      foreach (var indicator in indicators)
+        //      {
+        //          string seriesType = "close";
+        //          string url = $"{BaseURL}?function={indicator}&symbol={symbol}&interval={interval}&time_period={timePeriod}&apikey={APIKey}";
+
+        //          if (indicator is "RSI" or "MACD" or "BBANDS" or "SMA" or "EMA")
+        //          {
+        //              url += $"&series_type={seriesType}";
+        //          }
+
+        //          Console.WriteLine($"Requesting Indicator: {indicator} - URL: {url}");
+        //          var response = await _httpClient.GetStringAsync(url);
+        //          Console.WriteLine($"Response: {response}");
+
+        //          try
+        //          {
+        //              var data = JsonConvert.DeserializeObject<AlphaVantageIndicatorResponse>(response);
+        //              if (data == null) continue;
+
+        //              // ✅ Ensure RSI values are ADDED, not overwritten
+        //              if (indicator == "RSI" && data.RSI != null)
+        //              {
+        //                  foreach (var entry in data.RSI)
+        //                  {
+        //                      // 🔍 Debug raw RSI entry structure
+        //                      Console.WriteLine($"🔍 Raw RSI entry: {JsonConvert.SerializeObject(entry)}");
+
+        //                      // Extract RSI value from dictionary
+        //                      string rsiString = entry.Value.GetType().GetProperty("Value")?.GetValue(entry.Value, null)?.ToString();
+
+        //                      if (string.IsNullOrEmpty(rsiString) || !decimal.TryParse(rsiString, out decimal rsiValue))
+        //                      {
+        //                          Console.WriteLine($"⚠️ Skipping RSI entry {entry.Key}: Unable to parse value.");
+        //                          continue;
+        //                      }
+
+        //                      if (!results.ContainsKey(entry.Key))
+        //                      {
+        //                          results[entry.Key] = new Dictionary<string, object>();
+        //                      }
+
+        //                      results[entry.Key]["RSI"] = rsiValue;
+        //                      Console.WriteLine($"✅ Added RSI {rsiValue} for {entry.Key}");
+        //                  }
+        //              }
+
+        //              // ✅ Ensure BBANDS values are ADDED, not overwritten
+        //              if (indicator == "BBANDS" && data.BBANDS != null)
+        //              {
+        //                  foreach (var entry in data.BBANDS)
+        //                  {
+        //                      if (!results.ContainsKey(entry.Key))
+        //                      {
+        //                          results[entry.Key] = new Dictionary<string, object>();
+        //                      }
+
+        //                      // 🔹 Merge Bollinger Bands Data
+        //                      results[entry.Key]["BBANDS"] = new Dictionary<string, decimal?>
+        //                {
+        //                    { "UpperBand", entry.Value.UpperBand },
+        //                    { "MiddleBand", entry.Value.MiddleBand },
+        //                    { "LowerBand", entry.Value.LowerBand }
+        //                };
+        //                  }
+        //              }
+        //          }
+        //          catch (Exception ex)
+        //          {
+        //              Console.WriteLine($"Error parsing {indicator}: {ex.Message}");
+        //          }
+        //      }
+
+        //      // 🔍 FINAL DEBUG: Check if RSI & BBANDS are grouped correctly
+        //      Console.WriteLine($"Final results (before returning): {JsonConvert.SerializeObject(results, Formatting.Indented)}");
+
+        //      return results;
+        //  }
+
+
+
+
+        //   public async Task<Dictionary<string, Dictionary<string, decimal>>> GetStockIndicatorsAsync(
+        //string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14)
+        //   {
+        //       var results = new Dictionary<string, Dictionary<string, decimal>>();
+
+        //       foreach (var indicator in indicators)
+        //       {
+        //           string seriesType = "close"; // Required for certain indicators
+        //           string url = $"{BaseURL}?function={indicator}&symbol={symbol}&interval={interval}&time_period={timePeriod}&apikey={APIKey}";
+
+        //           // Append series_type if required
+        //           if (indicator is "RSI" or "MACD" or "BBANDS" or "SMA" or "EMA")
+        //           {
+        //               url += $"&series_type={seriesType}";
+        //           }
+
+        //           Console.WriteLine($"Requesting Indicator: {indicator} - URL: {url}");
+        //           var response = await _httpClient.GetStringAsync(url);
+        //           Console.WriteLine($"Response: {response}");
+
+        //           try
+        //           {
+        //               var data = JsonConvert.DeserializeObject<AlphaVantageIndicatorResponse>(response);
+        //               Dictionary<string, IndicatorData> indicatorData = indicator switch
+        //               {
+        //                   "SMA" => data?.SMA,
+        //                   "EMA" => data?.EMA,
+        //                   "MACD" => data?.MACD?.ToDictionary(kvp => kvp.Key, kvp => new IndicatorData { Value = kvp.Value.MACD_Signal }),
+        //                   "RSI" => data?.RSI,
+        //                   "BBANDS" => data?.BBANDS?.ToDictionary(kvp => kvp.Key, kvp => new IndicatorData { Value = kvp.Value.MiddleBand }),
+        //                   _ => null
+        //               };
+
+        //               if (indicatorData != null)
+        //               {
+        //                   results[indicator] = indicatorData
+        //                       .Where(item => item.Value.Value.HasValue)
+        //                       .ToDictionary(item => item.Key, item => item.Value.Value.Value);
+        //               }
+        //           }
+        //           catch (Exception ex)
+        //           {
+        //               Console.WriteLine($"Error parsing {indicator}: {ex.Message}");
+        //           }
+        //       }
+
+        //       return results;
+        //   }
+
+        //public async Task<Dictionary<string, Dictionary<string, decimal>>> GetStockIndicatorsAsync( string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14)
+        //{
+
+
+        //    //var results = new Dictionary<string, Dictionary<string, decimal>>();
+
+        //    //foreach (var indicator in indicators)
+        //    //{
+        //    //    string url = $"{BaseURL}?function={indicator}&symbol={symbol}&interval={interval}&time_period={timePeriod}&apikey={APIKey}";
+
+        //    //    Console.WriteLine($"Requesting Indicator: {indicator} - URL: {url}");
+        //    //    var response = await _httpClient.GetStringAsync(url);
+        //    //    Console.WriteLine($"Response: {response}");
+
+        //    //    try
+        //    //    {
+        //    //        var technicalData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(response);
+        //    //        var indicatorKey = technicalData.Keys.FirstOrDefault(k => k.StartsWith("Technical Analysis"));
+
+        //    //        if (indicatorKey == null) continue; // Skip if the expected key is missing
+
+        //    //        var indicatorData = technicalData[indicatorKey];
+
+        //    //        var parsedData = indicatorData.ToDictionary(
+        //    //            item => item.Key, // Date
+        //    //            item => decimal.Parse(item.Value.Values.First(), CultureInfo.InvariantCulture) // Indicator Value
+        //    //        );
+
+        //    //        results[indicator] = parsedData;
+        //    //    }
+        //    //    catch (Exception ex)
+        //    //    {
+        //    //        Console.WriteLine($"Error parsing {indicator}: {ex.Message}");
+        //    //    }
+        //    //}
+
+        //    //return results;
+        //}
 
         public string GetCompanyLogoUrl(string website)
         {
