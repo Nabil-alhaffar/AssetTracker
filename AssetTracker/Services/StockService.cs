@@ -65,14 +65,8 @@ namespace AssetTracker.Services
             var data = JsonConvert.DeserializeObject<AlphaVantageTimeSeries>(response);
             if (data == null) return null;
 
-            Dictionary<string, AlphaVantageTimeSeriesEntry> timeSeries = function switch
-            {
-                "TIME_SERIES_DAILY" => data.DailyTimeSeries,
-                "TIME_SERIES_WEEKLY" => data.WeeklyTimeSeries,
-                "TIME_SERIES_MONTHLY" => data.MonthlyTimeSeries,
-                "TIME_SERIES_INTRADAY" => data.TimeSeries,
-                _ => data.DailyTimeSeries
-            };
+            // Use the improved GetTimeSeries method
+            Dictionary<string, AlphaVantageTimeSeriesEntry> timeSeries = data.GetTimeSeries(function);
 
             if (timeSeries == null || !timeSeries.Any()) return null;
 
@@ -82,11 +76,13 @@ namespace AssetTracker.Services
                 ClosePrice = item.Value.Close,
                 Open = item.Value.Open,
                 Low = item.Value.Low,
-                High = item.Value.High
+                High = item.Value.High,
+                Volume = item.Value.Volume
             })
             .OrderBy(d => d.Date)
             .ToList();
         }
+
 
         public async Task<Stock> GetStockOverviewAsync(string symbol)
         {
@@ -200,15 +196,24 @@ namespace AssetTracker.Services
         [JsonProperty("Time Series (Daily)")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> DailyTimeSeries { get; set; }
 
-        [JsonProperty("Time Series (Weekly)")]
+        [JsonProperty("Weekly Time Series")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> WeeklyTimeSeries { get; set; }
 
-        [JsonProperty("Time Series (Monthly)")]
+        [JsonProperty("Monthly Time Series")]
         public Dictionary<string, AlphaVantageTimeSeriesEntry> MonthlyTimeSeries { get; set; }
 
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries =>
-            TimeSeries5Min ?? TimeSeries15Min ?? TimeSeries30Min ?? TimeSeries60Min;
+        public Dictionary<string, AlphaVantageTimeSeriesEntry> GetTimeSeries(string function)
+        {
+            return function switch
+            {
+                "TIME_SERIES_DAILY" => DailyTimeSeries,
+                "TIME_SERIES_WEEKLY" => WeeklyTimeSeries,
+                "TIME_SERIES_MONTHLY" => MonthlyTimeSeries,
+                _ => TimeSeries5Min ?? TimeSeries15Min ?? TimeSeries30Min ?? TimeSeries60Min
+            };
+        }
     }
+
 
     public class AlphaVantageTimeSeriesEntry
     {
