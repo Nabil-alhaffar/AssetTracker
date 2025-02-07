@@ -7,6 +7,6 @@ public interface IStockService
     Task<Stock> GetStockOverviewAsync(string symbol);
     string GetCompanyLogoUrl(string website);
     Task<IEnumerable<HistoricalData>> GetHistoricalDataAsync(string symbol, string interval);
-    Task<Dictionary<string, Dictionary<string, object>>> GetStockIndicatorsAsync(string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14);
+    Task<Dictionary<string, Dictionary<string, object>>> GetStockIndicatorsAsync(string symbol, List<string> indicators, string interval = "daily", int timePeriod = 14, int limit=100);
 
 }

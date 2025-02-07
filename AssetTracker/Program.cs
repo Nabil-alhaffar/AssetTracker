@@ -13,6 +13,12 @@ builder.Services.AddSingleton<IUserService, UserService>();
 
 builder.Services.AddSingleton<IPortfolioService, PortfolioService>();
 builder.Services.AddSingleton<IPortfolioRepository, PortfolioRepository>();
+
+var redisConnection = $"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]}";
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnection;
+});
 builder.Services.AddHttpClient();
 
 builder.Services.AddControllers();

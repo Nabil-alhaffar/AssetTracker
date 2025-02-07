@@ -21,12 +21,12 @@ namespace AssetTracker.Controller
 		[HttpGet("getPrice/{symbol}")]
 		public async Task<IActionResult> GetStockPrice(string symbol)
 		{
-			var currentPrice = await _stockService.GetStockOverviewAsync(symbol);
-			if (currentPrice.CurrentPrice == 0)
+			var currentPrice = await _stockService.GetStockPriceAsync(symbol);
+			if (currentPrice == 0)
 			{
 				return NotFound("Stock Symbol not found or API error");
 			}
-			return Ok(currentPrice.CurrentPrice);
+			return Ok(currentPrice);
 		}
 
         [HttpGet("getStock/{symbol}")]
@@ -62,7 +62,7 @@ namespace AssetTracker.Controller
         }
 
         [HttpGet("indicators")]
-        public async Task<IActionResult> GetStockIndicators([FromQuery] string symbol,[FromQuery] string interval = "daily", [FromQuery] int timePeriod = 14, [FromQuery] string[] indicators = null)
+        public async Task<IActionResult> GetStockIndicators([FromQuery] string symbol,[FromQuery] string interval = "daily", [FromQuery] int timePeriod = 14, [FromQuery] string[] indicators = null, [FromQuery]int limit =100)
         {
             if (string.IsNullOrEmpty(symbol))
                 return BadRequest("Symbol is required.");
@@ -71,7 +71,7 @@ namespace AssetTracker.Controller
                 indicators = new string[] { "SMA", "EMA", "MACD", "RSI", "BBANDS" };
 
            ;
-            var data = await _stockService.GetStockIndicatorsAsync(symbol, indicators.ToList(), interval, timePeriod);
+            var data = await _stockService.GetStockIndicatorsAsync(symbol, indicators.ToList(), interval, timePeriod,limit);
 
             if (!data.Any())
                 return NotFound("Error Fetching Data.");
