@@ -10,7 +10,7 @@ namespace AssetTracker.Models
 
         [Required]
         public string CompanyName { get; set; }
-        public double? CurrentPrice { get; set; }
+        public decimal? CurrentPrice { get; set; }
         public string? Country { get; set; }
 
         public double? MarketCap { get; set; }
@@ -28,6 +28,9 @@ namespace AssetTracker.Models
         public string? LogoURL { get; set; }
         public double? AnalystTargetPrice { get; set; }
         public string? OfficialSite { get; set; }
+
+        public GlobalQuote? Quote { get; set; } 
+
         public enum Sector
         {
             Energy,
@@ -48,14 +51,6 @@ namespace AssetTracker.Models
             Bearish
         }
 
-
-        //      public double Quantity { get; set; }
-        //public double AveragePurchasePrice { get; set; }
-        //public DateTime DateEstablished { get; set; }
-        //      public double MarketValue => Quantity * CurrentPrice;
-
-
-        //public double PNL=>(CurrentPrice-AveragePurchasePrice)*Quantity;
         public Stock()
 		{
 			

@@ -8,22 +8,18 @@ namespace AssetTracker.Models
         [Required]
         public DateTime DateEstablished { get; set; }
         [Required]
-        public double Quantity { get; set; }
+        public decimal Quantity { get; set; }
         [Required]
-        public double AveragePurchasePrice { get; set; }
+        public decimal AveragePurchasePrice { get; set; }
         public int UserId { get; set; }
         public int Id { get; set; }
         public Stock Stock { get; set; }
         public int PortfolioId { get; set; }
-        public double? TotalCost  => AveragePurchasePrice * Quantity;
-        public double? PNL => (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
+        public decimal? TotalCost  => AveragePurchasePrice * Quantity;
+        public decimal? PNL => (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         public string? StockSymbol => Stock.Symbol;
-        public double? GetMarketValue()
-
-        {
-            return Stock.CurrentPrice * Quantity;
-        }
-        public double? GetProfitLoss()
+        public decimal? MarketValue => Quantity * Stock.CurrentPrice;
+        public decimal? GetProfitLoss()
         {
             return (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         }

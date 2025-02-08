@@ -40,7 +40,7 @@ namespace AssetTracker.Controllers
             return Ok("Position split successfully.");
         }
         [HttpGet("{userId}/check-stoploss/{symbol}")]
-        public async Task<IActionResult> CheckPositionForStopLossAsync(int userId, string symbol, [FromQuery] double stopLossPrice)
+        public async Task<IActionResult> CheckPositionForStopLossAsync(int userId, string symbol, [FromQuery] decimal stopLossPrice)
         {
             if (stopLossPrice <= 0)
                 return BadRequest("Stop loss price must be greater than 0.");

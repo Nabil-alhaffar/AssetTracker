@@ -17,27 +17,22 @@ namespace AssetTracker.Services
         }
 
         // Update a position (adding more quantity and adjusting purchase price)
-        public async Task UpdatePositionAsync(int userId, string symbol, double additionalQuantity, double purchasePrice)
+        public async Task UpdatePositionAsync(Position updatedPosition, int userId)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
+            var position = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == updatedPosition.StockSymbol);
 
             if (position != null)
             {
-                // Update the quantity of the position
-                double newQuantity = position.Quantity + additionalQuantity;
-
-                // Update the average purchase price based on the weighted average formula
-                double totalCost = (position.Quantity * position.AveragePurchasePrice) + (additionalQuantity * purchasePrice);
-                double newAveragePurchasePrice = totalCost / newQuantity;
-
-                // Set the updated values
-                position.Quantity = newQuantity;
-                position.AveragePurchasePrice = newAveragePurchasePrice;
-
-                // Persist the changes back to the repository (e.g., in-memory list or DB)
-                await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Assuming this saves the changes
+                position.Quantity = updatedPosition.Quantity;
+                position.AveragePurchasePrice = updatedPosition.AveragePurchasePrice;
             }
+            else
+            {
+                portfolio.Positions.Add(updatedPosition);
+            }
+
+            await _portfolioRepository.UpdatePortfolioAsync(portfolio);
         }
 
         // Split a position based on the split factor
@@ -58,7 +53,7 @@ namespace AssetTracker.Services
         }
 
         // Check if a position has triggered the stop loss
-        public async Task<bool> CheckPositionForStopLossAsync(int userId, string symbol, double stopLossPrice)
+        public async Task<bool> CheckPositionForStopLossAsync(int userId, string symbol, decimal stopLossPrice)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol) ?? throw new InvalidOperationException("Position not found.");
@@ -82,8 +77,8 @@ namespace AssetTracker.Services
                 throw new InvalidOperationException("Position not found.");
 
             // Calculate profit/loss based on the current price and purchase price
-            double? marketValue = position.Stock.CurrentPrice * position.Quantity;
-            double totalCost = position.AveragePurchasePrice * position.Quantity;
+            decimal? marketValue = position.Stock.CurrentPrice * position.Quantity;
+            decimal totalCost = position.AveragePurchasePrice * position.Quantity;
 
             // Assuming PNL is a field in the Position model, calculate and update it
             //position.PNL = marketValue - totalCost;
@@ -103,7 +98,7 @@ namespace AssetTracker.Services
                 if (existingPosition != null)
                 {
                     // Update the position if it exists (e.g., adding quantity)
-                    await UpdatePositionAsync(userId, position.Stock.Symbol, position.Quantity, position.AveragePurchasePrice);
+                    await UpdatePositionAsync(position, userId);
                 }
                 else
                 {

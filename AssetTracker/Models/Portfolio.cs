@@ -6,15 +6,6 @@ namespace AssetTracker.Models
 	public class Portfolio
 	{
 		
-        //public double PNL = Assets.Sum(s=>s.PNL);
-        //public double GetTotalValue()
-        //{
-        //	return Positions.Sum(p => p.GetMarketValue());
-        //}
-        //public double GetTotalProfitAndLoss()
-        //{
-        //	return Positions.Sum(p => p.GetProfitLoss());
-        //}
 
         [Required]
         public int Id { get; set; }

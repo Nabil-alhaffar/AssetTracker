@@ -32,8 +32,9 @@ namespace AssetTracker.Services
             return _alerts;
         }
 
-        public async Task CheckAlertsAsync()
+        public async Task<IEnumerable<StockAlert>> CheckAlertsAsync()
         {
+            var triggeredAlerts = new List<StockAlert>();
             foreach (var alert in _alerts)
             {
                 string function = alert.Condition.Type switch
@@ -63,8 +64,10 @@ namespace AssetTracker.Services
                 if (value.HasValue && alert.IsTriggered(value.Value))
                 {
                     alert.TriggerAction();
+                    triggeredAlerts.Add(alert);
                 }
             }
+            return triggeredAlerts ;
         }
     }
 

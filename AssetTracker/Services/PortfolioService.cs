@@ -16,11 +16,12 @@ namespace AssetTracker.Services
             _portfolioRepository = portfolioRepository;
             _stockService = stockService;
         }
+
         public async Task<double> GetTotalValueAsync(int userId) {
             try
             {
                 var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-                return (double)portfolio.Positions.Sum(p => p.GetMarketValue());
+                return (double)portfolio.Positions.Sum(p => p.MarketValue);
 
             }
             catch
@@ -29,14 +30,8 @@ namespace AssetTracker.Services
             }
 		}
 
-        public async Task<ICollection<Position>> GetAllPositionsAsync(int userId)
+        public async Task<double> GetTotalProfitAndLossAsync(int userId)
         {
-            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var positions = portfolio.Positions;
-            return positions;
-        }
-		public async Task <double> GetTotalProfitAndLossAsync(int userId)
-		{
             try
             {
                 var positions = await _portfolioRepository.GetPositionsByUserId(userId);
@@ -46,7 +41,37 @@ namespace AssetTracker.Services
             {
                 throw new ArgumentException(nameof(userId), "No positions for provided userID.");
             }
-		}
+        }
+
+        public async Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId)
+        {
+            var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+ 
+
+            if (positions == null || !positions.Any())
+                return new PortfolioSummary { TotalMarketValue = 0, TotalCost = 0, PNL = 0, ReturnPercentage = 0 };
+
+            decimal totalCost = positions.Sum(p => p.Quantity * p.AveragePurchasePrice);
+            decimal totalMarketValue = (decimal)positions.Sum(p => p.MarketValue);
+            decimal pnl = totalMarketValue - totalCost;
+            decimal returnPercentage = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+
+            return new PortfolioSummary
+            {
+                TotalMarketValue = totalMarketValue,
+                TotalCost = totalCost,
+                PNL = pnl,
+                ReturnPercentage = returnPercentage
+            };
+        }
+
+        public async Task<ICollection<Position>> GetAllPositionsAsync(int userId)
+        {
+            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            var positions = portfolio.Positions;
+            return positions;
+        }
+
 		public async Task  AddPositionToPortfolioAsync(Position position,int userId)
 		{
             if (position == null)
@@ -75,6 +100,7 @@ namespace AssetTracker.Services
                 await _portfolioRepository.AddPositionToPortfolioAsync(position, userId);
             }
         }
+
         public async Task RemovePositionAsync(int userId, string symbol) 
 		{
             try
@@ -91,6 +117,7 @@ namespace AssetTracker.Services
 
             //await _positionRepository.RemovePositionAsync(symbol);
         }
+
         public async Task<Portfolio> GetPortfolioAsync(int userId)
         {
             try

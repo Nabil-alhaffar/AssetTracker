@@ -1,4 +1,4 @@
-﻿using System;
+﻿    using System;
 using AssetTracker.Models;
 using AssetTracker.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -34,10 +34,14 @@ namespace AssetTracker.Controllers
             return Ok(user);
         }
         [HttpGet("Get-all")]
-        public async Task <IEnumerable<User>> GetAllUsers()
+        public async Task <IActionResult> GetAllUsers()
         {
             var users = await _userService.GetUsersAsync();
-            return users;
+
+            if (!users.Any())
+                return NotFound(new { message = "No users found." });
+
+            return Ok(new { count = users.Count(), users });
 
         }
     }   

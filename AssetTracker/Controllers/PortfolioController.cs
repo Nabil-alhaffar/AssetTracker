@@ -21,6 +21,35 @@ namespace AssetTracker.Controllers
             _positionService = positionService;
         }
 
+        [HttpGet("portfolio/summary/{userId}")]
+        public async Task<IActionResult> GetPortfolioSummary(int userId)
+        {
+            var portfolioSummary = await _portfolioService.GetPortfolioSummaryAsync(userId);
+
+            if (portfolioSummary == null)
+                return NotFound(new { message = "Portfolio summary not available." });
+
+            return Ok(new
+            {
+                message = "Portfolio summary retrieved.",
+                totalMarketValue = portfolioSummary.TotalMarketValue,
+                totalCost = portfolioSummary.TotalCost,
+                TotalReturns = portfolioSummary.PNL,
+                returnPercentage = portfolioSummary.ReturnPercentage
+            });
+        }
+        //[HttpGet("position/history/{positionId}")]
+        //public async Task<IActionResult> GetPositionHistory(int positionId)
+        //{
+        //    var history = await _positionService.GetPositionHistoryAsync(positionId);
+
+        //    if (history == null || !history.Any())
+        //        return NotFound(new { message = "No transaction history found for this position." });
+
+        //    return Ok(new { message = "Position history retrieved successfully.", history });
+        //}
+
+
         // Get the total portfolio value
         [HttpGet("total-value/{userId}")]
         public async Task<ActionResult<double>> GetTotalValue(int userId)
@@ -28,12 +57,13 @@ namespace AssetTracker.Controllers
             try
             {
                 var totalValue = await _portfolioService.GetTotalValueAsync(userId);
-                return Ok(totalValue);
+                return Ok(new { userId, totalValue });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message); // Handle errors gracefully
+                return BadRequest(new { message = ex.Message });
             }
+
         }
 
         // Get the total Profit & Loss
@@ -80,7 +110,6 @@ namespace AssetTracker.Controllers
             try
             {
                 await _portfolioService.AddPositionToPortfolioAsync(position, userId);
-                //await _positionService.AddPositionAsync(position,userId);
                 return Ok("Position added or updated successfully.");
 
             }

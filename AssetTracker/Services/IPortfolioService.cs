@@ -10,7 +10,9 @@ using AssetTracker.Models;
         Task<ICollection<Position>> GetAllPositionsAsync(int userId);
         Task AddPositionToPortfolioAsync(Position position, int userId);
         Task RemovePositionAsync(int userId,string stockSymbol);
-    Task<Portfolio> GetPortfolioAsync(int userId);
+        Task<Portfolio> GetPortfolioAsync(int userId);
+        Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId);
+
 
     }
 

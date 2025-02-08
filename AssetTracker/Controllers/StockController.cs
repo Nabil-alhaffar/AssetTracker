@@ -11,7 +11,10 @@ namespace AssetTracker.Controller
     [Route("api/[controller]")]
     public class StockController: ControllerBase
 	{
-		public readonly IStockService _stockService;
+
+        private static readonly string[] DefaultIndicators = { "SMA", "EMA", "MACD", "RSI", "BBANDS" };
+
+        public readonly IStockService _stockService;
 		public StockController(IStockService stockService)
 
 		{
@@ -39,14 +42,9 @@ namespace AssetTracker.Controller
             }
 
             // Get the logo URL
-            var logoUrl = _stockService.GetCompanyLogoUrl(stock.OfficialSite);
-            stock.LogoURL = logoUrl;
-            return Ok(stock);
-            //return new
-            //{
-            //    Stock = stock,
-            //    LogoUrl = logoUrl
-            //});
+            stock.LogoURL = _stockService.GetCompanyLogoUrl(stock.OfficialSite);
+
+            return Ok(new { stock, logoUrl = stock.LogoURL });
         }
 
         [HttpGet("stock/{symbol}/historical/{interval}")]
@@ -65,18 +63,16 @@ namespace AssetTracker.Controller
         public async Task<IActionResult> GetStockIndicators([FromQuery] string symbol,[FromQuery] string interval = "daily", [FromQuery] int timePeriod = 14, [FromQuery] string[] indicators = null, [FromQuery]int limit =100)
         {
             if (string.IsNullOrEmpty(symbol))
-                return BadRequest("Symbol is required.");
+                return BadRequest(new { message = "Symbol is required." });
 
-            if (indicators == null || indicators.Length == 0)
-                indicators = new string[] { "SMA", "EMA", "MACD", "RSI", "BBANDS" };
+            indicators ??= DefaultIndicators; // Use default indicators if none are provided
 
-           ;
-            var data = await _stockService.GetStockIndicatorsAsync(symbol, indicators.ToList(), interval, timePeriod,limit);
+            var data = await _stockService.GetStockIndicatorsAsync(symbol, indicators.ToList(), interval, timePeriod, limit);
 
             if (!data.Any())
-                return NotFound("Error Fetching Data.");
+                return NotFound(new { message = "No data found." });
 
-            return Ok(data);
+            return Ok(new { symbol, interval, timePeriod, limit, indicators, data });
         }
 
     }

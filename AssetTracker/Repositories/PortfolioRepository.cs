@@ -1,11 +1,13 @@
 ﻿using System;
 using AssetTracker.Models;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace AssetTracker.Repositories
 {
 	public class PortfolioRepository:IPortfolioRepository
 	{
         private readonly List<Portfolio> _portfolios; // Simulating an in-memory store of portfolios
+        private readonly IDistributedCache _cache;
 
         public PortfolioRepository()
         {
