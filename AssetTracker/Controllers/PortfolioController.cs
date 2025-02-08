@@ -24,30 +24,34 @@ namespace AssetTracker.Controllers
         [HttpGet("portfolio/summary/{userId}")]
         public async Task<IActionResult> GetPortfolioSummary(int userId)
         {
-            var portfolioSummary = await _portfolioService.GetPortfolioSummaryAsync(userId);
-
-            if (portfolioSummary == null)
-                return NotFound(new { message = "Portfolio summary not available." });
-
-            return Ok(new
+            try
             {
-                message = "Portfolio summary retrieved.",
-                totalMarketValue = portfolioSummary.TotalMarketValue,
-                totalCost = portfolioSummary.TotalCost,
-                TotalReturns = portfolioSummary.PNL,
-                returnPercentage = portfolioSummary.ReturnPercentage
-            });
+                var portfolioSummary = await _portfolioService.GetPortfolioSummaryAsync(userId);
+                return Ok(new
+                {
+                    message = "Portfolio summary retrieved.",
+                    totalMarketValue = portfolioSummary.TotalMarketValue,
+                    totalCost = portfolioSummary.TotalCost,
+                    TotalReturns = portfolioSummary.PNL,
+                    returnPercentage = portfolioSummary.ReturnPercentage
+                });
+            }
+            catch {
+
+                return NotFound(new { message = "Portfolio/user does not exist." });
+
+            }
         }
-        //[HttpGet("position/history/{positionId}")]
-        //public async Task<IActionResult> GetPositionHistory(int positionId)
-        //{
-        //    var history = await _positionService.GetPositionHistoryAsync(positionId);
+        [HttpGet("position/history/{userId}")]
+        public async Task<IActionResult> GetPositionHistory(int userId, string symbol)
+        {
+            var history = await _positionService.GetPositionHistoryAsync(userId,symbol);
 
-        //    if (history == null || !history.Any())
-        //        return NotFound(new { message = "No transaction history found for this position." });
+            if (history == null || !history.Any())
+                return NotFound(new { message = "No transaction history found for this position." });
 
-        //    return Ok(new { message = "Position history retrieved successfully.", history });
-        //}
+            return Ok(new { message = "Position history retrieved successfully.", history });
+        }
 
 
         // Get the total portfolio value

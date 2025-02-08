@@ -42,6 +42,9 @@ namespace AssetTracker.Repositories
         public async Task<Portfolio> GetUserPortfolioAsync(int userId)
         {
             var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
+            if (portfolio == null)
+                throw new InvalidOperationException("Portfolio not found.");
+
             return await Task.FromResult(portfolio); // Simulate async behavior
 
         }
@@ -49,6 +52,11 @@ namespace AssetTracker.Repositories
         public async Task<ICollection<Position>>GetPositionsByUserId(int userId)
         {
             var positions = _portfolios.FirstOrDefault(p => p.UserId == userId).Positions;
+            if (positions == null)
+            {
+                throw new InvalidOperationException("Positions not found.");
+            }
+
             return await Task.FromResult(positions);
         }
 

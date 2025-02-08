@@ -13,7 +13,8 @@ namespace AssetTracker.Services
         public Task SplitPositionAsync(int userId, string symbol, int splitFactor);
         public Task <bool> CheckPositionForStopLossAsync(int userId, string symbol, decimal stopLossPrice);
         public Task UpdatePositionProfitLossAsync(int userId, string symbol);
-
+        Task<List<PositionHistory>> GetPositionHistoryAsync(int userId, string symbol);
+        Task AddPositionHistoryAsync(PositionHistory history);
 
 
 

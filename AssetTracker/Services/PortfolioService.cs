@@ -8,13 +8,15 @@ namespace AssetTracker.Services
 	{
         private readonly IPortfolioRepository _portfolioRepository;
         private readonly IStockService _stockService;  // To get the market price of the stock
+        private readonly IPositionService _positionService;
 
         //private readonly IPositionService _positionService;
         //private readonly IP
-        public PortfolioService(IPortfolioRepository portfolioRepository, IStockService stockService)
+        public PortfolioService(IPortfolioRepository portfolioRepository, IStockService stockService, IPositionService positionService)
         {
             _portfolioRepository = portfolioRepository;
             _stockService = stockService;
+            _positionService = positionService;
         }
 
         public async Task<double> GetTotalValueAsync(int userId) {
@@ -45,24 +47,32 @@ namespace AssetTracker.Services
 
         public async Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId)
         {
-            var positions = await _portfolioRepository.GetPositionsByUserId(userId);
- 
-
-            if (positions == null || !positions.Any())
-                return new PortfolioSummary { TotalMarketValue = 0, TotalCost = 0, PNL = 0, ReturnPercentage = 0 };
-
-            decimal totalCost = positions.Sum(p => p.Quantity * p.AveragePurchasePrice);
-            decimal totalMarketValue = (decimal)positions.Sum(p => p.MarketValue);
-            decimal pnl = totalMarketValue - totalCost;
-            decimal returnPercentage = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
-
-            return new PortfolioSummary
+            try
             {
-                TotalMarketValue = totalMarketValue,
-                TotalCost = totalCost,
-                PNL = pnl,
-                ReturnPercentage = returnPercentage
-            };
+                var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+                if (positions == null || !positions.Any())
+                    return new PortfolioSummary { TotalMarketValue = 0, TotalCost = 0, PNL = 0, ReturnPercentage = 0 };
+                decimal totalCost = positions.Sum(p => p.Quantity * p.AveragePurchasePrice);
+                decimal totalMarketValue = (decimal)positions.Sum(p => p.MarketValue);
+                decimal pnl = totalMarketValue - totalCost;
+                decimal returnPercentage = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+
+                return new PortfolioSummary
+                {
+                    TotalMarketValue = totalMarketValue,
+                    TotalCost = totalCost,
+                    PNL = pnl,
+                    ReturnPercentage = returnPercentage
+                };
+            }
+            catch 
+            {
+                throw new Exception("User Positions not found");
+            }
+
+            
+
+            
         }
 
         public async Task<ICollection<Position>> GetAllPositionsAsync(int userId)
@@ -75,29 +85,44 @@ namespace AssetTracker.Services
 		public async Task  AddPositionToPortfolioAsync(Position position,int userId)
 		{
             if (position == null)
-            {
                 throw new ArgumentNullException(nameof(position), "Position cannot be null.");
-            }
 
-            // Get the portfolio from the repository
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             if (portfolio == null)
-            {
                 throw new InvalidOperationException("Portfolio not found.");
-            }
 
-            // Check if the position exists in the portfolio
             var existingPosition = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == position.StockSymbol);
             if (existingPosition != null)
             {
-                // Update the position's quantity and price (or apply any other rule you need)
-                existingPosition.Quantity += position.Quantity; // Example: Adding more quantity
-                existingPosition.AveragePurchasePrice = position.AveragePurchasePrice; // Replace with your logic if needed
+                var additionalQuantity = position.Quantity;
+                existingPosition.Quantity += additionalQuantity;
+                existingPosition.AveragePurchasePrice = position.AveragePurchasePrice;
+
+                await _positionService.AddPositionHistoryAsync(new PositionHistory
+                {
+                    UserId = userId,
+                    PositionId = existingPosition.Id,
+                    Symbol = existingPosition.StockSymbol,
+                    TransactionDate = DateTime.UtcNow,
+                    ActionType = "BUY",
+                    Quantity = additionalQuantity,
+                    Price = position.AveragePurchasePrice
+                });
             }
             else
             {
-                // If the position doesn't exist, add the new position
                 await _portfolioRepository.AddPositionToPortfolioAsync(position, userId);
+
+                await _positionService.AddPositionHistoryAsync(new PositionHistory
+                {
+                    UserId = userId,
+                    PositionId = position.Id,
+                    Symbol = position.StockSymbol,
+                    TransactionDate = DateTime.UtcNow,
+                    ActionType = "BUY",
+                    Quantity = position.Quantity,
+                    Price = position.AveragePurchasePrice
+                });
             }
         }
 
@@ -105,17 +130,28 @@ namespace AssetTracker.Services
 		{
             try
             {
+                var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+                var position = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == symbol);
+                if (position != null)
+                {
+                    await _positionService.AddPositionHistoryAsync(new PositionHistory
+                    {
+                        UserId = userId,
+                        PositionId = position.Id,
+                        Symbol = symbol,
+                        TransactionDate = DateTime.UtcNow,
+                        ActionType = "SELL",
+                        Quantity = position.Quantity,
+                        Price = (decimal)position.Stock.CurrentPrice
+                    }) ;
+                }
+
                 await _portfolioRepository.RemovePositionFromPortfolioAsync(userId, symbol);
             }
             catch
             {
                 throw new Exception("Position not found");
             }
-            //if (position == null)
-            //{
-            //}
-
-            //await _positionRepository.RemovePositionAsync(symbol);
         }
 
         public async Task<Portfolio> GetPortfolioAsync(int userId)

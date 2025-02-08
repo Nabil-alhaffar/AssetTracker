@@ -9,6 +9,8 @@ namespace AssetTracker.Services
     public class PositionService : IPositionService
     {
         private readonly IPortfolioRepository _portfolioRepository;
+        private readonly Dictionary<int, List<PositionHistory>> _positionHistoryStorage = new();
+
 
         // Constructor
         public PositionService(IPortfolioRepository portfolioRepository)
@@ -109,6 +111,29 @@ namespace AssetTracker.Services
                     await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
                 }
             }
+        }
+
+        public async Task<List<PositionHistory>> GetPositionHistoryAsync(int userId, string symbol)
+        {
+            if (!_positionHistoryStorage.TryGetValue(userId, out var history))
+            {
+                return new List<PositionHistory>();
+            }
+
+            var filteredHistory = string.IsNullOrEmpty(symbol)
+                ? history
+                : history.Where(h => h.Symbol == symbol).ToList();
+
+            return filteredHistory.OrderByDescending(h => h.TransactionDate).ToList();
+        }
+
+        public async Task AddPositionHistoryAsync(PositionHistory history)
+        {
+            if (!_positionHistoryStorage.ContainsKey(history.UserId))
+            {
+                _positionHistoryStorage[history.UserId] = new List<PositionHistory>();
+            }
+            _positionHistoryStorage[history.UserId].Add(history);
         }
 
         // Optionally, you could have a method to remove a position as well
