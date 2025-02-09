@@ -5,13 +5,13 @@ using AssetTracker.Models;
 
     public interface IPortfolioService
     {
-        Task<double> GetTotalValueAsync(int userId);
-        Task<double> GetTotalProfitAndLossAsync(int userId);
-        Task<ICollection<Position>> GetAllPositionsAsync(int userId);
-        Task AddPositionToPortfolioAsync(Position position, int userId);
-        Task RemovePositionAsync(int userId,string stockSymbol);
-        Task<Portfolio> GetPortfolioAsync(int userId);
-        Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId);
+        Task<double> GetTotalValueAsync(Guid userId);
+        Task<double> GetTotalProfitAndLossAsync(Guid userId);
+        Task<ICollection<Position>> GetAllPositionsAsync(Guid userId);
+        Task AddPositionToPortfolioAsync(Position position, Guid userId);
+        Task RemovePositionAsync(Guid userId,string stockSymbol);
+        Task<Portfolio> GetPortfolioAsync(Guid userId);
+        Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId);
 
 
     }

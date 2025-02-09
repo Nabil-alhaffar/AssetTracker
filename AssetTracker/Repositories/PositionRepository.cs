@@ -15,7 +15,7 @@ public class PositionRepository : IPositionRepository
     //    _positions = ;
     //}
 
-    public Task<Position> GetPositionAsync(int userId, string symbol)
+    public Task<Position> GetPositionAsync(Guid userId, string symbol)
     {
         var position = _positions.FirstOrDefault(p => p.UserId == userId && p.StockSymbol == symbol);
         return Task.FromResult(position);
@@ -43,7 +43,7 @@ public class PositionRepository : IPositionRepository
         return Task.CompletedTask;
     }
 
-    public Task<bool> DeletePositionAsync(int userId, string symbol)
+    public Task<bool> DeletePositionAsync(Guid userId, string symbol)
     {
         var position = _positions.FirstOrDefault(p => p.UserId == userId && p.StockSymbol == symbol);
         if (position != null)

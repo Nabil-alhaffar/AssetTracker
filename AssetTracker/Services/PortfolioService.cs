@@ -19,7 +19,7 @@ namespace AssetTracker.Services
             _positionService = positionService;
         }
 
-        public async Task<double> GetTotalValueAsync(int userId) {
+        public async Task<double> GetTotalValueAsync(Guid userId) {
             try
             {
                 var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
@@ -32,7 +32,7 @@ namespace AssetTracker.Services
             }
 		}
 
-        public async Task<double> GetTotalProfitAndLossAsync(int userId)
+        public async Task<double> GetTotalProfitAndLossAsync(Guid userId)
         {
             try
             {
@@ -45,7 +45,7 @@ namespace AssetTracker.Services
             }
         }
 
-        public async Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId)
+        public async Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId)
         {
             try
             {
@@ -75,14 +75,14 @@ namespace AssetTracker.Services
             
         }
 
-        public async Task<ICollection<Position>> GetAllPositionsAsync(int userId)
+        public async Task<ICollection<Position>> GetAllPositionsAsync(Guid userId)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var positions = portfolio.Positions;
             return positions;
         }
 
-		public async Task  AddPositionToPortfolioAsync(Position position,int userId)
+		public async Task  AddPositionToPortfolioAsync(Position position,Guid userId)
 		{
             if (position == null)
                 throw new ArgumentNullException(nameof(position), "Position cannot be null.");
@@ -101,7 +101,7 @@ namespace AssetTracker.Services
                 await _positionService.AddPositionHistoryAsync(new PositionHistory
                 {
                     UserId = userId,
-                    PositionId = existingPosition.Id,
+                    PositionId = existingPosition.PositionId,
                     Symbol = existingPosition.StockSymbol,
                     TransactionDate = DateTime.UtcNow,
                     ActionType = "BUY",
@@ -116,7 +116,7 @@ namespace AssetTracker.Services
                 await _positionService.AddPositionHistoryAsync(new PositionHistory
                 {
                     UserId = userId,
-                    PositionId = position.Id,
+                    PositionId = position.PositionId,
                     Symbol = position.StockSymbol,
                     TransactionDate = DateTime.UtcNow,
                     ActionType = "BUY",
@@ -126,7 +126,7 @@ namespace AssetTracker.Services
             }
         }
 
-        public async Task RemovePositionAsync(int userId, string symbol) 
+        public async Task RemovePositionAsync(Guid userId, string symbol) 
 		{
             try
             {
@@ -137,7 +137,7 @@ namespace AssetTracker.Services
                     await _positionService.AddPositionHistoryAsync(new PositionHistory
                     {
                         UserId = userId,
-                        PositionId = position.Id,
+                        PositionId = position.PositionId,
                         Symbol = symbol,
                         TransactionDate = DateTime.UtcNow,
                         ActionType = "SELL",
@@ -154,7 +154,7 @@ namespace AssetTracker.Services
             }
         }
 
-        public async Task<Portfolio> GetPortfolioAsync(int userId)
+        public async Task<Portfolio> GetPortfolioAsync(Guid userId)
         {
             try
             {

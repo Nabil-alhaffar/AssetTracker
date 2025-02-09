@@ -5,8 +5,8 @@ namespace AssetTracker.Models
 {
 	public class User
 	{
-        [Required]
-        public int UserId { get; set; }
+		[Required]
+		public Guid UserId { get; set; } = Guid.NewGuid();
 
         [Required]
         public string FirstName { get; set; }
@@ -28,9 +28,8 @@ namespace AssetTracker.Models
         public User()
 		{
 			Portfolio.UserId = this.UserId;
-			Portfolio.Id = 1;
 		}
-		public User(string firstName, string lastName, int userId, string email)
+		public User(string firstName, string lastName, Guid userId, string email)
 		{
 			this.FirstName = firstName;
 			this.LastName = lastName;

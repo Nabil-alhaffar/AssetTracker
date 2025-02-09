@@ -24,9 +24,9 @@ namespace AssetTracker.Services
 
             var portfolio = new Portfolio
             {
-                Id = 1,  // Default ID or auto-generated ID in a real DB
                 UserId = user.UserId,  // Link the portfolio to the user
                 Positions = new List<Position>()  // Initialize with empty positions
+               
             };
             user.Portfolio = portfolio;
 
@@ -37,7 +37,7 @@ namespace AssetTracker.Services
             // Add user logic
         }
 
-        public async Task<User> GetUserAsync(int userId)
+        public async Task<User> GetUserAsync(Guid userId)
         {
             return await _userRepository.GetUserAsync(userId);
         }
@@ -47,7 +47,7 @@ namespace AssetTracker.Services
             return await _userRepository.GetUsersAsync();
         }
 
-        public async Task RemoveUsersAsync(int userId)
+        public async Task RemoveUsersAsync(Guid userId)
         {
             throw new NotImplementedException();
         }

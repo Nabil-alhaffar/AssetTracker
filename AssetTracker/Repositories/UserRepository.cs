@@ -21,7 +21,7 @@ namespace AssetTracker.Repositories
             //await _context.SaveChangesAsync();
         }
 
-        public async Task<User> GetUserAsync(int userId)
+        public async Task<User> GetUserAsync(Guid userId)
         {
             var user = users.FirstOrDefault(p => p.UserId == userId);
 
@@ -45,7 +45,7 @@ namespace AssetTracker.Repositories
             //return await _context.Users.ToListAsync();
         }
 
-        public async Task RemoveUserAsync(int userId)
+        public async Task RemoveUserAsync(Guid userId)
         {
 
             var user = users.FirstOrDefault(p => p.UserId == userId);

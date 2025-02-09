@@ -21,7 +21,7 @@ namespace AssetTracker.Repositories
             await Task.CompletedTask; // Simulate async task
         }
 
-        public async Task AddPositionToPortfolioAsync( Position position, int userId)
+        public async Task AddPositionToPortfolioAsync( Position position, Guid userId)
         {
 
             var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
@@ -39,7 +39,7 @@ namespace AssetTracker.Repositories
             return await Task.FromResult(_portfolios); // Simulate async behavior
         }
 
-        public async Task<Portfolio> GetUserPortfolioAsync(int userId)
+        public async Task<Portfolio> GetUserPortfolioAsync(Guid userId)
         {
             var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
             if (portfolio == null)
@@ -49,7 +49,7 @@ namespace AssetTracker.Repositories
 
         }
 
-        public async Task<ICollection<Position>>GetPositionsByUserId(int userId)
+        public async Task<ICollection<Position>>GetPositionsByUserId(Guid userId)
         {
             var positions = _portfolios.FirstOrDefault(p => p.UserId == userId).Positions;
             if (positions == null)
@@ -60,7 +60,7 @@ namespace AssetTracker.Repositories
             return await Task.FromResult(positions);
         }
 
-        public async Task RemovePortfolioAsync(int userId)
+        public async Task RemovePortfolioAsync(Guid userId)
         {
             var portfolio = _portfolios.FirstOrDefault(p => p.UserId == userId);
             if (portfolio != null)
@@ -70,9 +70,9 @@ namespace AssetTracker.Repositories
             await Task.CompletedTask; // Simulate async task
         }
 
-        public async Task RemovePositionFromPortfolioAsync(int portfolioId, string symbol)
+        public async Task RemovePositionFromPortfolioAsync(Guid portfolioId, string symbol)
         {
-            var portfolio = _portfolios.FirstOrDefault(p => p.Id == portfolioId);
+            var portfolio = _portfolios.FirstOrDefault(p => p.PortfolioId == portfolioId);
             if (portfolio != null)
             {
                 var position = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == symbol);
@@ -86,7 +86,7 @@ namespace AssetTracker.Repositories
 
         public async Task UpdatePortfolioAsync(Portfolio portfolio)
         {
-            var existingPortfolio = _portfolios.FirstOrDefault(p => p.Id == portfolio.Id);
+            var existingPortfolio = _portfolios.FirstOrDefault(p => p.PortfolioId == portfolio.PortfolioId);
             if (existingPortfolio != null)
             {
                 // Update the portfolio's properties (you could add more business logic here)

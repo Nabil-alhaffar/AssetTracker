@@ -6,9 +6,9 @@ namespace AssetTracker.Services
 	public interface IUserService
 	{
         Task AddUserAsync(User user);
-        Task<User> GetUserAsync(int userId);
+        Task<User> GetUserAsync(Guid userId);
         Task<IEnumerable<User>> GetUsersAsync();
-        Task RemoveUsersAsync(int userId);
+        Task RemoveUsersAsync(Guid userId);
     }
 }
 

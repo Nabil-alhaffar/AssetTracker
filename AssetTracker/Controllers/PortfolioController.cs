@@ -22,7 +22,7 @@ namespace AssetTracker.Controllers
         }
 
         [HttpGet("portfolio/summary/{userId}")]
-        public async Task<IActionResult> GetPortfolioSummary(int userId)
+        public async Task<IActionResult> GetPortfolioSummary(Guid userId)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace AssetTracker.Controllers
             }
         }
         [HttpGet("position/history/{userId}")]
-        public async Task<IActionResult> GetPositionHistory(int userId, string symbol)
+        public async Task<IActionResult> GetPositionHistory(Guid userId, string symbol)
         {
             var history = await _positionService.GetPositionHistoryAsync(userId,symbol);
 
@@ -56,7 +56,7 @@ namespace AssetTracker.Controllers
 
         // Get the total portfolio value
         [HttpGet("total-value/{userId}")]
-        public async Task<ActionResult<double>> GetTotalValue(int userId)
+        public async Task<ActionResult<double>> GetTotalValue(Guid userId)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace AssetTracker.Controllers
 
         // Get the total Profit & Loss
         [HttpGet("total-pnl/{userId}")]
-        public async Task<ActionResult<double>> GetTotalProfitAndLoss(int userId)
+        public async Task<ActionResult<double>> GetTotalProfitAndLoss(Guid userId)
         {
             try
             {
@@ -87,9 +87,9 @@ namespace AssetTracker.Controllers
 
         // Add a new position to the portfolio
         [HttpPost("add-position/{userId}")]
-        public async Task<ActionResult> AddPositionToPortfolio([FromBody] Position position,int userId)
+        public async Task<ActionResult> AddPositionToPortfolio([FromBody] Position position,Guid userId)
         {
-           
+            
             //Portfolio portfolio1 = await _portfolioService.GetPortfolioAsync(userId);
             User user = await _userService.GetUserAsync(userId);
             //if (portfolio1 == null)
@@ -109,7 +109,7 @@ namespace AssetTracker.Controllers
             {
                 return NotFound("Portfolio not found.");
             }
-            position.PortfolioId = portfolio.Id;
+            position.PortfolioId = portfolio.PortfolioId;
             position.UserId = userId;
             try
             {
@@ -142,7 +142,7 @@ namespace AssetTracker.Controllers
         }
 
         [HttpDelete("remove-position/{symbol}")]
-        public async Task<ActionResult> RemovePositionAsync(int userId, string symbol)
+        public async Task<ActionResult> RemovePositionAsync(Guid userId, string symbol)
         {
             try
             {
@@ -155,7 +155,7 @@ namespace AssetTracker.Controllers
             }
         }
         [HttpGet("all")]
-        public async Task<ActionResult> GetAllPositionsAsync(int userId)
+        public async Task<ActionResult> GetAllPositionsAsync(Guid userId)
         {
             try
             {

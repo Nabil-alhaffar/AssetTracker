@@ -3,9 +3,9 @@ namespace AssetTracker.Models
 {
     public class PositionHistory
     {
-        public int Id { get; set; }
-        public int UserId { get; set; } // Associate history with a user
-        public int PositionId { get; set; }
+        public Guid PositionHistoryId { get; set; } = Guid.NewGuid();
+        public Guid UserId { get; set; } // Associate history with a user
+        public Guid PositionId { get; set; }
         public string Symbol { get; set; } // ✅ Added symbol field
         public DateTime TransactionDate { get; set; }
         public string ActionType { get; set; } // Buy, Sell, Dividend, etc.

@@ -9,7 +9,7 @@ namespace AssetTracker.Services
     public class PositionService : IPositionService
     {
         private readonly IPortfolioRepository _portfolioRepository;
-        private readonly Dictionary<int, List<PositionHistory>> _positionHistoryStorage = new();
+        private readonly Dictionary<Guid, List<PositionHistory>> _positionHistoryStorage = new();
 
 
         // Constructor
@@ -19,7 +19,7 @@ namespace AssetTracker.Services
         }
 
         // Update a position (adding more quantity and adjusting purchase price)
-        public async Task UpdatePositionAsync(Position updatedPosition, int userId)
+        public async Task UpdatePositionAsync(Position updatedPosition, Guid userId)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == updatedPosition.StockSymbol);
@@ -38,7 +38,7 @@ namespace AssetTracker.Services
         }
 
         // Split a position based on the split factor
-        public async Task SplitPositionAsync(int userId, string symbol, int splitFactor)
+        public async Task SplitPositionAsync(Guid userId, string symbol, int splitFactor)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
@@ -55,7 +55,7 @@ namespace AssetTracker.Services
         }
 
         // Check if a position has triggered the stop loss
-        public async Task<bool> CheckPositionForStopLossAsync(int userId, string symbol, decimal stopLossPrice)
+        public async Task<bool> CheckPositionForStopLossAsync(Guid userId, string symbol, decimal stopLossPrice)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol) ?? throw new InvalidOperationException("Position not found.");
@@ -70,7 +70,7 @@ namespace AssetTracker.Services
         }
 
         // Update Profit & Loss for a given position
-        public async Task UpdatePositionProfitLossAsync(int userId, string symbol)
+        public async Task UpdatePositionProfitLossAsync(Guid userId, string symbol)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
@@ -90,7 +90,7 @@ namespace AssetTracker.Services
         }
 
         // Add a new position to the portfolio
-        public async Task AddPositionAsync(Position position, int userId)
+        public async Task AddPositionAsync(Position position, Guid userId)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             if (portfolio != null)
@@ -113,7 +113,7 @@ namespace AssetTracker.Services
             }
         }
 
-        public async Task<List<PositionHistory>> GetPositionHistoryAsync(int userId, string symbol)
+        public async Task<List<PositionHistory>> GetPositionHistoryAsync(Guid userId, string symbol)
         {
             if (!_positionHistoryStorage.TryGetValue(userId, out var history))
             {

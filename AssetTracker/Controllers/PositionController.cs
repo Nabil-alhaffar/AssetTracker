@@ -29,7 +29,7 @@ namespace AssetTracker.Controllers
         //    return Ok("Position updated successfully.");
         //}
         [HttpPut("{userId}/split/{symbol}")]
-        public async Task<IActionResult> SplitPositionAsync(int userId, string symbol, int splitFactor)
+        public async Task<IActionResult> SplitPositionAsync(Guid userId, string symbol, int splitFactor)
         {
             if (splitFactor <= 0)
                 return BadRequest("Split factor must be a positive integer.");
@@ -40,7 +40,7 @@ namespace AssetTracker.Controllers
             return Ok("Position split successfully.");
         }
         [HttpGet("{userId}/check-stoploss/{symbol}")]
-        public async Task<IActionResult> CheckPositionForStopLossAsync(int userId, string symbol, [FromQuery] decimal stopLossPrice)
+        public async Task<IActionResult> CheckPositionForStopLossAsync(Guid userId, string symbol, [FromQuery] decimal stopLossPrice)
         {
             if (stopLossPrice <= 0)
                 return BadRequest("Stop loss price must be greater than 0.");
@@ -51,7 +51,7 @@ namespace AssetTracker.Controllers
             return Ok(new { StopLossTriggered = isStopLossTriggered });
         }
         [HttpGet("{userId}/update-profit-loss/{symbol}")]
-        public async Task<IActionResult> UpdatePositionProfitLossAsync(int userId, string symbol)
+        public async Task<IActionResult> UpdatePositionProfitLossAsync(Guid userId, string symbol)
         {
             // Call the service to update profit/loss
             await _positionService.UpdatePositionProfitLossAsync(userId, symbol);

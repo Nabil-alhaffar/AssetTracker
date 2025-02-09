@@ -27,7 +27,7 @@ namespace AssetTracker.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<IActionResult> GetUser(int userId)
+        public async Task<IActionResult> GetUser(Guid userId)
         {
             var user = await _userService.GetUserAsync(userId);
             if (user == null) return NotFound("User not found");

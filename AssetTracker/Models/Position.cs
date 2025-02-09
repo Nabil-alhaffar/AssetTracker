@@ -11,10 +11,10 @@ namespace AssetTracker.Models
         public decimal Quantity { get; set; }
         [Required]
         public decimal AveragePurchasePrice { get; set; }
-        public int UserId { get; set; }
-        public int Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid PositionId { get; set; } = Guid.NewGuid();
         public Stock Stock { get; set; }
-        public int PortfolioId { get; set; }
+        public Guid PortfolioId { get; set; }
         public decimal? TotalCost  => AveragePurchasePrice * Quantity;
         public decimal? PNL => (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         public string? StockSymbol => Stock.Symbol;

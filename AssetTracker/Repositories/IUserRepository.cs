@@ -5,11 +5,11 @@ namespace AssetTracker.Repositories
 	public interface IUserRepository
 	{
 
-		Task<User> GetUserAsync(int UserId);
+		Task<User> GetUserAsync(Guid UserId);
 		Task<IEnumerable<User>> GetUsersAsync();
 		Task AddUserAsync(User user);
 		Task UpdateUserAsync(User user);
-		Task RemoveUserAsync(int userId);
+		Task RemoveUserAsync(Guid userId);
 
 	}
 }

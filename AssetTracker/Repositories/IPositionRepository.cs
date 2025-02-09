@@ -19,8 +19,8 @@ using AssetTracker.Models;
 public interface IPositionRepository
 {
     Task<IEnumerable<Position>> GetAllPositions();
-    Task<Position> GetPositionAsync(int userId, string symbol);  // Get position for the user
+    Task<Position> GetPositionAsync(Guid userId, string symbol);  // Get position for the user
     Task UpdatePositionAsync(Position position);  // Update position details
     Task AddPositionAsync(Position position);  // Add new position
-    Task<bool> DeletePositionAsync(int userId, string symbol);  // Delete position
+    Task<bool> DeletePositionAsync(Guid userId, string symbol);  // Delete position
 }
