@@ -53,120 +53,126 @@ namespace AssetTracker.Controllers
             return Ok(new { message = "Position history retrieved successfully.", history });
         }
 
-
-        // Get the total portfolio value
-        [HttpGet("total-value/{userId}")]
-        public async Task<ActionResult<double>> GetTotalValue(Guid userId)
+        [HttpPost("Portfolio/deposit-funds/{userId}")]
+        public async Task <IActionResult> DepositFunds(Guid userId, decimal depositAmount)
         {
             try
             {
-                var totalValue = await _portfolioService.GetTotalValueAsync(userId);
-                return Ok(new { userId, totalValue });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                await _portfolioService.UpdateAvailableFundsAsync(userId, depositAmount);
+                return Ok(new { message = $"{depositAmount} was deposited successfully into {userId}'s account." });
 
+            }
+            catch
+            {
+                return NotFound(new { message = "Failed to add funds." });
+
+            }
         }
 
-        // Get the total Profit & Loss
-        [HttpGet("total-pnl/{userId}")]
-        public async Task<ActionResult<double>> GetTotalProfitAndLoss(Guid userId)
+        [HttpPost("Portfolio/withdraw-funds/{userId}")]
+        public async Task<IActionResult> WithdrawFunds(Guid userId, decimal withdrawAmount)
         {
             try
             {
-                var totalProfitLoss = await _portfolioService.GetTotalProfitAndLossAsync( userId);
-                return Ok(totalProfitLoss);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message); // Handle errors gracefully
-            };
-        }
-
-        // Add a new position to the portfolio
-        [HttpPost("add-position/{userId}")]
-        public async Task<ActionResult> AddPositionToPortfolio([FromBody] Position position,Guid userId)
-        {
-            
-            //Portfolio portfolio1 = await _portfolioService.GetPortfolioAsync(userId);
-            User user = await _userService.GetUserAsync(userId);
-            //if (portfolio1 == null)
-            //{
-            //    return NotFound($"cannot find portfolio");
-            //}
-            if(user == null) {
-                return NotFound("User not found");
-            }
-
-            if (!ModelState.IsValid)
-            {
-               return BadRequest(ModelState);
-            }  
-            var portfolio = user.Portfolio;
-            if (portfolio == null)
-            {
-                return NotFound("Portfolio not found.");
-            }
-            position.PortfolioId = portfolio.PortfolioId;
-            position.UserId = userId;
-            try
-            {
-                await _portfolioService.AddPositionToPortfolioAsync(position, userId);
-                return Ok("Position added or updated successfully.");
+                await _portfolioService.UpdateAvailableFundsAsync(userId, withdrawAmount);
+                return Ok(new { message = $"{withdrawAmount} was deposited successfully into {userId}'s account." });
 
             }
-            catch (Exception ex)
+            catch
             {
-                return BadRequest($"Error: {ex.Message}"); // Handle any unexpected errors
+                return NotFound(new { message = "Failed to Withdraw funds." });
 
-            }
-
-
-
-            // Add the position to the portfolio
-
-            //user.Portfolio.Positions.Add(position);
-
-            return Ok("Position added successfully.");
-            //try
-            //{
-            //    await _portfolioService.AddPositionToPortfolioAsync(position,userId);
-            //    return Ok("Position added successfully");
-            //}
-            //catch (Exception ex)
-            //{
-            //    return BadRequest(ex.Message); // Handle errors gracefully
-            //}
-        }
-
-        [HttpDelete("remove-position/{symbol}")]
-        public async Task<ActionResult> RemovePositionAsync(Guid userId, string symbol)
-        {
-            try
-            {
-                await _portfolioService.RemovePositionAsync(userId ,symbol);
-                return Ok("Position removed successfully");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message); // Handle errors gracefully
             }
         }
-        [HttpGet("all")]
-        public async Task<ActionResult> GetAllPositionsAsync(Guid userId)
-        {
-            try
-            {
-                var positions = await _portfolioService.GetAllPositionsAsync(userId);
-                return Ok(positions);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message); // Handle errors gracefully
-            }
-        }
+
+
+
+
+        //// Add a new position to the portfolio
+        //[HttpPost("add-position/{userId}")]
+        //public async Task<ActionResult> AddPositionToPortfolio([FromBody] Position position,Guid userId)
+        //{
+
+        //    //Portfolio portfolio1 = await _portfolioService.GetPortfolioAsync(userId);
+        //    User user = await _userService.GetUserAsync(userId);
+        //    //if (portfolio1 == null)
+        //    //{
+        //    //    return NotFound($"cannot find portfolio");
+        //    //}
+        //    if(user == null) {
+        //        return NotFound("User not found");
+        //    }
+
+        //    if (!ModelState.IsValid)
+        //    {
+        //       return BadRequest(ModelState);
+        //    }  
+        //    var portfolio = user.Portfolio;
+        //    if (portfolio == null)
+        //    {
+        //        return NotFound("Portfolio not found.");
+        //    }
+        //    position.PortfolioId = portfolio.PortfolioId;
+        //    position.UserId = userId;
+        //    try
+        //    {
+        //        await _portfolioService.AddPositionToPortfolioAsync(position, userId);
+        //        return Ok("Position added or updated successfully.");
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest($"Error: {ex.Message}"); // Handle any unexpected errors
+
+        //    }
+
+
+
+        // Add the position to the portfolio
+
+        //user.Portfolio.Positions.Add(position);
+
+        //    return Ok("Position added successfully.");
+        //    //try
+        //    //{
+        //    //    await _portfolioService.AddPositionToPortfolioAsync(position,userId);
+        //    //    return Ok("Position added successfully");
+        //    //}
+        //    //catch (Exception ex)
+        //    //{
+        //    //    return BadRequest(ex.Message); // Handle errors gracefully
+        //    //}
+        //}
+
+        //[HttpDelete("remove-position/{symbol}")]
+        //public async Task<ActionResult> RemovePositionAsync(Guid userId, string symbol)
+        //{
+        //    try
+        //    {
+        //        await _portfolioService.RemovePositionAsync(userId ,symbol);
+        //        return Ok("Position removed successfully");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message); // Handle errors gracefully
+        //    }
+        //}
+        //[HttpGet("all")]
+
+
+
+        //public async Task<ActionResult> GetAllPositionsAsync(Guid userId)
+        //{
+        //    try
+        //    {
+        //        var positions = await _portfolioService.GetAllPositionsAsync(userId);
+        //        return Ok(positions);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message); // Handle errors gracefully
+        //    }
+        //}
 
         //[HttpGet("{userId}")]
         //public async Task<IActionResult> GetPortfolioAsync(int userId)
@@ -177,6 +183,36 @@ namespace AssetTracker.Controllers
         //        return NotFound("Portfolio not found for the given user.");
 
         //    return Ok(portfolio);
+        //}
+        //// Get the total portfolio value
+        //[HttpGet("total-value/{userId}")]
+        //public async Task<ActionResult<double>> GetTotalValue(Guid userId)
+        //{
+        //    try
+        //    {
+        //        var totalValue = await _portfolioService.GetTotalValueAsync(userId);
+        //        return Ok(new { userId, totalValue });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+
+        //}
+
+        //// Get the total Profit & Loss
+        //[HttpGet("total-pnl/{userId}")]
+        //public async Task<ActionResult<double>> GetTotalProfitAndLoss(Guid userId)
+        //{
+        //    try
+        //    {
+        //        var totalProfitLoss = await _portfolioService.GetTotalProfitAndLossAsync( userId);
+        //        return Ok(totalProfitLoss);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message); // Handle errors gracefully
+        //    };
         //}
     }
 }

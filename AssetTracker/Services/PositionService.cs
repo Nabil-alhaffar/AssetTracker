@@ -3,45 +3,28 @@ using System.Linq;
 using System.Threading.Tasks;
 using AssetTracker.Models;
 using AssetTracker.Repositories;
+using System.Collections.Generic;
 
 namespace AssetTracker.Services
 {
     public class PositionService : IPositionService
     {
         private readonly IPortfolioRepository _portfolioRepository;
+        private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService; // Added to get current stock price
         private readonly Dictionary<Guid, List<PositionHistory>> _positionHistoryStorage = new();
 
-
         // Constructor
-        public PositionService(IPortfolioRepository portfolioRepository)
+        public PositionService(IPortfolioRepository portfolioRepository, IAlphaVantageStockMarketService alphaVantageStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
-        }
-
-        // Update a position (adding more quantity and adjusting purchase price)
-        public async Task UpdatePositionAsync(Position updatedPosition, Guid userId)
-        {
-            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var position = portfolio.Positions.FirstOrDefault(p => p.StockSymbol == updatedPosition.StockSymbol);
-
-            if (position != null)
-            {
-                position.Quantity = updatedPosition.Quantity;
-                position.AveragePurchasePrice = updatedPosition.AveragePurchasePrice;
-            }
-            else
-            {
-                portfolio.Positions.Add(updatedPosition);
-            }
-
-            await _portfolioRepository.UpdatePortfolioAsync(portfolio);
+            _alphaVantageStockMarketService = alphaVantageStockMarketService;
         }
 
         // Split a position based on the split factor
         public async Task SplitPositionAsync(Guid userId, string symbol, int splitFactor)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
 
             if (position != null)
             {
@@ -58,10 +41,18 @@ namespace AssetTracker.Services
         public async Task<bool> CheckPositionForStopLossAsync(Guid userId, string symbol, decimal stopLossPrice)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol) ?? throw new InvalidOperationException("Position not found.");
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
+
+            if (position == null)
+            {
+                throw new InvalidOperationException("Position not found.");
+            }
+
+            // Get the current price of the stock from an external service
+            decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
 
             // Compare the current market price of the stock with the stop-loss price
-            if (position.Stock.CurrentPrice <= stopLossPrice)
+            if (currentPrice <= stopLossPrice)
             {
                 return true;  // Stop loss triggered
             }
@@ -73,44 +64,129 @@ namespace AssetTracker.Services
         public async Task UpdatePositionProfitLossAsync(Guid userId, string symbol)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
 
             if (position == null)
+            {
                 throw new InvalidOperationException("Position not found.");
+            }
 
-            // Calculate profit/loss based on the current price and purchase price
-            decimal? marketValue = position.Stock.CurrentPrice * position.Quantity;
-            decimal totalCost = position.AveragePurchasePrice * position.Quantity;
-
-            // Assuming PNL is a field in the Position model, calculate and update it
-            //position.PNL = marketValue - totalCost;
+            // Get the current price of the stock from an external service
+            decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
 
             // Persist the changes back to the repository
             await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
         }
 
-        // Add a new position to the portfolio
-        public async Task AddPositionAsync(Position position, Guid userId)
+        // Add or update a position in the portfolio
+        public async Task AddOrUpdatePositionAsync(Guid userId, string symbol, decimal quantity, decimal price)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-            if (portfolio != null)
-            {
-                // Check if the position already exists in the portfolio
-                var existingPosition = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == position.Stock.Symbol);
-                if (existingPosition != null)
-                {
-                    // Update the position if it exists (e.g., adding quantity)
-                    await UpdatePositionAsync(position, userId);
-                }
-                else
-                {
-                    // Add the new position to the portfolio
-                    portfolio.Positions.Add(position);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
 
-                    // Persist the changes back to the repository
-                    await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
-                }
+            if (position == null)
+            {
+                position = new Position { UserId = userId, Symbol = symbol, Quantity = quantity, AveragePurchasePrice = price };
+                portfolio.Positions.Add(symbol, position);
             }
+            else
+            {
+                position.AveragePurchasePrice = ((position.AveragePurchasePrice * position.Quantity) + (price * quantity)) / (position.Quantity + quantity);
+                position.Quantity += quantity;
+            }
+
+            // Persist the changes back to the repository
+            await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
+
+            // Add position history for this action
+            await AddPositionHistoryAsync(new PositionHistory
+            {
+                UserId = userId,
+                PositionId = position.PositionId,
+                Symbol = position.Symbol,
+                TransactionDate = DateTime.UtcNow,
+                ActionType = "BUY",
+                Quantity = quantity,
+                Price = price
+            });
+        }
+
+        // Reduce or remove a position from the portfolio
+        public async Task ReduceOrRemovePositionAsync(Guid userId, string symbol, decimal quantity, decimal price)
+        {
+            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
+
+            if (position == null)
+            {
+                return;  // Position not found
+            }
+
+            bool shortPosition = position.Quantity < 0;
+
+            // Add position history for this action
+            await AddPositionHistoryAsync(new PositionHistory
+            {
+                UserId = userId,
+                PositionId = position.PositionId,
+                Symbol = symbol,
+                TransactionDate = DateTime.UtcNow,
+                ActionType = shortPosition ? "BUY TO CLOSE SHORT" : "SELL",
+                Quantity = quantity,
+                Price = price
+            });
+
+            position.Quantity -= quantity;
+
+            if (position.Quantity == 0)
+            {
+                portfolio.Positions.Remove(symbol);  // Remove position if quantity is zero
+            }
+
+            await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
+        }
+
+        // Add or update a short position in the portfolio
+        public async Task AddOrUpdateShortPositionAsync(Guid userId, string symbol, decimal quantity, decimal price)
+        {
+            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
+
+            // Add position history for this action
+            await AddPositionHistoryAsync(new PositionHistory
+            {
+                UserId = userId,
+                PositionId = position?.PositionId ?? Guid.NewGuid(),  // If position doesn't exist, generate new Id
+                Symbol = symbol,
+                TransactionDate = DateTime.UtcNow,
+                ActionType = "SELL SHORT",
+                Quantity = quantity,
+                Price = price
+            });
+
+            if (position == null)
+            {
+                position = new Position { UserId = userId, Symbol = symbol, Quantity = -quantity, AveragePurchasePrice = price };
+                portfolio.Positions.Add(symbol, position);
+            }
+            else
+            {
+                position.AveragePurchasePrice = ((position.AveragePurchasePrice * position.Quantity) + (price * -quantity)) / (position.Quantity - quantity);
+                position.Quantity -= quantity;
+            }
+
+            await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
+        }
+
+        // Add position history
+        public async Task AddPositionHistoryAsync(PositionHistory history)
+        {
+            if (!_positionHistoryStorage.ContainsKey(history.UserId))
+            {
+                _positionHistoryStorage[history.UserId] = new List<PositionHistory>();
+            }
+
+             _positionHistoryStorage[history.UserId].Add(history);
         }
 
         public async Task<List<PositionHistory>> GetPositionHistoryAsync(Guid userId, string symbol)
@@ -127,25 +203,36 @@ namespace AssetTracker.Services
             return filteredHistory.OrderByDescending(h => h.TransactionDate).ToList();
         }
 
-        public async Task AddPositionHistoryAsync(PositionHistory history)
+
+        // Get PositionSummary for a user and symbol
+        public async Task<PositionSummary> GetPositionSummaryAsync(Guid userId, string symbol)
         {
-            if (!_positionHistoryStorage.ContainsKey(history.UserId))
+            var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
+
+            if (position != null)
             {
-                _positionHistoryStorage[history.UserId] = new List<PositionHistory>();
+                // Get the current price from stock service
+                decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
+
+                // Create and return PositionSummary
+                return new PositionSummary
+                {
+                    PositionId = position.PositionId,
+                    Symbol = position.Symbol,
+                    Quantity = position.Quantity,
+                    AveragePurchasePrice = position.AveragePurchasePrice,
+                    CurrentPrice = currentPrice
+                };
             }
-            _positionHistoryStorage[history.UserId].Add(history);
+
+            return null; // Return null if position not found
         }
 
-        // Optionally, you could have a method to remove a position as well
-        // public async Task RemovePositionAsync(int userId, string symbol)
-        // {
-        //     var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-        //     var position = portfolio.Positions.FirstOrDefault(p => p.Stock.Symbol == symbol);
-        //     if (position != null)
-        //     {
-        //         portfolio.Positions.Remove(position);
-        //         await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save changes
-        //     }
-        // }
+            public async Task<Position> GetPositionAsync(Guid userId, string symbol)
+        {
+            return await _portfolioRepository.GetUserPositionBySymbol(userId, symbol);
+
+        }
     }
 }

@@ -7,20 +7,20 @@ namespace AssetTracker.Models
 	{
 
 
-		[Required]
-		public Guid PortfolioId { get; set; } = Guid.NewGuid();
-
-        public Guid UserId { get; set; }
+        //[Required]
+        //public Guid PortfolioId { get; set; } = Guid.NewGuid();
         //public User User { get; set; }
 
-        public List<Position> Positions { get; set; } = new List<Position>();
-
+        public Guid UserId { get; set; }
+        public Dictionary<string, Position> Positions { get; set; } = new ();
+		public decimal AvailableFunds { get; set; } = 0; 
 
 
         public Portfolio()
 		{
 
-			Positions = new List<Position>();
+			Positions = new Dictionary<string, Position>();
+			 
 		}
 	}
 }

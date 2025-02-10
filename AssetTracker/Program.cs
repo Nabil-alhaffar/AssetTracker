@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 //services.AddScoped<IStockService, StockService>();
+builder.Services.AddSingleton<IAlphaVantageStockMarketService, AlphaVantageStockMarketService>();
 builder.Services.AddSingleton<IStockService, StockService>();
 
 builder.Services.AddSingleton<IPositionService, PositionService>();
@@ -20,6 +21,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = redisConnection;
 });
 builder.Services.AddHttpClient();
+//builder.Services.AddHttpClient<IAlphaVantageStockMarketService, AlphaVantageStockMarketService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

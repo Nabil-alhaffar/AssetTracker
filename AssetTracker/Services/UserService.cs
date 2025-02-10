@@ -25,11 +25,11 @@ namespace AssetTracker.Services
             var portfolio = new Portfolio
             {
                 UserId = user.UserId,  // Link the portfolio to the user
-                Positions = new List<Position>()  // Initialize with empty positions
-               
+                Positions = new Dictionary<string, Position>(),  // Initialize with empty positions
+                AvailableFunds =0
             };
             user.Portfolio = portfolio;
-
+         
             await _portfolios.AddPortfolioAsync(portfolio);  // Add to the portfolio repository too
             await _userRepository.AddUserAsync(user);
 

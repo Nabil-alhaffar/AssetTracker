@@ -11,70 +11,41 @@ namespace AssetTracker.Controller
     [Route("api/[controller]")]
     public class StockController: ControllerBase
 	{
-
-        private static readonly string[] DefaultIndicators = { "SMA", "EMA", "MACD", "RSI", "BBANDS" };
-
-        public readonly IStockService _stockService;
-		public StockController(IStockService stockService)
-
-		{
-			_stockService = stockService; 
-		}
-
-		[HttpGet("getPrice/{symbol}")]
-		public async Task<IActionResult> GetStockPrice(string symbol)
-		{
-			var currentPrice = await _stockService.GetStockPriceAsync(symbol);
-			if (currentPrice == 0)
-			{
-				return NotFound("Stock Symbol not found or API error");
-			}
-			return Ok(currentPrice);
-		}
-
-        [HttpGet("getStock/{symbol}")]
-        public async Task<IActionResult> GetStockDetails(string symbol)
+        private readonly IStockService _stockService;
+        public StockController(IStockService stockService)
         {
-            var stock = await _stockService.GetStockOverviewAsync(symbol); // synchronous
-            if (stock == null)
-            {
-                return NotFound("Stock not found.");
-            }
-
-            // Get the logo URL
-            stock.LogoURL = _stockService.GetCompanyLogoUrl(stock.OfficialSite);
-
-            return Ok(new { stock, logoUrl = stock.LogoURL });
+            _stockService = stockService; 
         }
 
-        [HttpGet("stock/{symbol}/historical/{interval}")]
-        public async Task<ActionResult<IEnumerable<HistoricalData>>> GetHistoricalData(string symbol, string interval)
+        [HttpPost("{userId}/buy")]
+        public async Task<IActionResult> BuyStock(Guid userId, [FromBody] TradeRequest request)
         {
-            var historicalData = await _stockService.GetHistoricalDataAsync(symbol, interval);
-            if (historicalData == null || !historicalData.Any())
-            {
-                return NotFound("Historical data not found.");
-            }
+            TradeResult tradeResult = await _stockService.BuyStockAsync(userId, request.Symbol, request.Quantity);
 
-            return Ok(historicalData);
+            return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
         }
 
-        [HttpGet("indicators")]
-        public async Task<IActionResult> GetStockIndicators([FromQuery] string symbol,[FromQuery] string interval = "daily", [FromQuery] int timePeriod = 14, [FromQuery] string[] indicators = null, [FromQuery]int limit =100)
+        [HttpPost("{userId}/sell")]
+        public async Task<IActionResult> SellStock(Guid userId, [FromBody] TradeRequest request)
         {
-            if (string.IsNullOrEmpty(symbol))
-                return BadRequest(new { message = "Symbol is required." });
+            TradeResult tradeResult = await _stockService.SellStockAsync(userId, request.Symbol, request.Quantity);
 
-            indicators ??= DefaultIndicators; // Use default indicators if none are provided
-
-            var data = await _stockService.GetStockIndicatorsAsync(symbol, indicators.ToList(), interval, timePeriod, limit);
-
-            if (!data.Any())
-                return NotFound(new { message = "No data found." });
-
-            return Ok(new { symbol, interval, timePeriod, limit, indicators, data });
+            return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
         }
+        [HttpPost("{userId}/short")]
+        public async Task<IActionResult> ShortStock(Guid userId, [FromBody] TradeRequest request)
+        {
+            TradeResult tradeResult = await _stockService.ShortStockAsync(userId, request.Symbol, request.Quantity);
 
+            return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
+        }
+        [HttpPost("{userId}/close-short")]
+        public async Task<IActionResult> CloseShort(Guid userId, [FromBody] TradeRequest request)
+        {
+            TradeResult tradeResult = await _stockService.CloseShortAsync(userId, request.Symbol, request.Quantity);
+
+            return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
+        }
     }
 }
 
