@@ -11,6 +11,7 @@ builder.Services.AddSingleton<IPositionService, PositionService>();
 //builder.Services.AddSingleton<IPositionRepository, PositionRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
 
 builder.Services.AddSingleton<IPortfolioService, PortfolioService>();
 builder.Services.AddSingleton<IPortfolioRepository, PortfolioRepository>();

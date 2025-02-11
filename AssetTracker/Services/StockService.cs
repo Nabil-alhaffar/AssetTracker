@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using Microsoft.Extensions.Caching.Distributed;
-using static AssetTracker.Models.Position;
+using AssetTracker.Repositories;
 
 namespace AssetTracker.Services
 {
@@ -17,14 +17,16 @@ namespace AssetTracker.Services
         private readonly IPositionService _positionService;
         private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService;
         private readonly IPortfolioService _portfolioService;
+        private readonly IOrderRepository _orderRepository;
 
 
 
-        public StockService(IAlphaVantageStockMarketService stockMarketService, IPortfolioService portfolioService, IPositionService positionService)
+        public StockService(IAlphaVantageStockMarketService stockMarketService, IPortfolioService portfolioService, IPositionService positionService, IOrderRepository orderRepository)
         {
             _alphaVantageStockMarketService = stockMarketService;
             _portfolioService = portfolioService;
             _positionService = positionService;
+            _orderRepository = orderRepository;
 
         }
 
@@ -39,10 +41,10 @@ namespace AssetTracker.Services
             var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
 
             // 🚨 Validate trade restrictions
-            if (tradeRequest.Type == OrderType.Buy && position != null && position.Type == PositionType.Short)
+            if (tradeRequest.Type == OrderType.Buy && position != null && position.Type == Position.PositionType.Short)
                 return new TradeResult(false, "Close your short position before buying long.");
 
-            if (tradeRequest.Type == OrderType.Short && position != null && position.Type == PositionType.Long)
+            if (tradeRequest.Type == OrderType.Short && position != null && position.Type == Position.PositionType.Long)
                 return new TradeResult(false, "Sell your long position before shorting.");
 
             switch (tradeRequest.Type)
@@ -87,7 +89,7 @@ namespace AssetTracker.Services
             };
 
             await _positionService.UpdatePositionAsync(order);
-            //await _orderRepository.SaveOrderAsync(order);
+            await _orderRepository.AddOrderAsync(order);
 
             return new TradeResult(true, $"{tradeRequest.Type} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
         }
