@@ -74,8 +74,8 @@ namespace AssetTracker.Controllers
         {
             try
             {
-                await _portfolioService.UpdateAvailableFundsAsync(userId, withdrawAmount);
-                return Ok(new { message = $"{withdrawAmount} was deposited successfully into {userId}'s account." });
+                await _portfolioService.UpdateAvailableFundsAsync(userId, -withdrawAmount);
+                return Ok(new { message = $"{withdrawAmount} was withdrawn successfully from {userId}'s account." });
 
             }
             catch

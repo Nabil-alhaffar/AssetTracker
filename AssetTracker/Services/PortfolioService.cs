@@ -91,8 +91,15 @@ namespace AssetTracker.Services
                 throw new ArgumentException(nameof(userId), "userId cannot be null.");
             }
             Portfolio portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
+            if (portfolio.AvailableFunds+additionalAmount < 0)
+            {
+                throw new ArgumentException(nameof(portfolio.AvailableFunds), "Available funds cannot be negative.");
+
+            }
+
             portfolio.AvailableFunds += additionalAmount;
 
+            
             await _portfolioRepository.UpdatePortfolioAsync(portfolio);
         }
 

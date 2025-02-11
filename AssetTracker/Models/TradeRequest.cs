@@ -5,6 +5,7 @@ namespace AssetTracker.Models
 	{
 		public string Symbol { get; set; }
 		public decimal Quantity { get; set; }
+		public OrderType Type { get; set; }
 	}
 }
 

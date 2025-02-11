@@ -5,14 +5,17 @@ namespace AssetTracker.Models
 {
 	public class Position
 	{
-       
+
+        public Guid UserId { get; set; }
+        public Guid PositionId { get; set; } = Guid.NewGuid();
         [Required]
         public decimal Quantity { get; set; }
         [Required]
         public decimal AveragePurchasePrice { get; set; }
-        public Guid UserId { get; set; }
-        public Guid PositionId { get; set; } = Guid.NewGuid();
+       
         public string Symbol { get; set; }
+        public PositionType Type { get; set; }
+
         //public Stock Stock { get; set; }
         //public Guid PortfolioId { get; set; }
         //[Required]
@@ -25,7 +28,13 @@ namespace AssetTracker.Models
         //{
         //    return (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         //}
-
+        public enum PositionType
+        {
+            Long,
+            Short,
+            Options,
+            Futures
+        }
         public Position()
 		{
 		}

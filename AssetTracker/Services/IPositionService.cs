@@ -15,14 +15,7 @@ namespace AssetTracker.Services
         // Update Profit & Loss for a given position
         Task UpdatePositionProfitLossAsync(Guid userId, string symbol);
 
-        // Add or update a position in the portfolio
-        Task AddOrUpdatePositionAsync(Guid userId, string symbol, decimal quantity, decimal price);
-
-        // Reduce or remove a position from the portfolio
-        Task ReduceOrRemovePositionAsync(Guid userId, string symbol, decimal quantity, decimal price);
-
-        // Add or update a short position in the portfolio
-        Task AddOrUpdateShortPositionAsync(Guid userId, string symbol, decimal quantity, decimal price);
+       
 
         // Add position history
         Task AddPositionHistoryAsync(PositionHistory history);
@@ -33,6 +26,17 @@ namespace AssetTracker.Services
         Task<List<PositionHistory>> GetPositionHistoryAsync(Guid userId, string symbol);
 
         Task<Position> GetPositionAsync(Guid userId, string symbol);
+
+        Task UpdatePositionAsync(Order order);
+
+        //// Add or update a position in the portfolio
+        //Task AddOrUpdatePositionAsync(Guid userId, string symbol, decimal quantity, decimal price);
+
+        //// Reduce or remove a position from the portfolio
+        //Task ReduceOrRemovePositionAsync(Guid userId, string symbol, decimal quantity, decimal price);
+
+        //// Add or update a short position in the portfolio
+        //Task AddOrUpdateShortPositionAsync(Guid userId, string symbol, decimal quantity, decimal price);
 
 
     }
