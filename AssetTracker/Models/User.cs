@@ -22,7 +22,7 @@ namespace AssetTracker.Models
         public string UserName { get; set; }
 
 		public Portfolio Portfolio { get; set; } = new Portfolio();
-        public List<WatchList> Watchlists { get; set; } = new List<WatchList>();  // Default to empty list if not provided
+        public List<Watchlist> Watchlists { get; set; } = new List<Watchlist>();  // Default to empty list if not provided
 
 
         public User()
@@ -37,7 +37,7 @@ namespace AssetTracker.Models
 			this.Email = email;
 
 			Portfolio = new Portfolio();
-			Watchlists = new List<WatchList>();
+			Watchlists = new List<Watchlist>();
 		}
 	}
 }

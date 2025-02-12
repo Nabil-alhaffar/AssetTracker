@@ -17,53 +17,41 @@ namespace AssetTracker.Services
             _positionService = positionService;
         }
 
-  //      public async Task<decimal> GetTotalValueAsync(Guid userId) {
-  //          try
-  //          {
-  //              var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-  //              return (double)portfolio.Positions.Value.Sum(p => p.MarketValue);
-
-  //          }
-  //          catch
-  //          {
-  //              throw new ArgumentNullException(nameof(userId), "User cannot be null.");
-  //          }
-		//}
-
-        //public async Task<decimal> GetTotalProfitAndLossAsync(Guid userId)
-        //{
-        //    try
-        //    {
-        //        var positions = await _portfolioRepository.GetPositionsByUserId(userId);
-        //        return (double)positions.Sum(p => p.GetProfitLoss());
-        //    }
-        //    catch
-        //    {
-        //        throw new ArgumentException(nameof(userId), "No positions for provided userID.");
-        //    }
-        //}
+      
 
         public async Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId)
         {
-            
             try
             {
                 var positions = await _portfolioRepository.GetPositionsByUserId(userId);
                 if (positions == null || !positions.Any())
                     return new PortfolioSummary { TotalMarketValue = 0, TotalCost = 0, PNL = 0, ReturnPercentage = 0 };
-                decimal totalCost = positions.Sum(p => p.Value.Quantity * p.Value.AveragePurchasePrice);
 
-                // Sum total market value using p.Value to access Position properties
+                decimal totalCost = 0;
                 decimal totalMarketValue = 0;
                 decimal pnl = 0;
 
                 foreach (var position in positions)
                 {
                     var positionSummary = await _positionService.GetPositionSummaryAsync(userId, position.Key);
-                    // Assuming positionSummary has a MarketValue property
                     totalMarketValue += positionSummary.MarketValue;
+
+                    var positionData = position.Value;
+                    if (positionData.Type == Position.PositionType.Long)
+                    {
+                        // For long positions, total cost is the amount spent to purchase the stock
+                        totalCost += positionData.Quantity * positionData.AveragePurchasePrice;
+                    }
+                    else if (positionData.Type == Position.PositionType.Short)
+                    {
+                        // For short positions, total cost is the proceeds received from selling the stock short
+                        totalCost += positionData.Quantity * positionData.AveragePurchasePrice; // This is positive for short
+                    }
                 }
+
                 pnl = totalMarketValue - totalCost;
+
+                // Calculate return percentage based on total cost and profit/loss
                 decimal returnPercentage = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
 
                 return new PortfolioSummary
@@ -74,15 +62,12 @@ namespace AssetTracker.Services
                     ReturnPercentage = returnPercentage
                 };
             }
-            catch 
+            catch
             {
                 throw new Exception("User Positions not found");
             }
-
-            
-
-            
         }
+
 
         public async Task UpdateAvailableFundsAsync(Guid userId, decimal additionalAmount)
         {

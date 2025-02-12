@@ -3,17 +3,24 @@ using AssetTracker.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-//services.AddScoped<IStockService, StockService>();
+builder.Services.AddSingleton<IWatchlistService, WatchlistService>();
+
+builder.Services.AddSingleton<IWatchlistRepository, WatchlistRepository>();
+
 builder.Services.AddSingleton<IAlphaVantageStockMarketService, AlphaVantageStockMarketService>();
+
 builder.Services.AddSingleton<IStockService, StockService>();
 
 builder.Services.AddSingleton<IPositionService, PositionService>();
-//builder.Services.AddSingleton<IPositionRepository, PositionRepository>();
+
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
+
 builder.Services.AddSingleton<IUserService, UserService>();
+
 builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
 
 builder.Services.AddSingleton<IPortfolioService, PortfolioService>();
+
 builder.Services.AddSingleton<IPortfolioRepository, PortfolioRepository>();
 
 var redisConnection = $"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]}";

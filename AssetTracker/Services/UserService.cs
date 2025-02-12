@@ -49,7 +49,7 @@ namespace AssetTracker.Services
 
         public async Task RemoveUsersAsync(Guid userId)
         {
-            throw new NotImplementedException();
+           await _userRepository.RemoveUserAsync(userId);
         }
     }
 }
