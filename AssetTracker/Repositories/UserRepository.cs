@@ -1,83 +1,75 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AssetTracker.Models;
-
 
 namespace AssetTracker.Repositories
 {
-	public class UserRepository:IUserRepository
-	{
-        private readonly ICollection<User> users;
-        //private readonly ApplicationDbContext _context;
-		public UserRepository()
-		{
-            users = new List<User>();
-            //_context = context;
-		}
+    public class UserRepository : IUserRepository
+    {
+        private readonly Dictionary<Guid, User> _users;
 
+        // Constructor initializes the dictionary
+        public UserRepository()
+        {
+            _users = new Dictionary<Guid, User>();
+        }
+
+        // Add a user to the dictionary
         public async Task AddUserAsync(User user)
         {
-            users.Add(user);
-            await Task.CompletedTask;
-            //await _context.SaveChangesAsync();
+            if (_users.ContainsKey(user.UserId))
+            {
+                throw new InvalidOperationException("User already exists.");
+            }
+
+            _users[user.UserId] = user;  // Add user to dictionary using UserId as the key
+            await Task.CompletedTask;  // Simulating async task (no database)
         }
 
+        // Retrieve a user by their UserId
         public async Task<User> GetUserAsync(Guid userId)
         {
-            var user = users.FirstOrDefault(p => p.UserId == userId);
-
-            if (user == null)
+            if (_users.TryGetValue(userId, out var user))
             {
-                // Handle null case here
-                throw new InvalidOperationException("User not found.");
+                return await Task.FromResult(user);  // Return user if found
             }
-            else return user;
-            //return await users
-            //            .Include(u => u.Portfolios)
-            //                .ThenInclude(p => p.Positions)
-            //            .Include(u => u.Watchlists)
-            //                .ThenInclude(w => w.Stocks)
-            //            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            throw new InvalidOperationException("User not found.");  // Handle null case
         }
 
+        // Retrieve all users
         public async Task<IEnumerable<User>> GetUsersAsync()
         {
-            return await Task.FromResult(users);
-            //return await _context.Users.ToListAsync();
+            return await Task.FromResult(_users.Values.ToList());  // Return all users
         }
 
+        // Remove a user by their UserId
         public async Task RemoveUserAsync(Guid userId)
         {
-
-            var user = users.FirstOrDefault(p => p.UserId == userId);
-            if (user != null)
+            if (_users.Remove(userId))
             {
-                users.Remove(user); // Remove position from the in-memory list (replace with DB delete logic)
+                await Task.CompletedTask;  // Successfully removed the user
             }
             else
             {
-               throw new InvalidOperationException("User not found."); ;
-
+                throw new InvalidOperationException("User not found.");
             }
-            await Task.CompletedTask; // S
         }
 
+        // Update an existing user
         public async Task UpdateUserAsync(User user)
         {
-            var existingUser = users.FirstOrDefault(p => p.UserId == user.UserId);
-            if (existingUser != null)
+            if (_users.ContainsKey(user.UserId))
             {
-                // Update the portfolio's properties (you could add more business logic here)
-                existingUser = user;
+                _users[user.UserId] = user;  // Update user in the dictionary
+                await Task.CompletedTask;  // Simulate async task
             }
             else
             {
-                throw new InvalidOperationException("User not found."); ;
-
+                throw new InvalidOperationException("User not found.");
             }
-            await Task.CompletedTask; // Simulate async task
-            //_context.Users.Update(user);
-            //await _context.SaveChangesAsync();
         }
     }
 }
-

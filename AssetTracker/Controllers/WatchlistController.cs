@@ -18,39 +18,78 @@ namespace AssetTracker.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<List<Watchlist>>> GetUserWatchlists(string userId)
+        public async Task<ActionResult<List<Watchlist>>> GetUserWatchlists(Guid userId)
         {
-            return await _watchlistService.GetUserWatchlistsAsync(userId);
+            try
+            {
+                var watchlists = await _watchlistService.GetUserWatchlistsAsync(userId);
+                if (watchlists == null || watchlists.Count == 0)
+                {
+                    return NotFound(new { message = "No watchlists found for the given user." });
+                }
+
+                return Ok(watchlists);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "An error occurred while retrieving the watchlists.", error = ex.Message });
+            }
         }
 
         [HttpPost("{userId}")]
-        public async Task<IActionResult> AddWatchlist(string userId, [FromBody] Watchlist watchlist)
+        public async Task<IActionResult> AddWatchlist(Guid userId, [FromBody] Watchlist watchlist)
         {
-            await _watchlistService.AddWatchlistAsync(userId, watchlist);
-            return Ok();
+            try
+            {
+                await _watchlistService.AddWatchlistAsync(userId, watchlist);
+                return Ok(new { message = "Watchlist added successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "An error occurred while adding the watchlist.", error = ex.Message });
+            }
         }
 
         [HttpDelete("{userId}/{watchlistId}")]
-        public async Task<IActionResult> RemoveWatchlist(string userId, string watchlistId)
+        public async Task<IActionResult> RemoveWatchlist(Guid userId, Guid watchlistId)
         {
-            await _watchlistService.RemoveWatchlistAsync(userId, watchlistId);
-            return Ok();
+            try
+            {
+                await _watchlistService.RemoveWatchlistAsync(userId, watchlistId);
+                return Ok(new { message = "Watchlist removed successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "An error occurred while removing the watchlist.", error = ex.Message });
+            }
         }
 
         [HttpPost("{userId}/{watchlistId}/add-symbol")]
-        public async Task<IActionResult> AddSymbolToWatchlist(string userId, string watchlistId, [FromBody] string symbol)
+        public async Task<IActionResult> AddSymbolToWatchlist(Guid userId, Guid watchlistId, [FromBody] string symbol)
         {
-            await _watchlistService.AddSymbolToWatchlistAsync(userId, watchlistId, symbol);
-            return Ok();
+            try
+            {
+                await _watchlistService.AddSymbolToWatchlistAsync(userId, watchlistId, symbol);
+                return Ok(new { message = "Symbol added to watchlist successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "An error occurred while adding the symbol to the watchlist.", error = ex.Message });
+            }
         }
 
         [HttpPost("{userId}/{watchlistId}/remove-symbol")]
-        public async Task<IActionResult> RemoveSymbolFromWatchlist(string userId, string watchlistId, [FromBody] string symbol)
+        public async Task<IActionResult> RemoveSymbolFromWatchlist(Guid userId, Guid watchlistId, [FromBody] string symbol)
         {
-            await _watchlistService.RemoveSymbolFromWatchlistAsync(userId, watchlistId, symbol);
-            return Ok();
+            try
+            {
+                await _watchlistService.RemoveSymbolFromWatchlistAsync(userId, watchlistId, symbol);
+                return Ok(new { message = "Symbol removed from watchlist successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "An error occurred while removing the symbol from the watchlist.", error = ex.Message });
+            }
         }
     }
-
 }
-

@@ -8,15 +8,15 @@ namespace AssetTracker.Services
     public interface IWatchlistService
     {
 
-        public Task<List<Watchlist>> GetUserWatchlistsAsync(string userId);
+        public Task<List<Watchlist>> GetUserWatchlistsAsync(Guid userId);
 
-        public Task AddWatchlistAsync(string userId, Watchlist watchlist);
+        public Task AddWatchlistAsync(Guid userId, Watchlist watchlist);
 
-        public Task RemoveWatchlistAsync(string userId, string watchlistId);
+        public Task RemoveWatchlistAsync(Guid userId, Guid watchlistId);
 
-        public Task AddSymbolToWatchlistAsync(string userId, string watchlistId, string symbol);
+        public Task AddSymbolToWatchlistAsync(Guid userId, Guid watchlistId, string symbol);
 
-        public Task RemoveSymbolFromWatchlistAsync(string userId, string watchlistId, string symbol);
+        public Task RemoveSymbolFromWatchlistAsync(Guid userId, Guid watchlistId, string symbol);
     }
 }
 
