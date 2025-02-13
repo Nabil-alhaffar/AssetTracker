@@ -5,11 +5,15 @@ namespace AssetTracker.Repositories
 {
     public interface IPortfolioRepository
     {
-        Task<Portfolio> GetUserPortfolioAsync(Guid userId);
+        public Task<Portfolio> GetUserPortfolioAsync(Guid userId);
         public Task UpdatePortfolioAsync(Portfolio portfolio);
         public Task<Dictionary<string, Position>> GetPositionsByUserId(Guid userId);
-        Task<Position> GetUserPositionBySymbol(Guid userId, string symbol);
-        Task AddPortfolioAsync(Portfolio portfolio);
+        public Task<Position> GetUserPositionBySymbol(Guid userId, string symbol);
+        public Task AddPortfolioAsync(Portfolio portfolio);
+        public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue);
+        public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date);
+
+        //public DateTime? GetEarliestMarketValueDate(Guid userId);
 
         //Task AddPortfolioAsync(Portfolio portfolio);
         //public Task AddPositionToPortfolioAsync( Position position, Guid portfolioId);

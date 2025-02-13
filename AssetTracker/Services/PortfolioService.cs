@@ -17,57 +17,110 @@ namespace AssetTracker.Services
             _positionService = positionService;
         }
 
-      
 
         public async Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId)
         {
             try
             {
-                var positions = await _portfolioRepository.GetPositionsByUserId(userId);
-                if (positions == null || !positions.Any())
-                    return new PortfolioSummary { TotalMarketValue = 0, TotalCost = 0, PNL = 0, ReturnPercentage = 0 };
+                var totalMarketValue = await GetCurrentMarketValue(userId);
+                var totalCost = await GetTotalCost(userId);
 
-                decimal totalCost = 0;
-                decimal totalMarketValue = 0;
-                decimal pnl = 0;
 
-                foreach (var position in positions)
-                {
-                    var positionSummary = await _positionService.GetPositionSummaryAsync(userId, position.Key);
-                    totalMarketValue += positionSummary.MarketValue;
-
-                    var positionData = position.Value;
-                    if (positionData.Type == Position.PositionType.Long)
-                    {
-                        // For long positions, total cost is the amount spent to purchase the stock
-                        totalCost += positionData.Quantity * positionData.AveragePurchasePrice;
-                    }
-                    else if (positionData.Type == Position.PositionType.Short)
-                    {
-                        // For short positions, total cost is the proceeds received from selling the stock short
-                        totalCost += positionData.Quantity * positionData.AveragePurchasePrice; // This is positive for short
-                    }
-                }
-
-                pnl = totalMarketValue - totalCost;
-
-                // Calculate return percentage based on total cost and profit/loss
-                decimal returnPercentage = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+                // Call performance function with days = 1 (default)
+                var performance = await GetPortfolioPerformanceAsync(userId, 1);
+                await _portfolioRepository.StoreMarketValueAsync(userId, DateOnly.FromDateTime(DateTime.Now), totalMarketValue);
 
                 return new PortfolioSummary
                 {
                     TotalMarketValue = totalMarketValue,
                     TotalCost = totalCost,
+                    PNL = performance.PNL,
+                    ReturnPercentage = performance.ReturnPercentage
+                };
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error calculating portfolio summary: {ex.Message}");
+            }
+        }
+        public async Task<PortfolioPerformance> GetPortfolioPerformanceAsync(Guid userId, int days)
+        {
+            try
+            {
+                var todayMarketValue = await GetCurrentMarketValue(userId);
+                var pastMarketValue = await GetMarketValueDaysAgo(userId, days);
+
+                if (pastMarketValue == null)
+                {
+                    //throw new Exception($"Not enough historical data to calculate {days}-day performance.");
+
+                    return new PortfolioPerformance
+                    {
+                        PNL = 0,
+                        ReturnPercentage = 0
+                    };
+                }
+
+                decimal pnl = todayMarketValue - pastMarketValue.Value;
+                decimal returnPercentage = pastMarketValue.Value > 0 ? (pnl / pastMarketValue.Value) * 100 : 0;
+
+                return new PortfolioPerformance
+                {
                     PNL = pnl,
                     ReturnPercentage = returnPercentage
                 };
             }
-            catch
+            catch (Exception ex)
             {
-                throw new Exception("User Positions not found");
+                throw new Exception($"Error calculating portfolio performance: {ex.Message}");
             }
         }
+        private async Task<decimal?> GetMarketValueDaysAgo(Guid userId, int days)
+        {
+            var pastDate = DateOnly.FromDateTime(DateTime.Now).AddDays(-days);
+            return await _portfolioRepository.GetMarketValueOnDateAsync(userId, pastDate) ??
+                   await GetClosestAvailableMarketValue(userId, pastDate);
+        }
+        private async Task<decimal?> GetClosestAvailableMarketValue(Guid userId, DateOnly requestedDate)
+        {
+            for (int i = 1; i <= 7; i++) // Try up to a week back
+            {
+                var adjustedDate = requestedDate.AddDays(-i);
+                var value = await _portfolioRepository.GetMarketValueOnDateAsync(userId, adjustedDate);
+                if (value.HasValue) return value;
+            }
 
+            return null; // No valid historical data found
+        }
+
+        private async Task<decimal> GetCurrentMarketValue(Guid userId)
+        {
+            var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+            decimal totalMarketValue = 0;
+
+            foreach (var position in positions)
+            {
+                var positionSummary = await _positionService.GetPositionSummaryAsync(userId, position.Key);
+                totalMarketValue += positionSummary.MarketValue;
+            }
+
+            return totalMarketValue;
+        }
+
+        private async Task<decimal> GetTotalCost(Guid userId)
+        {
+            var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+            decimal totalCost = 0;
+
+            foreach (var position in positions)
+            {
+                var positionData = position.Value;
+                totalCost += positionData.Quantity * positionData.AveragePurchasePrice;
+            }
+
+            return totalCost;
+        }
 
         public async Task UpdateAvailableFundsAsync(Guid userId, decimal additionalAmount)
         {

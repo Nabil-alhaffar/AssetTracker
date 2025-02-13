@@ -7,11 +7,14 @@ namespace AssetTracker.Repositories
     public class PortfolioRepository : IPortfolioRepository
     {
         private readonly Dictionary<Guid, Portfolio> _userPortfolios;
+        private readonly Dictionary<Guid, SortedDictionary<DateOnly, decimal>> _historicalMarketValues;
+
         private readonly IDistributedCache _cache;
 
         public PortfolioRepository()
         {
             _userPortfolios = new(); // Initialize with an empty list (replace with actual DB logic)
+            _historicalMarketValues = new Dictionary<Guid, SortedDictionary<DateOnly, decimal>>();
 
         }
 
@@ -33,6 +36,7 @@ namespace AssetTracker.Repositories
 
 
         }
+
         public async Task UpdatePortfolioAsync(Portfolio portfolio)
         {
             // Simulating an async call to update the portfolio (you can replace this with actual async DB operations)
@@ -48,6 +52,7 @@ namespace AssetTracker.Repositories
                 _userPortfolios.Add(portfolio.UserId, portfolio);
             }
         }
+
         public async Task<Dictionary<string, Position>> GetPositionsByUserId(Guid userId)
         {
             if (!_userPortfolios.ContainsKey(userId))
@@ -59,6 +64,7 @@ namespace AssetTracker.Repositories
 
 
         }
+
         public async Task AddPortfolioAsync(Portfolio portfolio)
         {
             if (portfolio == null) throw new ArgumentNullException(nameof(portfolio));
@@ -85,6 +91,37 @@ namespace AssetTracker.Repositories
                 return null;
             }
         }
+
+        public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue)
+        {
+            if (!_historicalMarketValues.ContainsKey(userId))
+                _historicalMarketValues[userId] = new SortedDictionary<DateOnly, decimal>();
+
+            _historicalMarketValues[userId][date] = marketValue; // Store only date part
+            return Task.CompletedTask;
+        }
+
+        public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date)
+        {
+            if (_historicalMarketValues.TryGetValue(userId, out var marketValues) &&
+                marketValues.TryGetValue(date, out var value))
+            {
+                return Task.FromResult<decimal?>(value);
+            }
+            return Task.FromResult<decimal?>(null);
+        }
+
+        //public DateTime? GetEarliestMarketValueDate(Guid userId)
+        //{
+        //    if (_historicalMarketValues.TryGetValue(userId, out var marketValues) && marketValues.Any())
+        //    {
+        //        return marketValues.Keys.First(); // Get the first recorded date
+        //    }
+        //    return null;
+        //}
+
+    }
+}
 
         //public  async Task AddPortfolioAsync(Portfolio portfolio)
         //{
@@ -149,6 +186,4 @@ namespace AssetTracker.Repositories
         //    }
         //    await Task.CompletedTask; // Simulate async task
         //}
-    }
-}
-
+    

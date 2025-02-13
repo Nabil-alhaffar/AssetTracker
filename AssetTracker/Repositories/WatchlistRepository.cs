@@ -11,7 +11,7 @@ namespace AssetTracker.Repositories
         {
             _userWatchlists = new ();
             //_context = context;
-        }
+        }   
 
         public Task<List<Watchlist>> GetUserWatchlistsAsync(Guid userId) =>
             Task.FromResult(_userWatchlists.TryGetValue(userId, out var watchlists) ? watchlists : new List<Watchlist>());

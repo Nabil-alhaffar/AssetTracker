@@ -10,8 +10,8 @@ using AssetTracker.Models;
 
         Task UpdateAvailableFundsAsync(Guid userId, decimal additionalAmount);
         Task<decimal> GetAvailableFundsAsync(Guid userId);
-        Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId);
-
+        public Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId);
+        public Task<PortfolioPerformance> GetPortfolioPerformanceAsync(Guid userId, int days);
         //Task<ICollection<Position>> GetAllPositionsAsync(Guid userId);
         //Task AddPositionToPortfolioAsync(Position position, Guid userId);
         //Task RemovePositionAsync(Guid userId,string stockSymbol);

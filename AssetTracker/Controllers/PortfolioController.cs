@@ -36,12 +36,35 @@ namespace AssetTracker.Controllers
                     returnPercentage = portfolioSummary.ReturnPercentage
                 });
             }
-            catch {
+            catch (Exception err) {
 
-                return NotFound(new { message = "Portfolio/user does not exist." });
+                return NotFound(new { message = err.Message });
 
             }
         }
+
+        [HttpGet("portfolio/performance/{userId}")]
+        public async Task<IActionResult> GetPortfolioPerformance(Guid userId, int days)
+        {
+            try
+            {
+                var portfolioPerformance = await _portfolioService.GetPortfolioPerformanceAsync(userId, days);
+                return Ok(new
+                {
+                    message = "Portfolio performance retrieved.",
+                    pnl = portfolioPerformance.PNL,
+                    percentagePNL = portfolioPerformance.ReturnPercentage
+
+                }) ;
+            }
+            catch (Exception err)
+            {
+
+                return NotFound(new { message = err.Message });
+
+            }
+        }
+
         [HttpGet("position/history/{userId}")]
         public async Task<IActionResult> GetPositionHistory(Guid userId, string symbol)
         {
