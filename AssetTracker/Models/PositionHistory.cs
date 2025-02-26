@@ -12,6 +12,7 @@ namespace AssetTracker.Models
         public decimal Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal TotalAmount => Quantity * Price;
+
     }
 
 }

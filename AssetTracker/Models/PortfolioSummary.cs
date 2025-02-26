@@ -8,5 +8,8 @@ namespace AssetTracker.Models
         public decimal PNL { get; set; }
         public decimal ReturnPercentage { get; set; }
     }
+
+
+  
 }
 

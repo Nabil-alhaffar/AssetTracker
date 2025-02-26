@@ -40,7 +40,6 @@ namespace AssetTracker.Services
             var availableFunds = await _portfolioService.GetAvailableFundsAsync(userId);
             var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
 
-            // 🚨 Validate trade restrictions
             if (tradeRequest.Type == OrderType.Buy && position != null && position.Type == Position.PositionType.Short)
                 return new TradeResult(false, "Close your short position before buying long.");
 
