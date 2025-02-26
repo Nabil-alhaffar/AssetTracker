@@ -1,9 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace AssetTracker.Models
 {
-	public class Position
+	public sealed record Position
 	{
 
         public Guid UserId { get; set; }
@@ -28,11 +32,20 @@ namespace AssetTracker.Models
         //{
         //    return (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         //}
+       [JsonConverter(typeof(JsonStringEnumConverter))]
+
         public enum PositionType
         {
+           [EnumMember(Value = "LONG")]
             Long,
+
+           [EnumMember(Value = "SHORT")]
             Short,
+
+            [EnumMember(Value = "OPTIONS")]
             Options,
+
+            [EnumMember(Value = "FUTURES")]
             Futures
         }
         public Position()

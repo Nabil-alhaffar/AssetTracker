@@ -1,7 +1,7 @@
 ﻿using System;
 namespace AssetTracker.Models
 {
-	public class TradeRequest
+	public sealed record TradeRequest
 	{
 		public string Symbol { get; set; }
 		public decimal Quantity { get; set; }

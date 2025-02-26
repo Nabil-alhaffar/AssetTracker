@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AssetTracker.Models
 {
-	public class User
+	public sealed record User
 	{
 		[Required]
 		public Guid UserId { get; set; } = Guid.NewGuid();

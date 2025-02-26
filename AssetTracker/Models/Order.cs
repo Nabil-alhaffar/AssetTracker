@@ -1,9 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json.Linq;
+using System.Runtime.Serialization;
+using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace AssetTracker.Models
 {
-    public class Order
+    public sealed record Order
     {
         public Guid OrderId { get; set; } = Guid.NewGuid();
         public Guid UserId { get; set; }
@@ -17,11 +21,20 @@ namespace AssetTracker.Models
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum OrderType
     {
+        [EnumMember(Value = "BUY")]
         Buy,
+
+
+        [EnumMember(Value = "SELL")]
         Sell,
+
+        [EnumMember(Value = "SHORT")]
         Short,
+        [EnumMember(Value = "CLOSE_SHORT")]
+
         CloseShort
     }
 

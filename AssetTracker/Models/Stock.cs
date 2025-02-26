@@ -1,5 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace AssetTracker.Models
 {
@@ -29,25 +33,53 @@ namespace AssetTracker.Models
         public double? AnalystTargetPrice { get; set; }
         public string? OfficialSite { get; set; }
 
-        public GlobalQuote? Quote { get; set; } 
+        public GlobalQuote? Quote { get; set; }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum Sector
         {
+            [EnumMember(Value = "Energy")]
             Energy,
+
+            [EnumMember(Value = "Materials")]
             Materials,
+
+            [EnumMember(Value = "Industrials")]
             Industrials,
+
+            [EnumMember(Value = "Consumer_Discretionary")]
             ConsumerDiscretionary,
+
+            [EnumMember(Value = "Consumer_Staples")]
             ConsumerStaples,
+
+            [EnumMember(Value = "Healthcare")]
             Healthcare,
+
+            [EnumMember(Value = "Financials")]
             Financials,
+
+            [EnumMember(Value = "Information_Technology")]
             InformationTechnology,
+
+            [EnumMember(Value = "Communication_Services")]
             CommunicationServices,
+
+            [EnumMember(Value = "Utilities")]
             Utilities,
+
+            [EnumMember(Value = "Real_Estate")]
             RealEstate
         }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+
         public enum Status
         {
+            [EnumMember(Value = "Bullish")]
             Bullish,
+
+            [EnumMember(Value = "Bearish")]
             Bearish
         }
 

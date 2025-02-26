@@ -1,6 +1,7 @@
 ﻿using AssetTracker.Services;
 using AssetTracker.Repositories;
 using Alpaca.Markets;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,7 +45,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddHttpClient();
 //builder.Services.AddHttpClient<IAlphaVantageStockMarketService, AlphaVantageStockMarketService>();
 
-builder.Services.AddControllers();
+//builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

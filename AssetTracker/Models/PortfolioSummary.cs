@@ -1,7 +1,7 @@
 ﻿using System;
 namespace AssetTracker.Models
 {
-    public class PortfolioSummary
+    public sealed record PortfolioSummary
     {
         public decimal TotalMarketValue { get; set; }
         public decimal TotalCost { get; set; }

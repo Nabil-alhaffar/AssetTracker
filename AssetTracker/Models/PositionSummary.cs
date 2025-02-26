@@ -1,7 +1,7 @@
 ﻿using System;
 namespace AssetTracker.Models
 {
-    public class PositionSummary
+    public sealed record PositionSummary
     {
         public Guid PositionId { get; set; }
         public string Symbol { get; set; }

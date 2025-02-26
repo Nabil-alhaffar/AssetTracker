@@ -1,7 +1,7 @@
 ﻿using System;
 namespace AssetTracker.Models
 {
-	public class HistoricalData
+	public sealed record HistoricalData
 	{
         
         public DateTime Date { get; set; }

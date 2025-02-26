@@ -1,7 +1,7 @@
 ﻿using System;
 namespace AssetTracker.Models
 {
-    public class PositionHistory
+    public sealed record PositionHistory
     {
         public Guid PositionHistoryId { get; set; } = Guid.NewGuid();
         public Guid UserId { get; set; } // Associate history with a user

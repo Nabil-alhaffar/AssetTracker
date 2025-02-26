@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AssetTracker.Models
 {
-	public class Portfolio
+	public sealed record Portfolio
 	{
 
 

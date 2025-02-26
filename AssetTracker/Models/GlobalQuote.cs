@@ -2,7 +2,7 @@
 namespace AssetTracker.Models
 {
 
-    public class GlobalQuote
+    public sealed record GlobalQuote
     {
         public string Symbol { get; set; }
         public decimal Open { get; set; }
