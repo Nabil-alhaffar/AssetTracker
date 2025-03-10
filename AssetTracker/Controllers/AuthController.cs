@@ -39,8 +39,9 @@ namespace AssetTracker.Controllers
                 };
 
                 await _userService.RegisterUserAsync(user, model.Password);
+                await Login( new LoginModel { UserName=  model.UserName, Password =model.Password });
 
-                return Ok(new { message = "User registered successfully" });
+                return Ok(new { message = "User registered and Logged in successfully" });
             }
             catch (Exception ex)
             {
@@ -59,9 +60,24 @@ namespace AssetTracker.Controllers
             {
                 // Authenticate user
                 var user = await _userService.AuthenticateUserAsync(model.UserName, model.Password);
+
+                // Generate JWT token
                 var token = _authService.GenerateJwtToken(user);
 
-                return Ok(new { message = "Login successful", userId = user.UserId });
+                //// Create session ID
+                //var sessionId = Guid.NewGuid().ToString();  // Generate a session ID
+
+                //// Optionally store the session ID in your database or cache (e.g., Redis)
+                //await _userService.SaveSessionIdAsync(user.UserId, sessionId); // Hypothetical method to store session ID
+
+                // Return the response with the session ID and JWT token
+                return Ok(new
+                {
+                    message = "Login successful",
+                    userId = user.UserId,
+                    //sessionId = sessionId,  // Add session ID to the response
+                    token = token           // Include JWT token for further requests
+                });
             }
             catch (UnauthorizedAccessException)
             {

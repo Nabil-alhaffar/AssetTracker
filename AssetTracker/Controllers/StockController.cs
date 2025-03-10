@@ -5,7 +5,8 @@ using AssetTracker.Services;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc;
 using AssetTracker.Services.Interfaces;
-
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace AssetTracker.Controller
 {
@@ -19,11 +20,13 @@ namespace AssetTracker.Controller
             _stockService = stockService; 
         }
 
-        [HttpPost("{userId}/execute-trade")]
-        public async Task<IActionResult> ExecuteTrade(Guid userId, TradeRequest tradeRequest)
+        [HttpPost("execute-trade")]
+        [Authorize]
+        public async Task<IActionResult> ExecuteTrade( TradeRequest tradeRequest)
         {
 
 
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Get the userId from the JWT token
 
             TradeResult tradeResult = await _stockService.ExecuteTradeAsync(userId, tradeRequest);
             return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
