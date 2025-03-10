@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using AssetTracker.Models;
 
-namespace AssetTracker.Services
+namespace AssetTracker.Services.Interfaces
 {
     public interface IPositionService
     {

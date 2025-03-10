@@ -2,7 +2,7 @@
 using AssetTracker.Models;
 using AssetTracker.Repositories;
 
-namespace AssetTracker.Services
+namespace AssetTracker.Services.Interfaces
 {
 
     public interface IWatchlistService

@@ -1,7 +1,7 @@
 ﻿using System;
 using AssetTracker.Models;
 
-namespace AssetTracker.Services
+namespace AssetTracker.Services.Interfaces
 {
 	public interface IAlphaVantageStockMarketService
 	{

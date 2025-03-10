@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
@@ -9,8 +11,9 @@ namespace AssetTracker.Models
 {
 	public sealed record Position
 	{
-
+        [BsonRepresentation(BsonType.String)]
         public Guid UserId { get; set; }
+        [BsonRepresentation(BsonType.String)]
         public Guid PositionId { get; set; } = Guid.NewGuid();
         [Required]
         public decimal Quantity { get; set; }
@@ -19,7 +22,14 @@ namespace AssetTracker.Models
        
         public string Symbol { get; set; }
         public PositionType Type { get; set; }
-
+        public decimal PositionRatio { get; private set; }
+        public decimal CurrentPrice { get; set; } // Store real-time price here
+        public decimal MarketValue => Quantity * CurrentPrice;
+      
+        public void ComputePositionRatio(decimal totalPortfolioValue)
+        {
+            PositionRatio = totalPortfolioValue > 0 ? MarketValue / totalPortfolioValue : 0;
+        }
         //public Stock Stock { get; set; }
         //public Guid PortfolioId { get; set; }
         //[Required]
@@ -32,7 +42,7 @@ namespace AssetTracker.Models
         //{
         //    return (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         //}
-       [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
 
         public enum PositionType
         {
@@ -50,6 +60,7 @@ namespace AssetTracker.Models
         }
         public Position()
 		{
+
 		}
 	}
 }

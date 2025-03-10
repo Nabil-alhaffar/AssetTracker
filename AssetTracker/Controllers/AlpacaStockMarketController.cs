@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 using AssetTracker.Services;
+using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Controllers
 {

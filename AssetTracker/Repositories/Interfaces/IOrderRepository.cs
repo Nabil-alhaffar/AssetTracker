@@ -1,6 +1,6 @@
 ﻿using System;
 using AssetTracker.Models;
-namespace AssetTracker.Repositories
+namespace AssetTracker.Repositories.Interfaces
 {
 	public interface IOrderRepository
 	{

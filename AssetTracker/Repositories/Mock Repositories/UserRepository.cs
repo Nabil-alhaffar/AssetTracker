@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AssetTracker.Models;
+using AssetTracker.Repositories.Interfaces;
 
-namespace AssetTracker.Repositories
+namespace AssetTracker.Repositories.MockRepositories
 {
     public class UserRepository : IUserRepository
     {
@@ -29,7 +30,7 @@ namespace AssetTracker.Repositories
         }
 
         // Retrieve a user by their UserId
-        public async Task<User> GetUserAsync(Guid userId)
+        public async Task<User> GetUserByIDAsync(Guid userId)
         {
             if (_users.TryGetValue(userId, out var user))
             {
@@ -38,7 +39,17 @@ namespace AssetTracker.Repositories
 
             throw new InvalidOperationException("User not found.");  // Handle null case
         }
+        public async Task<User> GetUserByUsernameAsync(string username)
+        {
+            var user = _users.Values.FirstOrDefault(u => u.UserName.Equals(username, StringComparison.OrdinalIgnoreCase));
 
+            if (user != null)
+            {
+                return await Task.FromResult(user);  // Return user if found
+            }
+
+            throw new InvalidOperationException("User not found.");  // Handle user not found
+        }
         // Retrieve all users
         public async Task<IEnumerable<User>> GetUsersAsync()
         {

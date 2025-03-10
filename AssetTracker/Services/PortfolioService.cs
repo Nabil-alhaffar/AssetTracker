@@ -1,20 +1,28 @@
 ﻿using System;
 using AssetTracker.Models;
 using AssetTracker.Repositories;
+using AssetTracker.Repositories.Interfaces;
+using AssetTracker.Repositories.MongoDBRepositories;
+using AssetTracker.Services.Interfaces;
+
 
 namespace AssetTracker.Services
 {
 	public class PortfolioService:IPortfolioService
 	{
         private readonly IPortfolioRepository _portfolioRepository;
+        private readonly IHistoricalPortfolioValueRepository _historicalPortfolioValueRepository;
         private readonly IPositionService _positionService;
+        private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService;
 
         //private readonly IPositionService _positionService;
         //private readonly IP
-        public PortfolioService(IPortfolioRepository portfolioRepository, IPositionService positionService)
+        public PortfolioService( IHistoricalPortfolioValueRepository historicalPortfolioValueRepository, IPortfolioRepository portfolioRepository, IPositionService positionService, IAlphaVantageStockMarketService alphaVantageStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
+            _historicalPortfolioValueRepository = historicalPortfolioValueRepository;
             _positionService = positionService;
+            _alphaVantageStockMarketService = alphaVantageStockMarketService;
         }
 
 
@@ -28,7 +36,7 @@ namespace AssetTracker.Services
 
                 // Call performance function with days = 1 (default)
                 var performance = await GetPortfolioPerformanceAsync(userId, 1);
-                await _portfolioRepository.StoreMarketValueAsync(userId, DateOnly.FromDateTime(DateTime.Now), totalMarketValue);
+                await _historicalPortfolioValueRepository.StoreMarketValueAsync(userId, DateOnly.FromDateTime(DateTime.Now), totalMarketValue);
 
                 return new PortfolioSummary
                 {
@@ -79,7 +87,7 @@ namespace AssetTracker.Services
         private async Task<decimal?> GetMarketValueDaysAgo(Guid userId, int days)
         {
             var pastDate = DateOnly.FromDateTime(DateTime.Now).AddDays(-days);
-            return await _portfolioRepository.GetMarketValueOnDateAsync(userId, pastDate) ??
+            return await _historicalPortfolioValueRepository.GetMarketValueOnDateAsync(userId, pastDate) ??
                    await GetClosestAvailableMarketValue(userId, pastDate);
         }
         private async Task<decimal?> GetClosestAvailableMarketValue(Guid userId, DateOnly requestedDate)
@@ -87,7 +95,7 @@ namespace AssetTracker.Services
             for (int i = 1; i <= 7; i++) // Try up to a week back
             {
                 var adjustedDate = requestedDate.AddDays(-i);
-                var value = await _portfolioRepository.GetMarketValueOnDateAsync(userId, adjustedDate);
+                var value = await _historicalPortfolioValueRepository.GetMarketValueOnDateAsync(userId, adjustedDate);
                 if (value.HasValue) return value;
             }
 
@@ -150,6 +158,21 @@ namespace AssetTracker.Services
 
             var portfolio =  await _portfolioRepository.GetUserPortfolioAsync(userId);
             return portfolio.AvailableFunds;
+        }
+        public async Task<Dictionary<string, Position>> GetPortfolioPositionsAsync(Guid userId)
+        {
+            if(userId == null)
+                throw new ArgumentException(nameof(userId), "userId cannot be null.");
+            var positions = await _portfolioRepository.GetPositionsByUserId(userId);
+            foreach (var position in positions.Values)
+            {
+                // Fetch current price (replace with actual data fetching logic)
+                decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(position.Symbol);
+
+                position.CurrentPrice = currentPrice;
+            }
+            return positions;
+
         }
 
         //public async Task DepositFundsAsync(Guid userId, decimal depositedAmount)

@@ -9,6 +9,9 @@ using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using Microsoft.Extensions.Caching.Distributed;
 using AssetTracker.Repositories;
+using AssetTracker.Services.Interfaces;
+using AssetTracker.Repositories.Interfaces;
+using AssetTracker.Repositories.MongoDBRepositories;
 
 namespace AssetTracker.Services
 {
@@ -21,7 +24,7 @@ namespace AssetTracker.Services
 
 
 
-        public StockService(IAlphaVantageStockMarketService stockMarketService, IPortfolioService portfolioService, IPositionService positionService, IOrderRepository orderRepository)
+        public StockService(  IAlphaVantageStockMarketService stockMarketService, IPortfolioService portfolioService, IPositionService positionService, IOrderRepository orderRepository )
         {
             _alphaVantageStockMarketService = stockMarketService;
             _portfolioService = portfolioService;

@@ -4,6 +4,8 @@ using AssetTracker.Models;
 using AssetTracker.Services;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Mvc;
+using AssetTracker.Services.Interfaces;
+
 
 namespace AssetTracker.Controller
 {

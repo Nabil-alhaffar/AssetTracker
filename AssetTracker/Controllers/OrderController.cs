@@ -1,6 +1,9 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using AssetTracker.Repositories;
+using AssetTracker.Services.Interfaces;
+using AssetTracker.Repositories.Interfaces;
+
 namespace AssetTracker.Controllers
 {
     [Route("api/[controller]")]

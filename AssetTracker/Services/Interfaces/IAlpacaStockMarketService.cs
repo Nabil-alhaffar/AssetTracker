@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-namespace AssetTracker.Services
+namespace AssetTracker.Services.Interfaces
 {
     public interface IAlpacaStockMarketService
     {

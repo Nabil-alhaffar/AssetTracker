@@ -2,6 +2,7 @@
 using AssetTracker.Models;
 using AssetTracker.Services;
 using Microsoft.AspNetCore.Mvc;
+using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Controllers
 {
@@ -14,17 +15,17 @@ namespace AssetTracker.Controllers
             _userService = userService;
         }
 
-        [HttpPost("Create")]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        //[HttpPost("Create")]
+        //public async Task<IActionResult> CreateUser([FromBody] User user)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
 
-            await _userService.AddUserAsync(user);
-            return Ok("User created successfully");
-        }
+        //    await _userService.AddUserAsync(user);
+        //    return Ok("User created successfully");
+        //}
 
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUser(Guid userId)

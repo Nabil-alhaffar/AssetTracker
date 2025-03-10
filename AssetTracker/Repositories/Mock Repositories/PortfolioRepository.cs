@@ -1,20 +1,19 @@
 ﻿using System;
 using AssetTracker.Models;
 using Microsoft.Extensions.Caching.Distributed;
+using AssetTracker.Repositories.Interfaces;
 
-namespace AssetTracker.Repositories
+namespace AssetTracker.Repositories.MockRepositories
 {
     public class PortfolioRepository : IPortfolioRepository
     {
         private readonly Dictionary<Guid, Portfolio> _userPortfolios;
-        private readonly Dictionary<Guid, SortedDictionary<DateOnly, decimal>> _historicalMarketValues;
 
         private readonly IDistributedCache _cache;
 
         public PortfolioRepository()
         {
             _userPortfolios = new(); // Initialize with an empty list (replace with actual DB logic)
-            _historicalMarketValues = new Dictionary<Guid, SortedDictionary<DateOnly, decimal>>();
 
         }
 
@@ -60,7 +59,9 @@ namespace AssetTracker.Repositories
                 throw new InvalidOperationException("Portfolio not found.");
 
             }
-            return _userPortfolios[userId].Positions;
+            var positions = _userPortfolios[userId].Positions;
+
+            return positions;
 
 
         }
@@ -92,24 +93,24 @@ namespace AssetTracker.Repositories
             }
         }
 
-        public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue)
-        {
-            if (!_historicalMarketValues.ContainsKey(userId))
-                _historicalMarketValues[userId] = new SortedDictionary<DateOnly, decimal>();
+        //public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue)
+        //{
+        //    if (!_historicalMarketValues.ContainsKey(userId))
+        //        _historicalMarketValues[userId] = new SortedDictionary<DateOnly, decimal>();
 
-            _historicalMarketValues[userId][date] = marketValue; // Store only date part
-            return Task.CompletedTask;
-        }
+        //    _historicalMarketValues[userId][date] = marketValue; // Store only date part
+        //    return Task.CompletedTask;
+        //}
 
-        public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date)
-        {
-            if (_historicalMarketValues.TryGetValue(userId, out var marketValues) &&
-                marketValues.TryGetValue(date, out var value))
-            {
-                return Task.FromResult<decimal?>(value);
-            }
-            return Task.FromResult<decimal?>(null);
-        }
+        //public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date)
+        //{
+        //    if (_historicalMarketValues.TryGetValue(userId, out var marketValues) &&
+        //        marketValues.TryGetValue(date, out var value))
+        //    {
+        //        return Task.FromResult<decimal?>(value);
+        //    }
+        //    return Task.FromResult<decimal?>(null);
+        //}
 
         //public DateTime? GetEarliestMarketValueDate(Guid userId)
         //{

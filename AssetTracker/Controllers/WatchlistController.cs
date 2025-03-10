@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using AssetTracker.Models;
 using AssetTracker.Services;
 using System.Threading.Tasks;
+using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Controllers
 {

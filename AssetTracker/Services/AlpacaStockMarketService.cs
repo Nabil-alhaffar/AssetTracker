@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Services
 {

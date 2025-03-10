@@ -4,7 +4,11 @@ using System.Threading.Tasks;
 using AssetTracker.Models;
 using AssetTracker.Repositories;
 using System.Collections.Generic;
+//using static AssetTracker.Models.Position;
+using AssetTracker.Services.Interfaces;
+using AssetTracker.Repositories.Interfaces;
 using static AssetTracker.Models.Position;
+using AssetTracker.Repositories.MongoDBRepositories;
 
 namespace AssetTracker.Services
 {
@@ -15,7 +19,7 @@ namespace AssetTracker.Services
         private readonly Dictionary<Guid, List<PositionHistory>> _positionHistoryStorage = new();
 
         // Constructor
-        public PositionService(IPortfolioRepository portfolioRepository, IAlphaVantageStockMarketService alphaVantageStockMarketService)
+        public PositionService( IPortfolioRepository portfolioRepository, IAlphaVantageStockMarketService alphaVantageStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
             _alphaVantageStockMarketService = alphaVantageStockMarketService;
@@ -225,103 +229,6 @@ namespace AssetTracker.Services
             });
         }
 
-        //public async Task AddOrUpdatePositionAsync(Guid userId, string symbol, decimal quantity, decimal price)
-        //{
-        //    var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-        //    var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
-
-        //    if (position == null)
-        //    {
-        //        position = new Position { UserId = userId, Symbol = symbol, Quantity = quantity, AveragePurchasePrice = price, PositionType = Position.PositionType.Long };
-        //        portfolio.Positions.Add(symbol, position);
-        //    }
-        //    else
-        //    {
-        //        position.AveragePurchasePrice = ((position.AveragePurchasePrice * position.Quantity) + (price * quantity)) / (position.Quantity + quantity);
-        //        position.Quantity += quantity;
-        //    }
-
-        //    // Persist the changes back to the repository
-        //    await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
-
-        //    // Add position history for this action
-        //    await AddPositionHistoryAsync(new PositionHistory
-        //    {
-        //        UserId = userId,
-        //        PositionId = position.PositionId,
-        //        Symbol = position.Symbol,
-        //        TransactionDate = DateTime.UtcNow,
-        //        ActionType = "BUY",
-        //        Quantity = quantity,
-        //        Price = price
-        //    });
-        //}
-
-        //// Reduce or remove a position from the portfolio
-        //public async Task ReduceOrRemovePositionAsync(Guid userId, string symbol, decimal quantity, decimal price)
-        //{
-        //    var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-        //    var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
-
-        //    if (position == null)
-        //    {
-        //        return;  // Position not found
-        //    }
-
-        //    bool shortPosition = position.PositionType == Position.PositionType.Short ? true : false;
-        //    bool fullClose = (quantity == position.Quantity);
-        //    // Add position history for this action
-        //    await AddPositionHistoryAsync(new PositionHistory
-        //    {
-        //        UserId = userId,
-        //        PositionId = position.PositionId,
-        //        Symbol = symbol,
-        //        TransactionDate = DateTime.UtcNow,
-        //        ActionType = (shortPosition ? $"BUY TO CLOSE SHORT:" : "SELL TO CLOSE: ") + $"{quantity}/{position.Quantity}",
-        //        Quantity = quantity,
-        //        Price = price
-        //    });
-
-        //    position.Quantity -= quantity;
-
-        //    if (position.Quantity == 0)
-        //    {
-        //        portfolio.Positions.Remove(symbol);  // Remove position if quantity is zero
-        //    }
-
-        //    await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
-        //}
-
-        //// Add or update a short position in the portfolio
-        //public async Task AddOrUpdateShortPositionAsync(Guid userId, string symbol, decimal quantity, decimal price)
-        //{
-        //    var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
-        //    var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
-
-        //    // Add position history for this action
-        //    await AddPositionHistoryAsync(new PositionHistory
-        //    {
-        //        UserId = userId,
-        //        PositionId = position?.PositionId ?? Guid.NewGuid(),  // If position doesn't exist, generate new Id
-        //        Symbol = symbol,
-        //        TransactionDate = DateTime.UtcNow,
-        //        ActionType = "SELL SHORT",
-        //        Quantity = quantity,
-        //        Price = price
-        //    });
-
-        //    if (position == null)
-        //    {
-        //        position = new Position { UserId = userId, Symbol = symbol, Quantity = -quantity, AveragePurchasePrice = price, PositionType = Position.PositionType.Short };
-        //        portfolio.Positions.Add(symbol, position);
-        //    }
-        //    else
-        //    {
-        //        position.AveragePurchasePrice = ((position.AveragePurchasePrice * position.Quantity) + (price * -quantity)) / (position.Quantity - quantity);
-        //        position.Quantity -= quantity;
-        //    }
-
-        //    await _portfolioRepository.UpdatePortfolioAsync(portfolio);  // Save updated portfolio
-        //}
+        
     }
 }

@@ -1,5 +1,5 @@
 ﻿using AssetTracker.Models;
-namespace AssetTracker.Repositories
+namespace AssetTracker.Repositories.Interfaces
 {
     public interface IWatchlistRepository
     {

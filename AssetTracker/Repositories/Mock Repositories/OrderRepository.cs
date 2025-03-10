@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using AssetTracker.Models;
-namespace AssetTracker.Repositories
+using AssetTracker.Repositories.Interfaces;
+
+namespace AssetTracker.Repositories.MockRepositories
 {
 	public class OrderRepository:IOrderRepository
 	{

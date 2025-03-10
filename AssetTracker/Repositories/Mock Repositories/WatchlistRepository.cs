@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using AssetTracker.Models;
 using AssetTracker.Repositories;
-namespace AssetTracker.Repositories
+using AssetTracker.Repositories.Interfaces;
+
+namespace AssetTracker.Repositories.MockRepositories
 {
     public class WatchlistRepository : IWatchlistRepository
     {
@@ -28,21 +30,21 @@ namespace AssetTracker.Repositories
         public Task RemoveWatchlistAsync(Guid userId, Guid watchlistId)
         {
             if (_userWatchlists.TryGetValue(userId, out var watchlists))
-                watchlists.RemoveAll(w => w.Id == watchlistId);
+                watchlists.RemoveAll(w => w.WatchlistId == watchlistId);
 
             return Task.CompletedTask;
         }
 
         public Task AddSymbolToWatchlistAsync(Guid userId, Guid watchlistId, string symbol)
         {
-            var watchlist = _userWatchlists[userId]?.Find(w => w.Id == watchlistId);
+            var watchlist = _userWatchlists[userId]?.Find(w => w.WatchlistId == watchlistId);
             watchlist?.Symbols.Add(symbol);
             return Task.CompletedTask;
         }
 
         public Task RemoveSymbolFromWatchlistAsync(Guid userId, Guid watchlistId, string symbol)
         {
-            var watchlist = _userWatchlists[userId]?.Find(w => w.Id == watchlistId);
+            var watchlist = _userWatchlists[userId]?.Find(w => w.WatchlistId == watchlistId);
             watchlist?.Symbols.Remove(symbol);
             return Task.CompletedTask;
         }

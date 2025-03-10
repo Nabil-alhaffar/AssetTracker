@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using AssetTracker.Services;
 using System.Threading.Tasks;
 using AssetTracker.Models;
+using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Controllers
 {
@@ -107,7 +108,21 @@ namespace AssetTracker.Controllers
 
             }
         }
+        [HttpGet ("Portfolio/Positions/{userId}")]
+        public async Task<IActionResult> GetPortfolioPositionsByUserId(Guid userId)
+        {
+            try
+            {
+              var positions =   await _portfolioService.GetPortfolioPositionsAsync(userId);
+                return Ok(new { message = "Positions retrieved successfully.", positions });
 
+            }
+            catch
+            {
+                return NotFound(new { message = "Portfolio not found." });
+
+            }
+        }
 
 
 

@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using Microsoft.Extensions.Caching.Distributed;
+using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Services
 {

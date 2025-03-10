@@ -13,8 +13,10 @@
     <PackageReference Include="Alpaca.Markets" Version="7.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.16" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.1" />
+    <PackageReference Include="MongoDB.Driver" Version="3.2.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,11 +24,19 @@
     <None Remove="Services\" />
     <None Remove="Repositories\" />
     <None Remove="Models\Alert\" />
+    <None Remove="Repositories\Interfaces\" />
+    <None Remove="Repositories\Mock Repositories\" />
+    <None Remove="Repositories\MongoDB Repositories\" />
+    <None Remove="Services\Interfaces\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Services\" />
     <Folder Include="Repositories\" />
     <Folder Include="Models\Alert\" />
+    <Folder Include="Repositories\Interfaces\" />
+    <Folder Include="Repositories\Mock Repositories\" />
+    <Folder Include="Repositories\MongoDB Repositories\" />
+    <Folder Include="Services\Interfaces\" />
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 ﻿using System;
 using AssetTracker.Models;
 
-namespace AssetTracker.Repositories
+namespace AssetTracker.Repositories.Interfaces
 {
     public interface IPortfolioRepository
     {
@@ -10,8 +10,8 @@ namespace AssetTracker.Repositories
         public Task<Dictionary<string, Position>> GetPositionsByUserId(Guid userId);
         public Task<Position> GetUserPositionBySymbol(Guid userId, string symbol);
         public Task AddPortfolioAsync(Portfolio portfolio);
-        public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue);
-        public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date);
+        //public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue);
+        //public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date);
 
         //public DateTime? GetEarliestMarketValueDate(Guid userId);
 
