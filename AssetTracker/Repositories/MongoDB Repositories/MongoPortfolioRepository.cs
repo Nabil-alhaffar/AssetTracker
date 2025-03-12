@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AssetTracker.Repositories.Interfaces;
+using MongoDB.Driver.Linq;
 
 namespace AssetTracker.Repositories.MongoDBRepositories
 {
@@ -60,7 +61,24 @@ namespace AssetTracker.Repositories.MongoDBRepositories
             var portfolio = await GetUserPortfolioAsync(userId);
             return portfolio.Positions.TryGetValue(symbol, out var position) ? position : null;
         }
+        public async Task<List<Guid>> GetAllUserIdsAsync()
+        {
+            try
+            {
+                // Assuming Portfolio documents contain a field UserId of type Guid
+                var userIds = await _portfolioCollection
+                    .AsQueryable()
+                    .Select(p => p.UserId) // Select only the UserId field
+                    .Distinct()
+                    .ToListAsync();
 
+                return userIds;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error fetching all user IDs: {ex.Message}");
+            }
+        }
 
     }
 

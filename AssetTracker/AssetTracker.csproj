@@ -11,6 +11,8 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
   <ItemGroup>
     <PackageReference Include="Alpaca.Markets" Version="7.2.0" />
+    <PackageReference Include="Hangfire" Version="1.8.18" />
+    <PackageReference Include="Hangfire.Mongo" Version="1.11.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.16" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.1" />
@@ -29,6 +31,7 @@
     <None Remove="Repositories\Mock Repositories\" />
     <None Remove="Repositories\MongoDB Repositories\" />
     <None Remove="Services\Interfaces\" />
+    <None Remove="Schedulers\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -39,5 +42,6 @@
     <Folder Include="Repositories\Mock Repositories\" />
     <Folder Include="Repositories\MongoDB Repositories\" />
     <Folder Include="Services\Interfaces\" />
+    <Folder Include="Schedulers\" />
   </ItemGroup>
 </Project>

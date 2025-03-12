@@ -401,3 +401,6 @@ FodyWeavers.xsd
 #Appsettings.json
  appsettings.json
  appsettings.Development.json
+
+.env
+.DS_Store

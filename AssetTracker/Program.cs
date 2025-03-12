@@ -17,6 +17,10 @@ using MongoDB.Bson;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Hangfire;
+using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,12 +76,42 @@ var mongoClient = new MongoClient(mongoDbConnectionString);
 var mongoDatabase = mongoClient.GetDatabase("PortfolioDB"); // Replace "PortfolioDB" with your database name
 builder.Services.AddSingleton(mongoDatabase);
 
+// MongoDB setup for HangfireDB
+var hangfireDatabaseName = "HangfireDB"; // Separate database for Hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UseMongoStorage(mongoClient, hangfireDatabaseName, new MongoStorageOptions
+    {
+        MigrationOptions = new MongoMigrationOptions
+        {
+            MigrationStrategy = new DropMongoMigrationStrategy(),
+            BackupStrategy = new NoneMongoBackupStrategy()
+        },
+        Prefix = "hangfire" // Optional: Prefix for Hangfire collections
+    });
+});
+
 // Register the WebSocket background service
+builder.Services.AddTransient<HangfireTaskScheduler>();
 
 var redisConnection = $"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]}";
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = redisConnection;
+});
+builder.Services.AddSingleton<IAlpacaTradingClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var securityKey = new SecretKey(config["Alpaca:ApiKey"], config["Alpaca:ApiSecret"]);
+    
+    return Alpaca.Markets.Environments.Paper.GetAlpacaTradingClient(securityKey);
+});
+
+builder.Services.AddSingleton<IAlpacaDataStreamingClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var securityKey = new SecretKey(config["Alpaca:ApiKey"], config["Alpaca:ApiSecret"]);
+    return Alpaca.Markets.Environments.Paper.GetAlpacaDataStreamingClient(securityKey);
 });
 
 builder.Services.AddHttpClient();
@@ -149,6 +183,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseHangfireDashboard("/hangfire");
+
+var hangfireTaskScheduler = app.Services.GetRequiredService<HangfireTaskScheduler>();
+hangfireTaskScheduler.Configure(); // Configure recurring tasks like market updates
+
 
 app.UseHttpsRedirection();
 

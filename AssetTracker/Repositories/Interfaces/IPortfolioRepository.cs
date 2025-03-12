@@ -10,6 +10,8 @@ namespace AssetTracker.Repositories.Interfaces
         public Task<Dictionary<string, Position>> GetPositionsByUserId(Guid userId);
         public Task<Position> GetUserPositionBySymbol(Guid userId, string symbol);
         public Task AddPortfolioAsync(Portfolio portfolio);
+        Task<List<Guid>> GetAllUserIdsAsync(); // Assuming user ID is a Guid
+
         //public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue);
         //public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date);
 

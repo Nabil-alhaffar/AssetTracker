@@ -4,6 +4,7 @@ using AssetTracker.Models;
 
 namespace AssetTracker.Services.Interfaces
 {
+
     public interface IPortfolioService
     {
         //Task<decimal> GetTotalValueAsync(Guid userId);
@@ -11,9 +12,11 @@ namespace AssetTracker.Services.Interfaces
 
         Task UpdateAvailableFundsAsync(Guid userId, decimal additionalAmount);
         Task<decimal> GetAvailableFundsAsync(Guid userId);
-        public Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId);
-        public Task<PortfolioPerformance> GetPortfolioPerformanceAsync(Guid userId, int days);
-        public Task<Dictionary<string, Position>> GetPortfolioPositionsAsync(Guid userId);
+        Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId);
+        Task<PortfolioPerformance> GetPortfolioPerformanceAsync(Guid userId, int days);
+        Task<Dictionary<string, Position>> GetPortfolioPositionsAsync(Guid userId);
+        Task<Portfolio> GetUserPortfolioAsync(Guid userId);
+        public Task UpdateMarketValuesForAllUsersAsync();
 
         //Task<ICollection<Position>> GetAllPositionsAsync(Guid userId);
         //Task AddPositionToPortfolioAsync(Position position, Guid userId);

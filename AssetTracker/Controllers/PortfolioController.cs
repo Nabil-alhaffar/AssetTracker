@@ -4,6 +4,7 @@ using AssetTracker.Services;
 using System.Threading.Tasks;
 using AssetTracker.Models;
 using AssetTracker.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AssetTracker.Controllers
 {
@@ -38,6 +39,24 @@ namespace AssetTracker.Controllers
                 });
             }
             catch (Exception err) {
+
+                return NotFound(new { message = err.Message });
+
+            }
+        }
+        [HttpGet("portfolio/{userId}")]
+        public async Task<IActionResult> GetUserPortfolio(Guid userId)
+        {
+            try
+            {
+                var portfolio = await _portfolioService.GetUserPortfolioAsync(userId);
+                return Ok(new
+                {
+                    portfolio
+                }) ;
+            }
+            catch (Exception err)
+            {
 
                 return NotFound(new { message = err.Message });
 
@@ -78,6 +97,7 @@ namespace AssetTracker.Controllers
         }
 
         [HttpPost("Portfolio/deposit-funds/{userId}")]
+        [Authorize]
         public async Task <IActionResult> DepositFunds(Guid userId, decimal depositAmount)
         {
             try
@@ -94,6 +114,7 @@ namespace AssetTracker.Controllers
         }
 
         [HttpPost("Portfolio/withdraw-funds/{userId}")]
+        [Authorize]
         public async Task<IActionResult> WithdrawFunds(Guid userId, decimal withdrawAmount)
         {
             try

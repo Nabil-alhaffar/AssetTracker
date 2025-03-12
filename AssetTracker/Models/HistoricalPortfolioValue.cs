@@ -5,6 +5,9 @@ namespace AssetTracker.Models
 {
     public sealed record HistoricalPortfolioValue
     {
+        [BsonId]  // MongoDB will map _id to this property
+        public ObjectId MongoId { get; set; } // MongoDB uses ObjectId by default
+
         [BsonRepresentation(BsonType.String)]
         public Guid UserId { get; set; }
 

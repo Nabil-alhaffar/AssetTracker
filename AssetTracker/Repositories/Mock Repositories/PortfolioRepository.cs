@@ -92,6 +92,20 @@ namespace AssetTracker.Repositories.MockRepositories
                 return null;
             }
         }
+        public async Task<List<Guid>> GetAllUserIdsAsync()
+        {
+            try
+            {
+                // Assuming Portfolio documents contain a field UserId of type Guid
+                var userIds = _userPortfolios.Values.Select(portfolio => portfolio.UserId).ToList();
+
+                return userIds;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error fetching all user IDs: {ex.Message}");
+            }
+        }
 
         //public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue)
         //{

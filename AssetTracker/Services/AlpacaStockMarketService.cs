@@ -13,6 +13,7 @@ namespace AssetTracker.Services
     {
         private readonly ILogger<AlpacaStockMarketService> _logger;
         private readonly IAlpacaDataStreamingClient _dataClient;
+        private readonly IAlpacaTradingClient _tradingClient; // ✅ Add Trading Client
         private readonly List<string> _subscribedSymbols = new();
 
         public AlpacaStockMarketService(IConfiguration configuration, ILogger<AlpacaStockMarketService> logger)
@@ -26,9 +27,12 @@ namespace AssetTracker.Services
             {
                 throw new Exception("Alpaca API credentials are missing!");
             }
+            //_logger.LogInformation($"API secret: {apiSecret}");
+            //_logger.LogInformation($"API Key: {apiKey}");
 
             var securityKey = new SecretKey(apiKey, apiSecret);
             _dataClient = Alpaca.Markets.Environments.Paper.GetAlpacaDataStreamingClient(securityKey);
+            _tradingClient = Alpaca.Markets.Environments.Paper.GetAlpacaTradingClient(securityKey); // ✅ Initialize Trading Client
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,10 +42,16 @@ namespace AssetTracker.Services
                 _logger.LogInformation("Connecting to Alpaca Data WebSocket...");
                 await _dataClient.ConnectAndAuthenticateAsync(stoppingToken);
                 _logger.LogInformation("Connected to Alpaca Data WebSocket.");
+
+                // ✅ Check if the market is open
+                var clock = await _tradingClient.GetClockAsync();
+                _logger.LogInformation($"Market Open: {clock.IsOpen}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error connecting to Alpaca Data WebSocket: {ex.Message}");
+                _logger.LogError($"Stack Trace: {ex.StackTrace}");
+
             }
         }
 
@@ -57,33 +67,29 @@ namespace AssetTracker.Services
 
             try
             {
-                // Subscribe to trade updates
+                // ✅ Subscribe to trade updates
                 var tradeSubscription = _dataClient.GetTradeSubscription(symbol);
                 tradeSubscription.Received += trade =>
                 {
-                    _logger.LogInformation($"Trade Update - Symbol: {trade.Symbol} Price: {trade.Price} Quantity: {trade.Size} Time: {trade.TimestampUtc}");
+                    _logger.LogInformation($"Trade Update - Symbol: {trade.Symbol}, Price: {trade.Price}, Quantity: {trade.Size}, Time: {trade.TimestampUtc}");
                 };
-                Console.WriteLine($"{tradeSubscription}");
                 await _dataClient.SubscribeAsync(tradeSubscription, stoppingToken);
 
-                // Subscribe to quote updates
+                // ✅ Subscribe to quote updates
                 var quoteSubscription = _dataClient.GetQuoteSubscription(symbol);
-                Console.WriteLine($"{quoteSubscription}");
-
                 quoteSubscription.Received += quote =>
                 {
-                    _logger.LogInformation($"Quote Update - Symbol: {quote.Symbol} Ask Price: {quote.AskPrice} Bid Price: {quote.BidPrice}");
+                    _logger.LogInformation($"Quote Update - Symbol: {quote.Symbol}, Ask: {quote.AskPrice}, Bid: {quote.BidPrice}");
                 };
                 await _dataClient.SubscribeAsync(quoteSubscription, stoppingToken);
 
-                // Subscribe to bar (candle) updates
+                // ✅ Subscribe to bar (candle) updates
                 var barSubscription = _dataClient.GetMinuteBarSubscription(symbol);
                 barSubscription.Received += bar =>
                 {
-                    _logger.LogInformation($"Bar Update - Symbol: {bar.Symbol} Open: {bar.Open} High: {bar.High} Low: {bar.Low} Close: {bar.Close} Volume: {bar.Volume} Time: {bar.TimeUtc} VWAP: {bar.Vwap}");
+                    _logger.LogInformation($"Bar Update - Symbol: {bar.Symbol}, Open: {bar.Open}, High: {bar.High}, Low: {bar.Low}, Close: {bar.Close}, Volume: {bar.Volume}, Time: {bar.TimeUtc}");
                 };
                 await _dataClient.SubscribeAsync(barSubscription, stoppingToken);
-                Console.WriteLine($"{barSubscription}");
 
                 _logger.LogInformation($"Successfully subscribed to {symbol} for trade, quote, and bar updates.");
             }

@@ -14,15 +14,17 @@ namespace AssetTracker.Services
 {
     public class PositionService : IPositionService
     {
+        private readonly ILogger<PositionService> _logger;
         private readonly IPortfolioRepository _portfolioRepository;
         private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService; // Added to get current stock price
         private readonly Dictionary<Guid, List<PositionHistory>> _positionHistoryStorage = new();
 
         // Constructor
-        public PositionService( IPortfolioRepository portfolioRepository, IAlphaVantageStockMarketService alphaVantageStockMarketService)
+        public PositionService(ILogger<PositionService> logger, IPortfolioRepository portfolioRepository, IAlphaVantageStockMarketService alphaVantageStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
             _alphaVantageStockMarketService = alphaVantageStockMarketService;
+            _logger = logger;
         }
 
         // Split a position based on the split factor
@@ -122,6 +124,7 @@ namespace AssetTracker.Services
             {
                 // Get the current price from stock service
                 decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
+                _logger.LogInformation($"Fetched price for {symbol}: {currentPrice}");
 
                 // Create and return PositionSummary
                 return new PositionSummary
@@ -131,7 +134,8 @@ namespace AssetTracker.Services
                     Quantity = position.Quantity,
                     AveragePurchasePrice = position.AveragePurchasePrice,
                     CurrentPrice = currentPrice
-                };
+                    
+    };
             }
 
             return null; // Return null if position not found

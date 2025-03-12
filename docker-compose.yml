@@ -1,0 +1,13 @@
+services:
+  assettracker:
+    image: assettracker
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - /Users/nabilhaffar/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+      - /Users/nabilhaffar/.aspnet/DataProtection-Keys:/root/.aspnet/DataProtection-Keys
+    env_file:
+      - .env
