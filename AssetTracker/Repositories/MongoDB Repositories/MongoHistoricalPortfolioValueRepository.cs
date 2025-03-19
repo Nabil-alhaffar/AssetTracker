@@ -13,25 +13,25 @@ namespace AssetTracker.Repositories.MongoDBRepositories
             _historicalPortfolioValueCollection = database.GetCollection<HistoricalPortfolioValue>("HistoricalPortfolioValues");
         }
 
-        public async Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue)
+        public async Task StoreTotalValueAsync(Guid userId, DateOnly date, decimal marketValue)
         {
             var historicalMarketValue = new HistoricalPortfolioValue
             {
                 UserId = userId,
                 Date = date,
-                MarketValue = marketValue
+                TotalValue = marketValue
             };
 
             await _historicalPortfolioValueCollection.InsertOneAsync(historicalMarketValue);
         }
 
-        public async Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date)
+        public async Task<decimal?> GetTotalValueOnDateAsync(Guid userId, DateOnly date)
         {
-            var marketValue = await _historicalPortfolioValueCollection
+            var totalValue = await _historicalPortfolioValueCollection
                 .Find(h => h.UserId == userId && h.Date == date)
                 .FirstOrDefaultAsync();
 
-            return marketValue?.MarketValue;
+            return totalValue?.TotalValue;
         }
     }
 }

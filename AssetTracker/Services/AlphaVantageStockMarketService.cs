@@ -22,7 +22,6 @@ namespace AssetTracker.Services
         public AlphaVantageStockMarketService(HttpClient httpClient, IDistributedCache cache, IConfiguration configuration)
 
 		{
-            Console.WriteLine($"API Key: {APIKey}"); // Log API key
 
             _httpClient = httpClient;
             _cache = cache;

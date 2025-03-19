@@ -1,0 +1,37 @@
+services:
+  assettracker:
+    image: assettracker
+    build:
+      context: .
+      args:
+        - PASSWORD_ENV_SEEDED=${PASSWORD_ENV_SEEDED}
+    ports:
+      - "80:80"
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - PASSWORD_ENV_SEEDED=${PASSWORD_ENV_SEEDED}
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${PASSWORD_ENV_SEEDED}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - Redis__Host=redis
+      - Redis__Port=6379
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+    volumes:
+      - /Users/nabilhaffar/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+      - /Users/nabilhaffar/.aspnet/DataProtection-Keys:/root/.aspnet/DataProtection-Keys
+#      - ./Assettracker/certs:/root/certs  # Mount certs to /root/certs inside container
+    env_file:
+      - ./AssetTracker/.env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+    driver: local

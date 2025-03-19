@@ -13,7 +13,7 @@ namespace AssetTracker.Repositories.MockRepositories
             _historicalMarketValues = new Dictionary<Guid, SortedDictionary<DateOnly, decimal>>();
 
         }
-        public Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue)
+        public Task StoreTotalValueAsync(Guid userId, DateOnly date, decimal marketValue)
         {
             if (!_historicalMarketValues.ContainsKey(userId))
                 _historicalMarketValues[userId] = new SortedDictionary<DateOnly, decimal>();
@@ -22,7 +22,7 @@ namespace AssetTracker.Repositories.MockRepositories
             return Task.CompletedTask;
         }
 
-        public Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date)
+        public Task<decimal?> GetTotalValueOnDateAsync(Guid userId, DateOnly date)
         {
             if (_historicalMarketValues.TryGetValue(userId, out var marketValues) &&
                 marketValues.TryGetValue(date, out var value))

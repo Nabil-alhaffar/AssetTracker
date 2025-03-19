@@ -11,11 +11,13 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
   <ItemGroup>
     <PackageReference Include="Alpaca.Markets" Version="7.2.0" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="3.7.400.111" />
     <PackageReference Include="Hangfire" Version="1.8.18" />
     <PackageReference Include="Hangfire.Mongo" Version="1.11.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.16" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
     <PackageReference Include="MongoDB.Driver" Version="3.2.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -32,6 +34,7 @@
     <None Remove="Repositories\MongoDB Repositories\" />
     <None Remove="Services\Interfaces\" />
     <None Remove="Schedulers\" />
+    <None Remove="Helpers\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -43,5 +46,6 @@
     <Folder Include="Repositories\MongoDB Repositories\" />
     <Folder Include="Services\Interfaces\" />
     <Folder Include="Schedulers\" />
+    <Folder Include="Helpers\" />
   </ItemGroup>
 </Project>

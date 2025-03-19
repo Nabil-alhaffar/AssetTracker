@@ -83,7 +83,7 @@ namespace AssetTracker.Repositories.MockRepositories
 
             }
             try {
-                var position = _userPortfolios[userId].Positions[symbol];
+                var position =   _userPortfolios[userId].Positions[symbol];
                 return position;
 
             }
@@ -97,7 +97,7 @@ namespace AssetTracker.Repositories.MockRepositories
             try
             {
                 // Assuming Portfolio documents contain a field UserId of type Guid
-                var userIds = _userPortfolios.Values.Select(portfolio => portfolio.UserId).ToList();
+                var userIds =  _userPortfolios.Values.Select(portfolio => portfolio.UserId).ToList();
 
                 return userIds;
             }

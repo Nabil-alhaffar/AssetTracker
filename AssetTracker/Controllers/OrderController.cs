@@ -15,7 +15,7 @@ namespace AssetTracker.Controllers
 		{
 			_orderRepository = orderRepository;
 		}
-        [HttpGet("Orders/{userId}")]
+        [HttpGet("{userId}")]
         public async Task<IActionResult> GetAllUserOrders(Guid userId)
         {
             var orders = await _orderRepository.GetAllUserOrdersAsync(userId);
@@ -27,7 +27,7 @@ namespace AssetTracker.Controllers
 
         }
 
-        [HttpGet("Orders/{userId}/{symbol}")]
+        [HttpGet("{userId}/{symbol}")]
         public async Task<IActionResult> GetUserOrdersByPosition(Guid userId, string symbol)
         {
             var orders = await _orderRepository.GetPositionOrdersAsync(userId,symbol);

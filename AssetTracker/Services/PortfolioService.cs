@@ -66,15 +66,40 @@ namespace AssetTracker.Services
                 throw new Exception($"Error calculating portfolio summary: {ex.Message}");
             }
         }
+        public async Task<decimal> GetCurrentTotalValue(Guid userId)
+        {
+            try
+            {
+                decimal TotalMarketValue = await GetCurrentMarketValue(userId);
+                decimal totalCashBalance = await  GetAvailableFundsAsync(userId);
+                return TotalMarketValue + totalCashBalance;
 
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error calculating Portfolio total value: {ex.Message}");
+
+            }
+
+        }
         public async Task<PortfolioPerformance> GetPortfolioPerformanceAsync(Guid userId, int days)
         {
             try
             {
-                var todayMarketValue = await GetCurrentMarketValue(userId);
-                var pastMarketValue = await GetMarketValueDaysAgo(userId, days);
+                var todayTotalValue = await GetCurrentTotalValue(userId);
+                var pastTotalValue = await GetTotalValueDaysAgo(userId, days);
+                //var todayMarketValue = await GetCurrentMarketValue(userId);
+                //var pastMarketValue = await GetMarketValueDaysAgo(userId, days);
 
-                if (pastMarketValue == null)
+                //if (pastMarketValue == null)
+                //{
+                //    return new PortfolioPerformance
+                //    {
+                //        PNL = 0,
+                //        ReturnPercentage = 0
+                //    };
+                //}
+                if (pastTotalValue == null)
                 {
                     return new PortfolioPerformance
                     {
@@ -82,9 +107,11 @@ namespace AssetTracker.Services
                         ReturnPercentage = 0
                     };
                 }
+                //decimal pnl = todayMarketValue - pastMarketValue.Value;
+                //decimal returnPercentage = pastMarketValue.Value > 0 ? (pnl / pastMarketValue.Value) * 100 : 0;
+                decimal pnl = todayTotalValue - pastTotalValue.Value;
 
-                decimal pnl = todayMarketValue - pastMarketValue.Value;
-                decimal returnPercentage = pastMarketValue.Value > 0 ? (pnl / pastMarketValue.Value) * 100 : 0;
+                decimal returnPercentage = pastTotalValue.Value > 0 ? (pnl / pastTotalValue.Value) * 100 : 0;
 
                 return new PortfolioPerformance
                 {
@@ -99,20 +126,20 @@ namespace AssetTracker.Services
         }
 
         // Fetch market value from a specified number of days ago
-        private async Task<decimal?> GetMarketValueDaysAgo(Guid userId, int days)
+        private async Task<decimal?> GetTotalValueDaysAgo(Guid userId, int days)
         {
             var pastDate = DateOnly.FromDateTime(DateTime.Now).AddDays(-days);
-            return await _historicalPortfolioValueRepository.GetMarketValueOnDateAsync(userId, pastDate) ??
-                   await GetClosestAvailableMarketValue(userId, pastDate);
+            return await _historicalPortfolioValueRepository.GetTotalValueOnDateAsync(userId, pastDate) ??
+                   await GetClosestAvailableTotalValue(userId, pastDate);
         }
 
         // Try to get the closest available market value within the last 7 days
-        private async Task<decimal?> GetClosestAvailableMarketValue(Guid userId, DateOnly requestedDate)
+        private async Task<decimal?> GetClosestAvailableTotalValue(Guid userId, DateOnly requestedDate)
         {
             for (int i = 1; i <= 7; i++) // Try up to a week back
             {
                 var adjustedDate = requestedDate.AddDays(-i);
-                var value = await _historicalPortfolioValueRepository.GetMarketValueOnDateAsync(userId, adjustedDate);
+                var value = await _historicalPortfolioValueRepository.GetTotalValueOnDateAsync(userId, adjustedDate);
                 if (value.HasValue) return value;
             }
 
@@ -132,6 +159,13 @@ namespace AssetTracker.Services
             }
 
             return totalMarketValue;
+        }
+
+        // Method to store the market value of the portfolio for a specific user
+        public async Task StoreTotalValueAsync(Guid userId, decimal marketValue)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            await _historicalPortfolioValueRepository.StoreTotalValueAsync(userId, today, marketValue);
         }
 
         // Get total cost for all positions in the portfolio
@@ -203,16 +237,10 @@ namespace AssetTracker.Services
             foreach (var userId in users)
             {
                 var marketValue = await GetCurrentMarketValue(userId);
-                await StoreMarketValueAsync(userId, marketValue);
+                await StoreTotalValueAsync(userId, marketValue);
             }
         }
 
-        // Method to store the market value of the portfolio for a specific user
-        public async Task StoreMarketValueAsync(Guid userId, decimal marketValue)
-        {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            await _historicalPortfolioValueRepository.StoreMarketValueAsync(userId, today, marketValue);
-        }
     }
 }
 

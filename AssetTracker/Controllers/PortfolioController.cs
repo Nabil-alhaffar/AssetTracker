@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using AssetTracker.Models;
 using AssetTracker.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace AssetTracker.Controllers
 {
@@ -15,15 +18,17 @@ namespace AssetTracker.Controllers
         private readonly IPortfolioService _portfolioService;
         private readonly IUserService _userService;
         private readonly IPositionService _positionService;
+        private readonly ICashFlowLogService _cashFlowLogService;
         // Constructor with Dependency Injection
-        public PortfolioController(IPortfolioService portfolioService, IUserService userService, IPositionService positionService)
+        public PortfolioController(IPortfolioService portfolioService, IUserService userService, IPositionService positionService, ICashFlowLogService cashFlowLogService)
         {
             _portfolioService = portfolioService;
             _userService = userService;
             _positionService = positionService;
+            _cashFlowLogService = cashFlowLogService;
         }
 
-        [HttpGet("portfolio/summary/{userId}")]
+        [HttpGet("summary/{userId}")]
         public async Task<IActionResult> GetPortfolioSummary(Guid userId)
         {
             try
@@ -44,7 +49,7 @@ namespace AssetTracker.Controllers
 
             }
         }
-        [HttpGet("portfolio/{userId}")]
+        [HttpGet("{userId}")]
         public async Task<IActionResult> GetUserPortfolio(Guid userId)
         {
             try
@@ -63,7 +68,7 @@ namespace AssetTracker.Controllers
             }
         }
 
-        [HttpGet("portfolio/performance/{userId}")]
+        [HttpGet("performance/{userId}")]
         public async Task<IActionResult> GetPortfolioPerformance(Guid userId, int days)
         {
             try
@@ -85,7 +90,7 @@ namespace AssetTracker.Controllers
             }
         }
 
-        [HttpGet("position/history/{userId}")]
+        [HttpGet("history/{userId}")]
         public async Task<IActionResult> GetPositionHistory(Guid userId, string symbol)
         {
             var history = await _positionService.GetPositionHistoryAsync(userId,symbol);
@@ -96,13 +101,23 @@ namespace AssetTracker.Controllers
             return Ok(new { message = "Position history retrieved successfully.", history });
         }
 
-        [HttpPost("Portfolio/deposit-funds/{userId}")]
+        [HttpPost("deposit-funds/{userId}")]
         [Authorize]
         public async Task <IActionResult> DepositFunds(Guid userId, decimal depositAmount)
         {
             try
             {
                 await _portfolioService.UpdateAvailableFundsAsync(userId, depositAmount);
+
+                CashFlowLog log = new CashFlowLog
+                {
+                    UserId = userId,
+                    Amount = depositAmount,
+                    Type = TransactionType.Deposit,
+                    Description = $" Deposit inititated by {userId}: Amount: {depositAmount}" 
+            
+                };
+                await _cashFlowLogService.AddLogAsync(log);
                 return Ok(new { message = $"{depositAmount} was deposited successfully into {userId}'s account." });
 
             }
@@ -113,13 +128,22 @@ namespace AssetTracker.Controllers
             }
         }
 
-        [HttpPost("Portfolio/withdraw-funds/{userId}")]
+        [HttpPost("withdraw-funds/{userId}")]
         [Authorize]
         public async Task<IActionResult> WithdrawFunds(Guid userId, decimal withdrawAmount)
         {
             try
             {
                 await _portfolioService.UpdateAvailableFundsAsync(userId, -withdrawAmount);
+                CashFlowLog log = new CashFlowLog
+                {
+                    UserId = userId,
+                    Amount = withdrawAmount,
+                    Type = TransactionType.Withdrawal,
+                    Description = $" Withdrawal initiated by {userId}: Amount: {withdrawAmount}"
+
+                };
+                await _cashFlowLogService.AddLogAsync(log);
                 return Ok(new { message = $"{withdrawAmount} was withdrawn successfully from {userId}'s account." });
 
             }
@@ -129,7 +153,7 @@ namespace AssetTracker.Controllers
 
             }
         }
-        [HttpGet ("Portfolio/Positions/{userId}")]
+        [HttpGet ("Positions/{userId}")]
         public async Task<IActionResult> GetPortfolioPositionsByUserId(Guid userId)
         {
             try

@@ -398,9 +398,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider *.sln.iml
 
-#Appsettings.json
- appsettings.json
- appsettings.Development.json
+#Appsettings
 
+AssetTracker/appsettings.json
+AssetTracker/appsettings.Development.json
+AssetTracker/appsettings.Docker.json
 .env
 .DS_Store

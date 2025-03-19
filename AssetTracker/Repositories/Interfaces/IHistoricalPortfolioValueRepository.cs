@@ -5,9 +5,9 @@ namespace AssetTracker.Repositories.Interfaces
 {
 	public interface IHistoricalPortfolioValueRepository
 	{
-        public  Task StoreMarketValueAsync(Guid userId, DateOnly date, decimal marketValue);
+        public  Task StoreTotalValueAsync(Guid userId, DateOnly date, decimal marketValue);
 
-        public  Task<decimal?> GetMarketValueOnDateAsync(Guid userId, DateOnly date);
+        public  Task<decimal?> GetTotalValueOnDateAsync(Guid userId, DateOnly date);
 
     }
 }

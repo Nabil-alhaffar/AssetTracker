@@ -23,6 +23,9 @@ namespace AssetTracker.Services
             string apiKey = configuration["Alpaca:ApiKey"];
             string apiSecret = configuration["Alpaca:ApiSecret"];
 
+            Console.WriteLine($"alpacsa key ={apiKey}");
+            Console.WriteLine($"alpacsa secret ={apiSecret}");
+
             if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
             {
                 throw new Exception("Alpaca API credentials are missing!");
