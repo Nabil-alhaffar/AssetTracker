@@ -100,10 +100,14 @@ builder.Services.AddSingleton(mongoDatabase);
 
 //var certFilePath = builder.Configuration["Kestrel:Endpoints:Https:Certificate:Path"];
 //var keyFilePath = builder.Configuration["Kestrel:Endpoints:Https:CertificateKey:Path"];
+//var certPassword = builder.Configuration["Cert:Password"];
+
+//var certFilePath = builder.Configuration["Kestrel:Endpoints:Https:Certificate:Path"];
+
+//var certFilePath = "/https/aspnetapp.pfx";
+//var certPassword = "some.long.password.fllkwefiwejf23049uwlekjf.sEFWEFGR98^&$";
+var certFilePath = builder.Configuration["Cert:Path"];
 var certPassword = builder.Configuration["Cert:Password"];
-
-var certFilePath = builder.Configuration["Kestrel:Endpoints:Https:Certificate:Path"];
-
 
 //Console.WriteLine($"Certificate Path: {certFilePath}");
 //Console.WriteLine($"Certificate Password: {certPassword}");
@@ -124,6 +128,10 @@ try
         });
         options.Listen(IPAddress.Any, 80);   // HTTP port
         options.Listen(IPAddress.Any, 5001, listenOptions =>
+        {
+            listenOptions.UseHttps();        // HTTPS port with a certificate
+        });
+        options.Listen(IPAddress.Any, 443, listenOptions =>
         {
             listenOptions.UseHttps();        // HTTPS port with a certificate
         });

@@ -37,7 +37,7 @@ namespace AssetTracker.Repositories.MongoDBRepositories
             var user = await _userCollection.Find(u => u.UserId == userId).FirstOrDefaultAsync();
             if (user == null)
             {
-                throw new InvalidOperationException("User not found.");
+                throw new InvalidOperationException($"User: {userId} not found.");
             }
             return user;
         }
