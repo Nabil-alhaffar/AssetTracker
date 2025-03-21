@@ -33,35 +33,7 @@ namespace AssetTracker.Controller
 
         }
 
-        //[HttpPost("{userId}/buy")]
-        //public async Task<IActionResult> BuyStock(Guid userId, [FromBody] TradeRequest request)
-        //{
-        //    TradeResult tradeResult = await _stockService.BuyStockAsync(userId, request.Symbol, request.Quantity);
-
-        //    return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
-        //}
-
-        //[HttpPost("{userId}/sell")]
-        //public async Task<IActionResult> SellStock(Guid userId, [FromBody] TradeRequest request)
-        //{
-        //    TradeResult tradeResult = await _stockService.SellStockAsync(userId, request.Symbol, request.Quantity);
-
-        //    return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
-        //}
-        //[HttpPost("{userId}/short")]
-        //public async Task<IActionResult> ShortStock(Guid userId, [FromBody] TradeRequest request)
-        //{
-        //    TradeResult tradeResult = await _stockService.ShortStockAsync(userId, request.Symbol, request.Quantity);
-
-        //    return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
-        //}
-        //[HttpPost("{userId}/close-short")]
-        //public async Task<IActionResult> CloseShort(Guid userId, [FromBody] TradeRequest request)
-        //{
-        //    TradeResult tradeResult = await _stockService.CloseShortAsync(userId, request.Symbol, request.Quantity);
-
-        //    return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
-        //}
+        
     }
 }
 

@@ -17,7 +17,7 @@ public class HangfireTaskScheduler
         // Schedule the market value update at market close (8:00 PM UTC)
         RecurringJob.AddOrUpdate<PortfolioService>(
             "market-close-job", // Unique job ID
-            service => service.UpdateMarketValuesForAllUsersAsync(),
+            service => service.UpdateTotalValuesForAllUsersAsync(),
             "0 20 * * *"); // Cron expression for 8:00 PM UTC
     }
 }

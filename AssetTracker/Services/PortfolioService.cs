@@ -230,14 +230,15 @@ namespace AssetTracker.Services
         }
 
         // Method to update market values once a day for all users
-        public async Task UpdateMarketValuesForAllUsersAsync()
+        public async Task UpdateTotalValuesForAllUsersAsync()
         {
             var users = await _portfolioRepository.GetAllUserIdsAsync(); // Assuming you have a method to get all user IDs
 
             foreach (var userId in users)
             {
-                var marketValue = await GetCurrentMarketValue(userId);
-                await StoreTotalValueAsync(userId, marketValue);
+                //var marketValue = await GetCurrentMarketValue(userId);
+                var totalValue = await GetCurrentTotalValue(userId);
+                await StoreTotalValueAsync(userId, totalValue);
             }
         }
 

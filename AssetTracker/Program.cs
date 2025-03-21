@@ -104,8 +104,6 @@ builder.Services.AddSingleton(mongoDatabase);
 
 //var certFilePath = builder.Configuration["Kestrel:Endpoints:Https:Certificate:Path"];
 
-//var certFilePath = "/https/aspnetapp.pfx";
-//var certPassword = "some.long.password.fllkwefiwejf23049uwlekjf.sEFWEFGR98^&$";
 var certFilePath = builder.Configuration["Cert:Path"];
 var certPassword = builder.Configuration["Cert:Password"];
 
