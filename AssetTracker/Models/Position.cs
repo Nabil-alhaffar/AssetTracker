@@ -25,10 +25,11 @@ namespace AssetTracker.Models
         public decimal PositionRatio { get; private set; }
         public decimal CurrentPrice { get; set; } // Store real-time price here
         public decimal MarketValue => Quantity * CurrentPrice;
-      
+        public decimal TotalCost  => AveragePurchasePrice * Quantity;
+
         public void ComputePositionRatio(decimal totalPortfolioValue)
         {
-            PositionRatio = totalPortfolioValue > 0 ? MarketValue / totalPortfolioValue : 0;
+            PositionRatio = totalPortfolioValue > 0 ? Math.Abs(MarketValue) / totalPortfolioValue : 0;
         }
         //public Stock Stock { get; set; }
         //public Guid PortfolioId { get; set; }

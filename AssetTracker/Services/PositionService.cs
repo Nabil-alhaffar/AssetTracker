@@ -119,11 +119,13 @@ namespace AssetTracker.Services
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
             var position = portfolio.Positions.FirstOrDefault(p => p.Key == symbol).Value;
-
             if (position != null)
             {
                 // Get the current price from stock service
                 decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
+                position.CurrentPrice = currentPrice;
+                var pnl = await GetPositionPnL(position);
+
                 _logger.LogInformation($"Fetched price for {symbol}: {currentPrice}");
 
                 // Create and return PositionSummary
@@ -133,12 +135,46 @@ namespace AssetTracker.Services
                     Symbol = position.Symbol,
                     Quantity = position.Quantity,
                     AveragePurchasePrice = position.AveragePurchasePrice,
-                    CurrentPrice = currentPrice
-                    
-    };
+                    CurrentPrice = currentPrice,
+                    OpenPNL = pnl.PNLValue,
+                    OpenPNLPercentage = pnl.PNLPercentage
+
+                };
             }
 
             return null; // Return null if position not found
+        }
+        private async Task<PnL> GetPositionPnL (Position position)
+        {
+            decimal openPNL = 0;
+
+            decimal currentPrice = position.CurrentPrice; // Fetch current market price for the symbol
+            decimal averageEntryPrice = position.AveragePurchasePrice;
+            decimal quantity = position.Quantity;
+
+            if (position.Type == Position.PositionType.Long) // Long position
+            {
+                openPNL += (currentPrice - averageEntryPrice) * quantity;
+            }
+            else if (position.Type == Position.PositionType.Short) // Short position
+            {
+                openPNL += (averageEntryPrice - currentPrice) * Math.Abs(quantity);
+            }
+
+
+            decimal openPnlPercentage = 0;
+            // Calculate OpenReturnPercentage
+
+            if (position.TotalCost != 0)
+            {
+                openPnlPercentage = (openPNL / Math.Abs(position.TotalCost)) * 100;
+            }
+
+            return new PnL
+            {
+                PNLValue = openPNL,
+                PNLPercentage = openPnlPercentage,
+            };
         }
 
         public async Task<Position> GetPositionAsync(Guid userId, string symbol)

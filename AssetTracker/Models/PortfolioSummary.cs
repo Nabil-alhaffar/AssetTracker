@@ -3,10 +3,14 @@ namespace AssetTracker.Models
 {
     public sealed record PortfolioSummary
     {
-        public decimal TotalMarketValue { get; set; }
-        public decimal TotalCost { get; set; }
-        public decimal PNL { get; set; }
-        public decimal ReturnPercentage { get; set; }
+        public decimal MarketValue { get; set; }
+        public decimal Cost { get; set; }
+        public decimal NetAccountValue { get; set; }
+        public decimal CashBalance { get; set; }
+        public decimal DayPNL { get; set; }
+        public decimal DayReturnPercentage { get; set; }
+        public decimal OpenPNL { get; set; }
+        public decimal OpenReturnPercentage { get; set; }
     }
 
 

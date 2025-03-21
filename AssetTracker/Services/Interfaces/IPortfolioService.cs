@@ -17,6 +17,8 @@ namespace AssetTracker.Services.Interfaces
         Task<Dictionary<string, Position>> GetPortfolioPositionsAsync(Guid userId);
         Task<Portfolio> GetUserPortfolioAsync(Guid userId);
         public Task UpdateTotalValuesForAllUsersAsync();
+        public Task UpdatePortfolioForAllUsersAsync();
+        public Task UpdatePortfolioByUserId(Guid userId);
 
         //Task<ICollection<Position>> GetAllPositionsAsync(Guid userId);
         //Task AddPositionToPortfolioAsync(Position position, Guid userId);

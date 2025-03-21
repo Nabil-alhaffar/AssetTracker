@@ -37,11 +37,13 @@ namespace AssetTracker.Controllers
                 return Ok(new
                 {
                     message = "Portfolio summary retrieved.",
-                    totalMarketValue = portfolioSummary.TotalMarketValue,
-                    totalCost = portfolioSummary.TotalCost,
-                    TotalReturns = portfolioSummary.PNL,
-                    returnPercentage = portfolioSummary.ReturnPercentage
-                });
+                    totalMarketValue = portfolioSummary.MarketValue,
+                    totalCost = portfolioSummary.Cost,
+                    OpenPnL = portfolioSummary.OpenPNL,
+                    PercentagePnL = portfolioSummary.OpenReturnPercentage,
+                    TotalReturns = portfolioSummary.DayPNL,
+                    returnPercentage = portfolioSummary.DayReturnPercentage
+                }) ;
             }
             catch (Exception err) {
 
@@ -166,6 +168,20 @@ namespace AssetTracker.Controllers
             {
                 return NotFound(new { message = "Portfolio not found." });
 
+            }
+        }
+
+        [HttpPost("UpdatePortfolio/{userId}")]
+        public async Task<IActionResult> UpdatePortfolioByUserId(Guid userId)
+        {
+            try
+            {
+                await _portfolioService.UpdatePortfolioByUserId(userId);
+                return Ok(new { message = "Portfolio updated successfully." });
+            }
+            catch
+            {
+                return NotFound(new { message = "Portfolio not found." });
             }
         }
 

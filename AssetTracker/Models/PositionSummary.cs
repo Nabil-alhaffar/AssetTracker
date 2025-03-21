@@ -14,7 +14,8 @@ namespace AssetTracker.Models
         public decimal CurrentPrice { get; set; }
         public decimal MarketValue => CurrentPrice * Quantity;
         public decimal TotalCost => AveragePurchasePrice * Quantity;
-        public decimal PNL => MarketValue - TotalCost; // Profit or Loss
+        public decimal OpenPNL { get; set; } // Profit or Loss
+        public decimal OpenPNLPercentage { get; set; }
     }
 }
 
