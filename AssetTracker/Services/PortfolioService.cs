@@ -89,7 +89,7 @@ namespace AssetTracker.Services
             decimal openReturnPercentage = 0;
             if (totalCostOfOpenPositions != 0)
             {
-                openReturnPercentage = (openPNL / totalCostOfOpenPositions) * 100;
+                openReturnPercentage = (openPNL / Math.Abs(totalCostOfOpenPositions)) * 100;
             }
             return new PnL { PNLValue = openPNL, PNLPercentage = openReturnPercentage };
         }

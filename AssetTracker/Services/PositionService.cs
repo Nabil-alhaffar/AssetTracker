@@ -122,11 +122,11 @@ namespace AssetTracker.Services
             if (position != null)
             {
                 // Get the current price from stock service
-                decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
-                position.CurrentPrice = currentPrice;
+                //decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(symbol);
+                //position.CurrentPrice = currentPrice;
                 var pnl = await GetPositionPnL(position);
 
-                _logger.LogInformation($"Fetched price for {symbol}: {currentPrice}");
+                //_logger.LogInformation($"Fetched price for {symbol}: {currentPrice}");
 
                 // Create and return PositionSummary
                 return new PositionSummary
@@ -135,7 +135,7 @@ namespace AssetTracker.Services
                     Symbol = position.Symbol,
                     Quantity = position.Quantity,
                     AveragePurchasePrice = position.AveragePurchasePrice,
-                    CurrentPrice = currentPrice,
+                    CurrentPrice = position.CurrentPrice,
                     OpenPNL = pnl.PNLValue,
                     OpenPNLPercentage = pnl.PNLPercentage
 

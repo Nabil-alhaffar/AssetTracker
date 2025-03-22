@@ -80,7 +80,7 @@ else
 builder.Services.AddHostedService<AlpacaStockMarketService>();
 
 // Register Stock Market Services
-//builder.Services.AddSingleton<IAlpacaStockMarketService, AlpacaStockMarketService>();
+builder.Services.AddSingleton<IAlpacaStockMarketService, AlpacaStockMarketService>();
 builder.Services.AddSingleton<IAlphaVantageStockMarketService, AlphaVantageStockMarketService>();
 
 // Register Application Services

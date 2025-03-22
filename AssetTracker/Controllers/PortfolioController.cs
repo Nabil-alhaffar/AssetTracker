@@ -39,10 +39,13 @@ namespace AssetTracker.Controllers
                     message = "Portfolio summary retrieved.",
                     totalMarketValue = portfolioSummary.MarketValue,
                     totalCost = portfolioSummary.Cost,
-                    OpenPnL = portfolioSummary.OpenPNL,
-                    PercentagePnL = portfolioSummary.OpenReturnPercentage,
-                    TotalReturns = portfolioSummary.DayPNL,
-                    returnPercentage = portfolioSummary.DayReturnPercentage
+                    totalNetValue = portfolioSummary.NetAccountValue,
+                    openPnL = portfolioSummary.OpenPNL,
+                    percentagePnL = portfolioSummary.OpenReturnPercentage,
+                    dayPnL = portfolioSummary.DayPNL,
+                    dayPercentagePnL = portfolioSummary.DayReturnPercentage,
+
+
                 }) ;
             }
             catch (Exception err) {
