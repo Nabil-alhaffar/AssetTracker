@@ -25,6 +25,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.HttpsPolicy;
 using System.Runtime.ConstrainedExecution;
+using Hangfire.Dashboard.BasicAuthorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -264,7 +265,26 @@ if (app.Environment.IsDevelopment())
 
 }
 
-app.UseHangfireDashboard("/hangfire");
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new BasicAuthAuthorizationFilter(
+                    new BasicAuthAuthorizationFilterOptions
+                    {
+                        RequireSsl = false,
+                        SslRedirect = false,
+                        LoginCaseSensitive = true,
+                        Users = new[]
+                        {
+                            new BasicAuthAuthorizationUser
+                            {
+                                Login = "Admin",
+                                PasswordClear = builder.Configuration["Hangfire:Password"]
+
+                            }
+                        }
+                    }) }
+});
 
 var hangfireTaskScheduler = app.Services.GetRequiredService<HangfireTaskScheduler>();
 hangfireTaskScheduler.Configure();

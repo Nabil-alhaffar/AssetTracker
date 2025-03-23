@@ -17,17 +17,6 @@ namespace AssetTracker.Controllers
             _userService = userService;
         }
 
-        //[HttpPost("Create")]
-        //public async Task<IActionResult> CreateUser([FromBody] User user)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
-
-        //    await _userService.AddUserAsync(user);
-        //    return Ok("User created successfully");
-        //}
 
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUser(Guid userId)
