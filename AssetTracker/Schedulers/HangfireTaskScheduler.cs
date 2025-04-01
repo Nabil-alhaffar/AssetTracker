@@ -13,18 +13,17 @@ public class HangfireTaskScheduler
     public void Configure()
     {
         _logger.LogInformation("Scheduling recurring tasks...");
-
-        // Schedule the market value update twenty mins after market close (8:20 PM UTC)
-        // Step 1: Update portfolio first at 8:20 AM and 8:20 PM UTC
+        // Schedule the market value update thirty mins after market close (8:30 PM UTC)
+        // Step 1: Update portfolio first at 8:30 AM and 8:30 PM UTC
         RecurringJob.AddOrUpdate<PortfolioService>(
-        "twice-daily-portfolio-update",
-        service => service.UpdatePortfolioForAllUsersAsync(),
-        "20 8,20 * * *"); // Runs daily at 8:20 AM & 8:20 PM UTC
+            "twice-daily-portfolio-update",
+            service => service.UpdatePortfolioForAllUsersAsync(),
+            "30 8,20 * * *"); // Runs daily at 8:30 AM & 8:30 PM UTC
 
-        // Step 2: Update total values AFTER the evening portfolio update (8:25 PM UTC)
+        // Step 2: Update total values AFTER the evening portfolio update (8:35 PM UTC)
         RecurringJob.AddOrUpdate<PortfolioService>(
             "market-close-job",
             service => service.UpdateTotalValuesForAllUsersAsync(),
-            "25 20 * * *"); // Runs daily at 8:25 PM UTC
+            "35 20 * * *"); // Runs daily at 8:35 PM UTC
     }
 }
