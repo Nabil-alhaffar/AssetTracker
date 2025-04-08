@@ -26,4 +26,4 @@ public class HangfireTaskScheduler
             service => service.UpdateTotalValuesForAllUsersAsync(),
             "35 20 * * *"); // Runs daily at 8:35 PM UTC
     }
-}
+}       

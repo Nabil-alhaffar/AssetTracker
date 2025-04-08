@@ -36,6 +36,7 @@ namespace AssetTracker.Controllers
             return Ok(new { count = users.Count(), users });
 
         }
+
     }   
 }
 

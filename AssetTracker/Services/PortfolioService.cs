@@ -246,15 +246,15 @@ namespace AssetTracker.Services
             if (userId == null)
                 throw new ArgumentException(nameof(userId), "userId cannot be null.");
 
-            decimal totalMarketValue = await GetCurrentMarketValue(userId);
+            //decimal totalMarketValue = await GetCurrentMarketValue(userId);
             var positions = await _portfolioRepository.GetPositionsByUserId(userId);
-            foreach (var position in positions.Values)
-            {
-                // Fetch current price (replace with actual data fetching logic)
-                decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(position.Symbol);
-                position.CurrentPrice = currentPrice;
-                position.ComputePositionRatio(totalMarketValue);
-            }
+            //foreach (var position in positions.Values)
+            //{
+            //    // Fetch current price (replace with actual data fetching logic)
+            //    //decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(position.Symbol);
+            //    position.CurrentPrice = currentPrice;
+            //    position.ComputePositionRatio(totalMarketValue);
+            //}
             return positions;
         }
         public async Task UpdatePortfolioForAllUsersAsync()

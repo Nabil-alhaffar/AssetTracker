@@ -51,6 +51,15 @@ namespace AssetTracker.Repositories.MongoDBRepositories
             }
             return user;
         }
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            var user = await _userCollection.Find(u => u.Email == email).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+            return user;
+        }
 
         // Retrieve all users
         public async Task<IEnumerable<User>> GetUsersAsync()

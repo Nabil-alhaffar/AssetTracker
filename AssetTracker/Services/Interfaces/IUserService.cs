@@ -11,6 +11,10 @@ namespace AssetTracker.Services.Interfaces
         Task RemoveUsersAsync(Guid userId);
         public Task<User> AuthenticateUserAsync(string username, string password);
         public Task RegisterUserAsync(User user, string password);
+        public Task ResetPassword(Guid userId, string newPassword);
+        public Task ResetEmail(Guid userId, string newEmail);
+        public Task ResetUsername(Guid userId, string newUsername);
+
 
 
     }

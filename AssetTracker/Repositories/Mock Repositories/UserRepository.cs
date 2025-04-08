@@ -50,6 +50,17 @@ namespace AssetTracker.Repositories.MockRepositories
 
             throw new InvalidOperationException("User not found.");  // Handle user not found
         }
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            var user = _users.Values.FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+
+            if (user != null)
+            {
+                return await Task.FromResult(user);  // Return user if found
+            }
+
+            throw new InvalidOperationException("User not found.");  // Handle user not found
+        }
         // Retrieve all users
         public async Task<IEnumerable<User>> GetUsersAsync()
         {

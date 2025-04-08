@@ -7,11 +7,12 @@ namespace AssetTracker.Repositories.Interfaces
 
 		Task<User> GetUserByIDAsync(Guid userId);
 		Task<User> GetUserByUsernameAsync(string username);
-		Task<IEnumerable<User>> GetUsersAsync();
+        Task<User> GetUserByEmailAsync(string email);
+        Task<IEnumerable<User>> GetUsersAsync();
 		Task AddUserAsync(User user);
 		Task UpdateUserAsync(User user);
 		Task RemoveUserAsync(Guid userId);
 
-	}
+    }
 }
 
