@@ -200,6 +200,7 @@ namespace AssetTracker.Services
                     Symbol = order.Symbol,
                     Quantity = order.Type == OrderType.Short ? -order.Quantity : order.Quantity,
                     AveragePurchasePrice = order.Price,
+                    CurrentPrice = order.Price,
                     Type = order.Type == OrderType.Short ? PositionType.Short : PositionType.Long
                 };
                 portfolio.Positions.Add(order.Symbol, position);
