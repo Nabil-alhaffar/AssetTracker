@@ -209,6 +209,21 @@ namespace AssetTracker.Services
 
             return totalCost;
         }
+        public async Task<Position> GetUserPositionBySymbol(Guid userId, string symbol)
+        {
+            ;
+            try
+            {
+                var position = await _portfolioRepository.GetUserPositionBySymbol(userId, symbol);
+                return position;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error fetching position: ", ex);
+            }
+
+        }
+
 
         // Update available funds in the portfolio (e.g., deposit/withdraw funds)
         public async Task UpdateAvailableFundsAsync(Guid userId, decimal additionalAmount)
