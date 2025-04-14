@@ -119,7 +119,7 @@ namespace AssetTracker.Services
                 throw new ArgumentException("User not found.");
             
             if (string.IsNullOrEmpty(newEmail))
-                throw new ArgumentException("Password cannot be empty.");
+                throw new ArgumentException("New email cannot be empty.");
 
             var emailValidator = new EmailAddressAttribute();
             if (!emailValidator.IsValid(newEmail))

@@ -133,6 +133,7 @@ namespace AssetTracker.Controllers
             }
         }
 
+
         [HttpPost("withdraw-funds/{userId}")]
         [Authorize]
         public async Task<IActionResult> WithdrawFunds(Guid userId, decimal withdrawAmount)
@@ -158,6 +159,20 @@ namespace AssetTracker.Controllers
 
             }
         }
+        [HttpGet("Positions/{userId}/{symbol}")]
+        public async Task<IActionResult> GetPositionBySymbol(Guid userId, string symbol)
+        {
+            try
+            {
+                var position = await _portfolioService.GetUserPositionBySymbol(userId, symbol);
+                return Ok(position);
+            }
+            catch(Exception ex)
+            {
+                return NotFound(new {message = $"Error fetching position: {ex}" });
+            }
+        }
+
         [HttpGet ("Positions/{userId}")]
         public async Task<IActionResult> GetPortfolioPositionsByUserId(Guid userId)
         {
