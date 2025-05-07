@@ -187,65 +187,83 @@ namespace AssetTracker.Services
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(order.UserId);
             if (portfolio == null)
-                throw new Exception("Portfolio not found");
+                throw new KeyNotFoundException($"No portfolio found for user {order.UserId}");
 
-            var position = portfolio.Positions.FirstOrDefault(p => p.Key == order.Symbol).Value;
-
-            if (position == null)
+            var positions = portfolio.Positions;
+            // 2) Try to get existing position
+            if (!positions.TryGetValue(order.Symbol, out var position))
             {
-                // Create a new position with the appropriate type (Long or Short)
+                // 2a) If no position exists, only Buy or Short can create one
+                if (order.Type == OrderType.Sell || order.Type == OrderType.CloseShort)
+                    throw new InvalidOperationException($"Cannot {order.Type} when no existing {order.Symbol} position.");
+
+                var qty = (order.Type == OrderType.Short ? -order.Quantity : order.Quantity);
                 position = new Position
                 {
                     UserId = order.UserId,
                     Symbol = order.Symbol,
-                    Quantity = order.Type == OrderType.Short ? -order.Quantity : order.Quantity,
+                    Quantity = qty,
                     AveragePurchasePrice = order.Price,
                     CurrentPrice = order.Price,
-                    Type = order.Type == OrderType.Short ? PositionType.Short : PositionType.Long
+                    Type = order.Type == OrderType.Short
+                                           ? PositionType.Short
+                                           : PositionType.Long
                 };
-                portfolio.Positions.Add(order.Symbol, position);
+                positions[order.Symbol] = position;
             }
             else
             {
-                // Modify existing position
+                // 3) Existing position: enforce exclusivity
                 if (position.Type == PositionType.Short && order.Type == OrderType.Buy)
-                {
-                    throw new InvalidOperationException("Cannot buy long while holding a short position. Close the short position first.");
-                }
+                    throw new InvalidOperationException("Must close short before buying long.");
                 if (position.Type == PositionType.Long && order.Type == OrderType.Short)
+                    throw new InvalidOperationException("Must sell long before shorting.");
+
+                // 4) Apply the fill
+                switch (order.Type)
                 {
-                    throw new InvalidOperationException("Cannot short sell while holding a long position. Sell the long position first.");
+                    case OrderType.Buy:
+                        // increase long
+                        position.AveragePurchasePrice =
+                            ((position.AveragePurchasePrice * position.Quantity)
+                             + (order.Price * order.Quantity))
+                            / (position.Quantity + order.Quantity);
+                        position.Quantity += order.Quantity;
+                        break;
+
+                    case OrderType.Sell:
+                        // decrease long
+                        position.Quantity -= order.Quantity;
+                        break;
+
+                    case OrderType.Short:
+                        // increase short (more negative)
+                        position.AveragePurchasePrice =
+                            ((Math.Abs(position.Quantity) * position.AveragePurchasePrice)
+                             + (order.Price * order.Quantity))
+                            / (Math.Abs(position.Quantity) + order.Quantity);
+                        position.Quantity -= order.Quantity;  // e.g. from 0 to -100
+                        break;
+
+                    case OrderType.CloseShort:
+                        // decrease short (less negative)
+                        position.Quantity += order.Quantity;  // e.g. from -100 to -70
+                        break;
                 }
 
-                decimal newQuantity;
-                if (order.Type == OrderType.Sell && position.Type == PositionType.Long)
+                // 5) If fully closed, remove; otherwise update cost/current price
+                if (position.Quantity == 0)
                 {
-                    // Selling long position, reduce the quantity
-                    newQuantity = position.Quantity - order.Quantity;
-                }
-                else if (order.Type == OrderType.CloseShort && position.Type == PositionType.Short)
-                {
-                    // Closing short position, add the quantity back to the short position
-                    newQuantity = position.Quantity + order.Quantity;
+                    positions.Remove(order.Symbol);
                 }
                 else
                 {
-                    newQuantity = position.Quantity + (position.Type == PositionType.Short ? -order.Quantity : order.Quantity);
-                }
-
-
-
-                if (newQuantity == 0)
-                {
-                    portfolio.Positions.Remove(order.Symbol); // Position closed
-                }
-                else
-                {
-                    position.AveragePurchasePrice = ((position.AveragePurchasePrice * Math.Abs(position.Quantity)) + (order.Price * order.Quantity)) / Math.Abs(newQuantity);
-                    position.Quantity = newQuantity;
+                    position.CurrentPrice = order.Price;
+                    // AveragePurchasePrice was only recalculated in the two “adding” cases
                 }
             }
 
+            // 6) Persist
             await _portfolioRepository.UpdatePortfolioAsync(portfolio);
 
             // ✅ Determine action type for history logging

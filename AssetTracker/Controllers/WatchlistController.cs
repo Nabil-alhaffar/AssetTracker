@@ -24,10 +24,10 @@ namespace AssetTracker.Controllers
             try
             {
                 var watchlists = await _watchlistService.GetUserWatchlistsAsync(userId);
-                if (watchlists == null || watchlists.Count == 0)
-                {
-                    return NotFound(new { message = "No watchlists found for the given user." });
-                }
+                //if (watchlists == null || watchlists.Count == 0)
+                //{
+                //    return NotFound(new { message = "No watchlists found for the given user." });
+                //}
 
                 return Ok(watchlists);
             }
