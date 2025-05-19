@@ -36,6 +36,8 @@
     <None Remove="Services\Interfaces\" />
     <None Remove="Schedulers\" />
     <None Remove="Helpers\" />
+    <None Remove="Models\MarketDataUpdates\" />
+    <None Remove="SignalR\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -48,5 +50,7 @@
     <Folder Include="Services\Interfaces\" />
     <Folder Include="Schedulers\" />
     <Folder Include="Helpers\" />
+    <Folder Include="Models\MarketDataUpdates\" />
+    <Folder Include="SignalR\" />
   </ItemGroup>
 </Project>

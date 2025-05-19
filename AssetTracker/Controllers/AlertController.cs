@@ -50,7 +50,7 @@
 //        }
 //        catch (Exception ex)
 //        {
-//            Console.WriteLine($"❌ Error fetching alerts: {ex.Message}");
+//            Console.WriteLine($"Error fetching alerts: {ex.Message}");
 //            return StatusCode(500, new { error = "Failed to retrieve alerts." });
 //        }
 //    }
@@ -74,7 +74,7 @@
 //        }
 //        catch (Exception ex)
 //        {
-//            Console.WriteLine($"❌ Error checking alerts: {ex.Message}");
+//            Console.WriteLine($" Error checking alerts: {ex.Message}");
 //            return StatusCode(500, new { error = "An error occurred while checking alerts." });
 //        }
 //    }

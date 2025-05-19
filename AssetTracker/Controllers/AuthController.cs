@@ -75,9 +75,12 @@ namespace AssetTracker.Controllers
                 {
                     message = "Login successful",
                     userId = user.UserId,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    email = user.Email,
                     //sessionId = sessionId,  // Add session ID to the response
                     token = token           // Include JWT token for further requests
-                });
+                }) ;
             }
             catch (UnauthorizedAccessException)
             {

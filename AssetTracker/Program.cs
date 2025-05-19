@@ -94,6 +94,11 @@ builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
 
+builder.Services.AddSingleton<AlpacaWebSocketService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<AlpacaWebSocketService>());
+builder.Services.AddSignalR();
+
+
 // MongoDB Configuration
 var mongoDbConnectionString = builder.Configuration["MongoDB:ConnectionString"];
 var mongoClient = new MongoClient(mongoDbConnectionString);
@@ -256,6 +261,7 @@ builder.Services.AddCors(options =>
 });
 // Build Application
 var app = builder.Build();
+app.UseRouting();
 
 // Configure Middleware
 if (app.Environment.IsDevelopment())
@@ -297,5 +303,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapHub<MarketDataHub>("/hubs/marketdata");
+});
+
 app.Run();
 

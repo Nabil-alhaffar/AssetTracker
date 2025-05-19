@@ -25,7 +25,9 @@ namespace AssetTracker.Models
         public decimal Quantity { get; set; }
 
         public decimal Price { get; set; }
+
         public OrderType Type { get; set; }
+
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 

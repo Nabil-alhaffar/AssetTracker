@@ -19,16 +19,7 @@ namespace AssetTracker.Controllers
             _positionService = positionService;
 
         }
-        //public async Task<IActionResult> UpdatePositionAsync(int userId, string symbol, [FromBody] PositionUpdateRequest request)
-        //{
-        //    if (request == null)
-        //        return BadRequest("Request data is required.");
-
-        //    // Call the service to update the position
-        //    await _positionService.UpdatePositionAsync(userId, symbol, request.AdditionalQuantity, request.PurchasePrice);
-
-        //    return Ok("Position updated successfully.");
-        //}
+    
         [HttpPut("{userId}/split/{symbol}")]
         public async Task<IActionResult> SplitPositionAsync(Guid userId, string symbol, int splitFactor)
         {
@@ -73,67 +64,8 @@ namespace AssetTracker.Controllers
             {
                 return BadRequest("Position Summary was not retrieved: "+ e.Message);
             }
-            //[HttpGet("all")]
-            //public async Task<ActionResult> GetAllPositionsAsync()
-            //{
-            //    try
-            //    {
-            //        var positions = await _positionService.GetAllPositionsAsync();
-            //        return Ok(positions);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return BadRequest(ex.Message); // Handle errors gracefully
-            //    }
-            //}
-
-            //[HttpGet("{symbol}")]
-            //public async Task<ActionResult> GetPositionBySymbolAsync(string symbol)
-            //{
-            //    try
-            //    {
-            //        var position = await _positionService.GetPositionAsync(symbol);
-            //        if (position == null)
-            //        {
-            //            return NotFound("Position not found");
-            //        }
-            //        return Ok(position);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return BadRequest(ex.Message); // Handle errors gracefully
-            //    }
-            //}
-
-            //[HttpPost("add")]
-            //public async Task<ActionResult> AddPositionAsync([FromBody] Position position)
-            //{
-            //    try
-            //    {
-            //        await _positionService.AddPositionAsync(position);
-            //        return Ok("Position added successfully");
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return BadRequest(ex.Message); // Handle errors gracefully
-            //    }
-            //}
-
-            //    [HttpDelete("remove/{symbol}")]
-            //    public async Task<ActionResult> RemovePositionAsync(string symbol)
-            //    {
-            //        try
-            //        {
-            //            await _positionService.RemovePositionAsync(symbol);
-            //            return Ok("Position removed successfully");
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            return BadRequest(ex.Message); // Handle errors gracefully
-            //        }
-            //    }
-            }
-
         }
+
     }
+}
 
