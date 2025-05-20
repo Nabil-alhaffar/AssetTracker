@@ -146,7 +146,7 @@ public class AlpacaWebSocketService : BackgroundService  , IDisposable
         var currentSubscriptions = _subscribedSymbols.Keys.ToList();
         _subscribedSymbols.Clear(); // Clear so SubscribeAsync will re-send
 
-        foreach (var key in _subscribedSymbols.Keys)
+        foreach (var key in currentSubscriptions)
         {
             var parts = key.Split('_');
             if (parts.Length != 2) continue;
@@ -160,57 +160,3 @@ public class AlpacaWebSocketService : BackgroundService  , IDisposable
 
 }
 
-/*using Microsoft.Extensions.Hosting;
- * using System.Net.WebSockets;
- * using System.Text; using System.Text.Json; 
- * using System.Collections.Concurrent;  
- * public class AlpacaWebSocketService : BackgroundService
- * {     private readonly ClientWebSocket _socket = new();     private const string Url = "wss://stream.data.alpaca.markets/v2/iex";
- * private readonly string _apiKey;     
- * private readonly string _apiSecret;     
- * private readonly ConcurrentDictionary<string, byte> _subscribedSymbols = new(); // prevent duplicates 
- * private readonly SemaphoreSlim _sendLock = new(1, 1);
- * public AlpacaWebSocketService(IConfiguration config)     {     
- * _apiKey = config["Alpaca:ApiKey"];     
- * _apiSecret = config["Alpaca:ApiSecret"];
- * } 
- * protected override async Task ExecuteAsync(CancellationToken stoppingToken)  
- * {         await _socket.ConnectAsync(new Uri(Url), stoppingToken);       
- * // Authenticate         var authMsg = JsonSerializer.Serialize(new       
- * {             action = "auth",             key = _apiKey,             secret = _apiSecret         });
- * await SendMessageAsync(authMsg);      
- * // Initial subscriptions (optional/static) 
- * await SubscribeAsync("AAPL");   
- * await SubscribeAsync("AMD", isQuote: true);
- * await SubscribeAsync("*", isBar: true);       
- * var buffer = new byte[8192];         
- * while (!stoppingToken.IsCancellationRequested)   
- * {             var result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), stoppingToken);    
- * if (result.MessageType == WebSocketMessageType.Close)   
- * break;           
- * var message = Encoding.UTF8.GetString(buffer, 0, result.Count); 
- * Console.WriteLine("Received: " + message);       
- * // Optionally: Forward to SignalR or another handler
- * }     }
- * public async Task SubscribeAsync(string symbol, bool isQuote = false, bool isBar = false) 
- * {         if (string.IsNullOrWhiteSpace(symbol)) return; 
- * var key = $"{(isQuote ? "Q" : isBar ? "B" : "T")}_{symbol.ToUpper()}";    
- * if (!_subscribedSymbols.TryAdd(key, 0))       
- * return; // already subscribed
- * var subscribeMsg = JsonSerializer.Serialize(new         {             action = "subscribe", 
- * trades = isQuote || isBar ? null : new[] { symbol },   
- * quotes = isQuote ? new[] { symbol } : null,           
- * bars = isBar ? new[] { symbol } : null         });  
- * await SendMessageAsync(subscribeMsg);   
- * Console.WriteLine($"Subscribed to {key}");   
- * 
- * }      
- * private async Task SendMessageAsync(string message)   
- * {         var bytes = Encoding.UTF8.GetBytes(message);       
- * await _sendLock.WaitAsync();     
- * try         {             
- * await _socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);   
- * }         finally
- * {             _sendLock.Release();  
- * }    
- * } }  */
