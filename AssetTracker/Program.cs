@@ -78,7 +78,7 @@ else
 }
 
 // Register Hosted Services
-builder.Services.AddHostedService<AlpacaStockMarketService>();
+//builder.Services.AddHostedService<AlpacaStockMarketService>();
 
 // Register Stock Market Services
 builder.Services.AddSingleton<IAlpacaStockMarketService, AlpacaStockMarketService>();
