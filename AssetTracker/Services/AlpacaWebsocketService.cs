@@ -145,6 +145,21 @@ public class AlpacaWebSocketService : BackgroundService  , IDisposable
         await SendMessageAsync(subscribeMsg);
     }
 
+    public async Task SubscribeToAllAsync(string symbol)
+    {
+        await SubscribeAsync(symbol);                      // Trades
+        await SubscribeAsync(symbol, isQuote: true);       // Quotes
+        await SubscribeAsync(symbol, isBar: true);         // Bars
+    }
+    public Task SubscribeToTradesAsync(string symbol) => SubscribeAsync(symbol);
+
+    public Task SubscribeToQuotesAsync(string symbol) => SubscribeAsync(symbol, isQuote: true);
+
+    public Task SubscribeToBarsAsync(string symbol) => SubscribeAsync(symbol, isBar: true);
+
+
+
+
     private async Task SendMessageAsync(string message)
     {
         if (_socket == null || _socket.State != WebSocketState.Open)
@@ -175,6 +190,37 @@ public class AlpacaWebSocketService : BackgroundService  , IDisposable
 
             await SubscribeAsync(symbol, isQuote: type == "Q", isBar: type == "B");
         }
+    }
+
+
+    public async Task UnsubscribeAsync(string symbol, bool isQuote = false, bool isBar = false)
+    {
+        if (string.IsNullOrWhiteSpace(symbol)) return;
+
+        var key = $"{(isQuote ? "Q" : isBar ? "B" : "T")}_{symbol.ToUpper()}";
+        if (!_subscribedSymbols.TryRemove(key, out _)) return;
+
+        var unsubscribeMsg = JsonSerializer.Serialize(new
+        {
+            action = "unsubscribe",
+            trades = !isQuote && !isBar ? new[] { symbol } : null,
+            quotes = isQuote ? new[] { symbol } : null,
+            bars = isBar ? new[] { symbol } : null
+        });
+
+        await SendMessageAsync(unsubscribeMsg);
+    }
+    public Task UnsubscribeFromTradesAsync(string symbol) => UnsubscribeAsync(symbol);
+
+    public Task UnsubscribeFromQuotesAsync(string symbol) => UnsubscribeAsync(symbol, isQuote: true);
+
+    public Task UnsubscribeFromBarsAsync(string symbol) => UnsubscribeAsync(symbol, isBar: true);
+
+    public async Task UnsubscribeFromAllAsync(string symbol)
+    {
+        await UnsubscribeFromTradesAsync(symbol);
+        await UnsubscribeFromQuotesAsync(symbol);
+        await UnsubscribeFromBarsAsync(symbol);
     }
 
 
