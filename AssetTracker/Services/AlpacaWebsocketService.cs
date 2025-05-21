@@ -64,32 +64,51 @@ public class AlpacaWebSocketService : BackgroundService  , IDisposable
                     var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     Console.WriteLine("Received: " + message);
 
-                    var messages = JsonSerializer.Deserialize<List<JsonElement>>(message);
-
-                    foreach (var msg in messages)
+                    try
                     {
-                        var type = msg.GetProperty("T").GetString();
-                        using var scope = _serviceProvider.CreateScope();
-                        var hub = scope.ServiceProvider.GetRequiredService<IHubContext<MarketDataHub>>();
-
-                        switch (type)
+                        var options = new JsonSerializerOptions
                         {
-                            case "t":
-                                var trade = JsonSerializer.Deserialize<TradeUpdate>(msg.GetRawText());
-                                _latestTrades[trade.Symbol] = trade;
-                                await hub.Clients.Group(trade.Symbol).SendAsync("ReceiveTrade", trade);
-                                break;
-                            case "q":
-                                var quote = JsonSerializer.Deserialize<QuoteUpdate>(msg.GetRawText());
-                                _latestQuotes[quote.Symbol] = quote;
-                                await hub.Clients.Group(quote.Symbol).SendAsync("ReceiveQuote", quote);
-                                break;
-                            case "b":
-                                var bar = JsonSerializer.Deserialize<BarUpdate>(msg.GetRawText());
-                                _latestBars[bar.Symbol] = bar;
-                                await hub.Clients.Group(bar.Symbol).SendAsync("ReceiveBar", bar);
-                                break;
+                            PropertyNameCaseInsensitive = false
+                        };
+                        var messages = JsonSerializer.Deserialize<List<JsonElement>>(message,options);
+          
+                        foreach (var msg in messages)
+                        {
+
+                            try
+                            {
+                                var type = msg.GetProperty("T").GetString();
+                                using var scope = _serviceProvider.CreateScope();
+                                var hub = scope.ServiceProvider.GetRequiredService<IHubContext<MarketDataHub>>();
+
+                                switch (type)
+                                {
+                                    case "t":
+                                        var trade = JsonSerializer.Deserialize<TradeUpdate>(msg.GetRawText(),options);
+                                        _latestTrades[trade.Symbol] = trade;
+                                        await hub.Clients.Group(trade.Symbol).SendAsync("ReceiveTrade", trade);
+                                        break;
+                                    case "q":
+                                        var quote = JsonSerializer.Deserialize<QuoteUpdate>(msg.GetRawText(),options);
+                                        _latestQuotes[quote.Symbol] = quote;
+                                        await hub.Clients.Group(quote.Symbol).SendAsync("ReceiveQuote", quote);
+                                        break;
+                                    case "b":
+                                        var bar = JsonSerializer.Deserialize<BarUpdate>(msg.GetRawText(), options);
+                                        _latestBars[bar.Symbol] = bar;
+                                        await hub.Clients.Group(bar.Symbol).SendAsync("ReceiveBar", bar);
+                                        break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error handling message: {msg}, Exception: {ex}");
+                            }
                         }
+                    }
+                    catch (JsonException ex)
+                    {
+                        Console.WriteLine($"JSON parse error: {ex.Message} - Raw message: {message}");
                     }
                 }
             }

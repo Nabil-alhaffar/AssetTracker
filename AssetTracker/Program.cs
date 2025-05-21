@@ -251,13 +251,14 @@ builder.Services.Configure<HttpsRedirectionOptions>(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .SetIsOriginAllowed(_ => true) 
+            .AllowCredentials();           
+    });
 });
 // Build Application
 var app = builder.Build();
@@ -297,8 +298,8 @@ hangfireTaskScheduler.Configure();
 
 
 
-app.UseCors("AllowAllOrigins");
-
+//app.UseCors("AllowAllOrigins");
+app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
