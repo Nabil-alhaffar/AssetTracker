@@ -96,8 +96,11 @@ builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
 
 builder.Services.AddSingleton<AlpacaWebSocketService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<AlpacaWebSocketService>());
-builder.Services.AddSignalR();
-
+builder.Services.AddSignalR().AddJsonProtocol(options =>
+{
+    options.PayloadSerializerOptions.PropertyNameCaseInsensitive = false;
+    options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 // MongoDB Configuration
 var mongoDbConnectionString = builder.Configuration["MongoDB:ConnectionString"];

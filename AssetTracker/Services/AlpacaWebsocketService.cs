@@ -98,6 +98,8 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
             }
                 
         }
+        if (_socketTask != null)
+            await _socketTask;
 
         _socketCts.Cancel();
 
@@ -164,17 +166,41 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
                             case "t":
                                 var trade = JsonSerializer.Deserialize<TradeUpdate>(msg.GetRawText(), options);
                                 _latestTrades[trade.Symbol] = trade;
-                                await hub.Clients.Group(trade.Symbol).SendAsync("ReceiveTrade", trade);
+                                try
+                                {
+                                    await hub.Clients.Group(trade.Symbol).SendAsync("ReceiveTrade", trade);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"SignalR trade send error: {ex}");
+                                }
                                 break;
                             case "q":
                                 var quote = JsonSerializer.Deserialize<QuoteUpdate>(msg.GetRawText(), options);
+
                                 _latestQuotes[quote.Symbol] = quote;
-                                await hub.Clients.Group(quote.Symbol).SendAsync("ReceiveQuote", quote);
+
+                                try
+                                {
+                                    await hub.Clients.Group(quote.Symbol).SendAsync("ReceiveQuote", quote);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"SignalR quote send error: {ex}");
+                                }
                                 break;
                             case "b":
                                 var bar = JsonSerializer.Deserialize<BarUpdate>(msg.GetRawText(), options);
                                 _latestBars[bar.Symbol] = bar;
-                                await hub.Clients.Group(bar.Symbol).SendAsync("ReceiveBar", bar);
+
+                                try
+                                {
+                                    await hub.Clients.Group(bar.Symbol).SendAsync("ReceiveBar", bar);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"SignalR bar send error: {ex}");
+                                }
                                 break;
                         }
 
