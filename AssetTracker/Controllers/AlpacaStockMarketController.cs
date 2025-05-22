@@ -23,6 +23,34 @@ namespace AssetTracker.Controllers
             _alpacaStockMarketService = alpacaStockMarketService;
             _logger = logger;
         }
+        [HttpPost("start")]
+        public async Task<IActionResult> Start()
+        {
+            var result = await _alpacaWebSocketService.StartSocketAsync();
+            return Ok(new { message = result ? "Socket started." : "Socket was already running." });
+        }
+
+        [HttpPost("stop")]
+        public async Task<IActionResult> Stop()
+        {
+            var result = await _alpacaWebSocketService.StopSocketAsync();
+            return Ok(new { message = result ? "Socket stopped." : "Socket was already stopped." });
+        }
+
+        [HttpPost("restart")]
+        public async Task<IActionResult> Restart()
+        {
+            await _alpacaWebSocketService.StopSocketAsync();
+            await Task.Delay(1000); // small delay to ensure cleanup
+            var result = await _alpacaWebSocketService.StartSocketAsync();
+            return Ok(new { message = result ? "Socket restarted." : "Failed to restart socket." });
+        }
+
+        [HttpGet("status")]
+        public IActionResult GetStatus()
+        {
+            return Ok(new { status = _alpacaWebSocketService._state.ToString() });
+        }
 
         [HttpPost("subscribe/all/{symbol}")]
         public async Task<IActionResult> SubscribeToStock(string symbol)
@@ -83,15 +111,16 @@ namespace AssetTracker.Controllers
 
             return Ok(new { bars });
         }
+
         [HttpGet("{symbol}/news")]
-        public async Task <IActionResult> GetNews (string symbol, int limit)
+        public async Task<IActionResult> GetNews(string symbol, int limit)
         {
-            var news = _alpacaStockMarketService.GetNewsAsync(symbol, limit);
-            if (news == null)
+            var news = await _alpacaStockMarketService.GetNewsAsync(symbol, limit);
+            if (news == null || !news.Any())
             {
-                return NotFound("news not found");
+                return NotFound("News not found.");
             }
-            return Ok(new {news});
+            return Ok(new { news });
         }
 
 
@@ -149,6 +178,13 @@ namespace AssetTracker.Controllers
         {
             await _alpacaWebSocketService.UnsubscribeFromBarsAsync(symbol);
             return Ok($"Unsubscribed from bars for {symbol}");
+        }
+
+        [HttpPost("disconnect")]
+        public async Task<IActionResult> Disconnect()
+        {
+            await _alpacaWebSocketService.DisconnectAsync();
+            return Ok($"Disconnect Successful.");
         }
     }
 }
