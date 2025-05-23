@@ -26,6 +26,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.HttpsPolicy;
 using System.Runtime.ConstrainedExecution;
 using Hangfire.Dashboard.BasicAuthorization;
+using AssetTracker.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,7 @@ builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
 
+builder.Services.AddSingleton<SymbolSubscriptionManager>();
 builder.Services.AddSingleton<AlpacaWebSocketService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<AlpacaWebSocketService>());
 builder.Services.AddSignalR().AddJsonProtocol(options =>

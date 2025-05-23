@@ -98,8 +98,6 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
             }
                 
         }
-        if (_socketTask != null)
-            await _socketTask;
 
         _socketCts.Cancel();
 

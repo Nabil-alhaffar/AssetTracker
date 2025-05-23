@@ -97,13 +97,13 @@ namespace AssetTracker.Controllers
                 return NotFound("Stock not found.");
             }
 
-            return Ok(new { snapshot});
+            return Ok(new { snapshot });
         }
 
         [HttpGet("{symbol}/historicaldata/{timeframe}")]
         public async Task<IActionResult> GetHistoricalBars(string symbol, string timeframe, [FromQuery] string start)
         {
-            var bars = await _alpacaStockMarketService.GetHistoricalBarsAsync(symbol,timeframe,start); // synchronous
+            var bars = await _alpacaStockMarketService.GetHistoricalBarsAsync(symbol, timeframe, start); // synchronous
             if (bars == null)
             {
                 return NotFound("bars not found.");
@@ -122,7 +122,19 @@ namespace AssetTracker.Controllers
             }
             return Ok(new { news });
         }
+        [HttpGet("most-actives")]
+        public async Task<IActionResult> GetMostActives()
+        {
+            var data = await _alpacaStockMarketService.GetMostActivesAsync();
+            return Ok(data);
+        }
 
+        [HttpGet("movers/{marketType}")]
+        public async Task<IActionResult> GetMovers(string marketType)
+        {
+            var data = await _alpacaStockMarketService.GetMarketMoversAsync(marketType);
+            return Ok(data);
+        }
 
         [HttpGet("trade/{symbol}")]
         public IActionResult GetLatestTrade(string symbol)
@@ -186,5 +198,7 @@ namespace AssetTracker.Controllers
             await _alpacaWebSocketService.DisconnectAsync();
             return Ok($"Disconnect Successful.");
         }
+
+    
     }
 }

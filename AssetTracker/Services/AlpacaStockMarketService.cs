@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Text.Json;
 using AssetTracker.Models;
+using static System.Net.WebRequestMethods;
 
 namespace AssetTracker.Services
 {
@@ -83,6 +84,38 @@ namespace AssetTracker.Services
             });
 
             return result?.News ?? new List<AlpacaNewsItem>();
+        }
+
+        //Screener
+
+        public async Task <AlpacaMostActiveResponse> GetMostActivesAsync()
+        {
+            var url = $"/v1beta1/screener/stocks/most-actives";
+            var response = await _client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            var result = await JsonSerializer.DeserializeAsync<AlpacaMostActiveResponse>(contentStream, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result!;
+        }
+
+        public async Task<AlpacaMarketMoversResponse> GetMarketMoversAsync(string marketType)
+        {
+            var url = $"/v1beta1/screener/{marketType}/movers";
+            var response = await _client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var contentStream = await response.Content.ReadAsStreamAsync();
+            var result = await JsonSerializer.DeserializeAsync<AlpacaMarketMoversResponse>(contentStream, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result!;
+
         }
 
         //public async Task<List<CorporateActionItem>> GetCorporateActionsAsync(string symbol, int limit = 10)
