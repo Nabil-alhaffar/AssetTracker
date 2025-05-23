@@ -14,5 +14,9 @@ namespace AssetTracker.Services.Interfaces
         public Task<string> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01");
         public Task<AlpacaMostActiveResponse> GetMostActivesAsync();
         public Task<AlpacaMarketMoversResponse> GetMarketMoversAsync(string marketType);
+
+        public Task<List<SymbolLookupResult>> SearchAsync(string query);
+        public Task InitializeAsync();
+
     }
 }

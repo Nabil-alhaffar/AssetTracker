@@ -201,6 +201,9 @@ builder.Services.AddSingleton<IAlpacaDataStreamingClient>(sp =>
 // HTTP Client
 builder.Services.AddHttpClient();
 
+
+
+
 // JSON Configuration
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -304,6 +307,9 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 var hangfireTaskScheduler = app.Services.GetRequiredService<HangfireTaskScheduler>();
 hangfireTaskScheduler.Configure();
 
+// Load Symbol cache at startup
+var symbolService = app.Services.GetRequiredService<IAlpacaStockMarketService>();
+await symbolService.InitializeAsync();
 
 
 //app.UseCors("AllowAllOrigins");

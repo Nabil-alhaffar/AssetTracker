@@ -11,6 +11,8 @@ using System.Net.Http;
 using System.Text.Json;
 using AssetTracker.Models;
 using static System.Net.WebRequestMethods;
+using System.Net.Http.Headers;
+using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 
 namespace AssetTracker.Services
 {
@@ -23,6 +25,9 @@ namespace AssetTracker.Services
         private readonly string _apiKey;
         private readonly string _apiSecret;
         private readonly HttpClient _client;
+        private List<SymbolLookupResult> _symbolCache = new();
+        private readonly SemaphoreSlim _loadLock = new(1, 1);
+
         public AlpacaStockMarketService(IConfiguration configuration, ILogger<AlpacaStockMarketService> logger)
         //IAlpacaDataStreamingClient dataClient, IAlpacaTradingClient tradingClient)
         { 
@@ -117,6 +122,61 @@ namespace AssetTracker.Services
             return result!;
 
         }
+        public Task<List<SymbolLookupResult>> SearchAsync(string query)
+        {
+            query = query.ToUpperInvariant();
+
+            var results = _symbolCache
+                .Where(s =>
+                    s.Symbol.ToUpperInvariant().Contains(query) ||
+                    s.Name.ToUpperInvariant().Contains(query))
+                .OrderByDescending(s => s.Symbol.Equals(query, StringComparison.OrdinalIgnoreCase)) // exact matches
+                .ThenBy(s => !s.Symbol.StartsWith(query, StringComparison.OrdinalIgnoreCase))        // starts with
+                .ThenBy(s => s.Symbol)                                                               // alphabetical
+                .Take(10)
+                .ToList();
+            return Task.FromResult(results);
+
+        }
+        public async Task InitializeAsync()
+        {
+            await LoadSymbolMetadataAsync();
+        }
+
+        private async Task LoadSymbolMetadataAsync()
+        {
+            await _loadLock.WaitAsync();
+            try
+            {
+                var url = "https://paper-api.alpaca.markets/v2/assets?status=active&tradable=true"; 
+
+                var response = await _client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                //Console.WriteLine("Raw Alpaca assets response: ");
+                Console.WriteLine(content);
+                var assets = JsonSerializer.Deserialize<List<AlpacaAsset>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                Console.WriteLine($"Total assets fetched: {assets?.Count}");
+
+                _symbolCache = assets!
+                    .Select(a => new SymbolLookupResult
+                    {
+                        Symbol = a.Symbol,
+                        Name = a.Name
+                    })
+                    .OrderBy(r => r.Symbol)
+                    .ToList();
+            }
+            finally
+            {
+                _loadLock.Release();
+            }
+        }
+
 
         //public async Task<List<CorporateActionItem>> GetCorporateActionsAsync(string symbol, int limit = 10)
         //{

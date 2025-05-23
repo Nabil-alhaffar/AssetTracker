@@ -199,6 +199,16 @@ namespace AssetTracker.Controllers
             return Ok($"Disconnect Successful.");
         }
 
-    
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+                return BadRequest("Query string 'q' is required.");
+
+            var results = await _alpacaStockMarketService.SearchAsync(q);
+            return Ok(results);
+        }
+
+
     }
 }
