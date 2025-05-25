@@ -36,8 +36,10 @@
     <None Remove="Services\Interfaces\" />
     <None Remove="Schedulers\" />
     <None Remove="Helpers\" />
-    <None Remove="Models\MarketDataUpdates\" />
     <None Remove="SignalR\" />
+    <None Remove="Models\Alpaca\" />
+    <None Remove="Models\Alpaca\MarketDataUpdates\" />
+    <None Remove="Models\Finnhub\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -50,7 +52,9 @@
     <Folder Include="Services\Interfaces\" />
     <Folder Include="Schedulers\" />
     <Folder Include="Helpers\" />
-    <Folder Include="Models\MarketDataUpdates\" />
     <Folder Include="SignalR\" />
+    <Folder Include="Models\Alpaca\" />
+    <Folder Include="Models\Alpaca\MarketDataUpdates\" />
+    <Folder Include="Models\Finnhub\" />
   </ItemGroup>
 </Project>

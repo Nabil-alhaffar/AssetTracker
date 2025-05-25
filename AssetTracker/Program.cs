@@ -201,6 +201,7 @@ builder.Services.AddSingleton<IAlpacaDataStreamingClient>(sp =>
 // HTTP Client
 builder.Services.AddHttpClient();
 
+builder.Services.AddHttpClient<IFinnhubStockMarketService, FinnhubService>();
 
 
 
