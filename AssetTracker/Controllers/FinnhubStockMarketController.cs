@@ -24,24 +24,32 @@ namespace AssetTracker.Controllers
             return profile is not null ? Ok(profile) : NotFound();
         }
 
-        //[HttpGet("quote/{symbol}")]
-        //public async Task<IActionResult> GetQuote(string symbol)
-        //{
-        //    var quote = await _finnhubService.GetQuoteAsync(symbol);
-        //    return quote is not null ? Ok(quote) : NotFound();
-        //}
-
-        [HttpGet("financials/{symbol}")]
-        public async Task<IActionResult> GetFinancials(string symbol)
+        [HttpGet("quote/{symbol}")]
+        public async Task<IActionResult> GetQuote(string symbol)
         {
-            var data = await _finnhubService.GetFinancialsAsync(symbol);
-            return data is not null ? Ok(data) : NotFound();
+            var quote = await _finnhubService.GetQuoteAsync(symbol);
+            return quote is not null ? Ok(quote) : NotFound();
+        }
+        //Commented out for now bc premium
+        //[HttpGet("financials/{symbol}")]
+        //public async Task<IActionResult> GetFinancials(string symbol)
+        //{
+        //    var data = await _finnhubService.GetFinancialsAsync(symbol);
+        //    return data is not null ? Ok(data) : NotFound();
+        //}
+        [HttpGet("financials-reported/{symbol}")]
+        public async Task<IActionResult> GetFinancialsReported( string symbol,
+                                                                [FromQuery] string start = "2024-01-01",
+                                                                [FromQuery] string end = "2026-01-01")
+        {
+            var data = await _finnhubService.GetFinancialsReportedAsync(symbol, start, end);
+            return data != null ? Ok(data) : NotFound();
         }
 
         [HttpGet("earnings/{symbol}")]
-        public async Task<IActionResult> GetEarnings(string symbol)
+        public async Task<IActionResult> GetEarnings(string symbol="", [FromQuery]string from = "2024-01-01", [FromQuery] string to = "2026-01-01")
         {
-            var earnings = await _finnhubService.GetEarningsAsync(symbol);
+            var earnings = await _finnhubService.GetEarningsAsync(symbol,from,to);
             return earnings is not null ? Ok(earnings) : NotFound();
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AssetTracker.Models;
+using AssetTracker.Models.Alpaca;
 
 namespace AssetTracker.Services.Interfaces
 {
@@ -11,7 +12,7 @@ namespace AssetTracker.Services.Interfaces
         public Task<string> GetSnapshotAsync(string symbol);
         public Task<List<AlpacaNewsItem>> GetNewsAsync(string symbol, int limit = 20);
 
-        public Task<string> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01");
+        public Task<AlpacaBarsResponse> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01");
         public Task<AlpacaMostActiveResponse> GetMostActivesAsync();
         public Task<AlpacaMarketMoversResponse> GetMarketMoversAsync(string marketType);
 

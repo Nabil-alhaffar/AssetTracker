@@ -13,6 +13,7 @@ using AssetTracker.Models;
 using static System.Net.WebRequestMethods;
 using System.Net.Http.Headers;
 using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
+using AssetTracker.Models.Alpaca;
 
 namespace AssetTracker.Services
 {
@@ -61,19 +62,21 @@ namespace AssetTracker.Services
                 throw new Exception($"Snapshot fetch failed: {response.StatusCode}");
             }
         }
-        public async Task<string> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01")
+        public async Task<AlpacaBarsResponse?> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01")
         {
-            //using var client = new HttpClient();
-            //client.DefaultRequestHeaders.Add("APCA-API-KEY-ID", _apiKey);
-            //client.DefaultRequestHeaders.Add("APCA-API-SECRET-KEY", _apiSecret);
-
             var url = $"/v2/stocks/{symbol}/bars?start={start}&timeframe={timeframe}";
             var response = await _client.GetAsync(url);
 
-            if (response.IsSuccessStatusCode)
-                return await response.Content.ReadAsStringAsync();
-            else
-                throw new Exception($"Failed to fetch bars: {response.StatusCode}");
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            var barsResponse = JsonSerializer.Deserialize<AlpacaBarsResponse>(jsonString);
+
+            return barsResponse;
         }
 
         public async Task<List<AlpacaNewsItem>> GetNewsAsync(string symbol, int limit = 20)

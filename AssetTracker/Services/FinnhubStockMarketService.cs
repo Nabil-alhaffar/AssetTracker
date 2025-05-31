@@ -36,14 +36,20 @@ namespace AssetTracker.Services
         public Task<CompanyProfile?> GetCompanyProfileAsync(string symbol) =>
             GetAsync<CompanyProfile>($"stock/profile2?symbol={symbol}");
 
-        //public Task<Quote?> GetQuoteAsync(string symbol) =>
-        //    GetAsync<Quote>($"quote?symbol={symbol}");
+        public Task<Quote?> GetQuoteAsync(string symbol) =>
+            GetAsync<Quote>($"quote?symbol={symbol}");
 
         public Task<Financials?> GetFinancialsAsync(string symbol) =>
             GetAsync<Financials>($"stock/financials?symbol={symbol}&statement=bs&freq=annual");
 
-        public Task<EarningsCalendar?> GetEarningsAsync(string symbol) =>
-            GetAsync<EarningsCalendar>($"calendar/earnings?symbol={symbol}");
+        public async Task<List<FinancialReportFiling>?> GetFinancialsReportedAsync(string symbol, string from = "2020-01-01", string to = "2025-12-31")
+        {
+            var result = await GetAsync<FinancialsReportedResponse>($"stock/financials-reported?symbol={symbol}&from={from}&to={to}");
+            return result?.Data;
+        }
+
+        public Task<EarningsCalendarResponse?> GetEarningsAsync(string symbol="", string from ="2024-01-01", string to = "2026-01-01") =>
+            GetAsync<EarningsCalendarResponse>($"calendar/earnings?from={from}&to={to}&symbol={symbol}");
 
         //public Task<StockNews[]> GetCompanyNewsAsync(string symbol, string from, string to) =>
         //    GetAsync<StockNews[]>($"company-news?symbol={symbol}&from={from}&to={to}");
@@ -59,6 +65,8 @@ namespace AssetTracker.Services
 
         public Task<BasicFinancials?> GetBasicFinancialsAsync(string symbol) =>
             GetAsync<BasicFinancials>($"stock/metric?symbol={symbol}&metric=all");
+
+        
     }
 
 }

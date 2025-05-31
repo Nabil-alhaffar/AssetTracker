@@ -101,7 +101,7 @@ namespace AssetTracker.Controllers
         }
 
         [HttpGet("{symbol}/historicaldata/{timeframe}")]
-        public async Task<IActionResult> GetHistoricalBars(string symbol, string timeframe, [FromQuery] string start)
+        public async Task<IActionResult> GetHistoricalBars(string symbol, string timeframe, [FromQuery] string start= "2024-01-01")
         {
             var bars = await _alpacaStockMarketService.GetHistoricalBarsAsync(symbol, timeframe, start); // synchronous
             if (bars == null)

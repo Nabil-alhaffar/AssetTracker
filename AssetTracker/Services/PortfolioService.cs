@@ -15,16 +15,18 @@ namespace AssetTracker.Services
         private readonly IHistoricalPortfolioValueRepository _historicalPortfolioValueRepository;
         private readonly IPositionService _positionService;
         private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService;
-
+        private readonly IFinnhubStockMarketService _finnhubStockMarketService;
         public PortfolioService(IHistoricalPortfolioValueRepository historicalPortfolioValueRepository,
                                 IPortfolioRepository portfolioRepository,
                                 IPositionService positionService,
-                                IAlphaVantageStockMarketService alphaVantageStockMarketService)
+                                IAlphaVantageStockMarketService alphaVantageStockMarketService
+                                IFinnhubStockMarketService finnhubStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
             _historicalPortfolioValueRepository = historicalPortfolioValueRepository;
             _positionService = positionService;
             _alphaVantageStockMarketService = alphaVantageStockMarketService;
+            _finnhubStockMarketService = finnhubStockMarketService;
         }
 
         public async Task<Portfolio> GetUserPortfolioAsync(Guid userId)
@@ -291,7 +293,10 @@ namespace AssetTracker.Services
                 foreach (var position in portfolio.Positions.Values)
                 {
                     // Fetch current price (replace with actual data fetching logic)
-                    decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(position.Symbol);
+                    var quote = await _finnhubStockMarketService.GetQuoteAsync(position.Symbol);
+                    decimal currentPrice = quote.C;
+
+                    //decimal currentPrice = await _alphaVantageStockMarketService.GetStockPriceAsync(position.Symbol);
                     position.CurrentPrice = currentPrice;
                     position.ComputePositionRatio(totalMarketValue);
                 }
