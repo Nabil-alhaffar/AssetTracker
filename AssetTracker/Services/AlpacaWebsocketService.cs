@@ -9,8 +9,11 @@ using System.Text;
 using System.Text.Json;
 using System.Collections.Concurrent;
 using AssetTracker.Models.MarketDataUpdates;
-
-public class AlpacaWebSocketService : BackgroundService, IDisposable
+using AssetTracker.Helpers;
+using AssetTracker.Services.Interfaces;
+using AssetTracker.Services;
+using AssetTracker.Models.Enums;
+public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWebSocketService
 {
     private ClientWebSocket _socket;
     private const string Url = "wss://stream.data.alpaca.markets/v2/iex";
@@ -22,26 +25,33 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
     private readonly ConcurrentDictionary<string, QuoteUpdate> _latestQuotes = new();
     private readonly ConcurrentDictionary<string, BarUpdate> _latestBars = new();
     private readonly IServiceProvider _serviceProvider;
+    private volatile ConnectionState _state = ConnectionState.Stopped;
+
+    public ConnectionState State => _state;
 
     private int _activeUserCount = 0;
     private readonly object _userLock = new();
 
     private CancellationTokenSource _socketCts = new();
     private Task _socketTask;
-    public enum ConnectionState { Stopped, Starting, Running, Stopping }
 
-    public volatile ConnectionState _state = ConnectionState.Stopped;
     private readonly object _stateLock = new();
 
     public IReadOnlyDictionary<string, TradeUpdate> LatestTrades => _latestTrades;
     public IReadOnlyDictionary<string, QuoteUpdate> LatestQuotes => _latestQuotes;
     public IReadOnlyDictionary<string, BarUpdate> LatestBars => _latestBars;
 
-    public AlpacaWebSocketService(IServiceProvider serviceProvider, IConfiguration config)
+    private readonly SymbolSubscriptionManager _symbolSubscriptionManager;
+    public AlpacaWebSocketService(IServiceProvider serviceProvider, IConfiguration config, SymbolSubscriptionManager symbolSubscriptionManager)
     {
         _apiKey = config["Alpaca:ApiKey"];
         _apiSecret = config["Alpaca:ApiSecret"];
         _serviceProvider = serviceProvider;
+        _symbolSubscriptionManager = symbolSubscriptionManager;
+
+        // Subscribe to the events
+        _symbolSubscriptionManager.OnSymbolSubscribed += SubscribeToAllAsync;
+        _symbolSubscriptionManager.OnSymbolUnsubscribed += UnsubscribeFromAllAsync;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -136,9 +146,10 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
 
                 var authMsg = JsonSerializer.Serialize(new { action = "auth", key = _apiKey, secret = _apiSecret });
                 await SendMessageAsync(authMsg);
-                await ResubscribeAllAsync();
 
                 lock (_stateLock) { _state = ConnectionState.Running; }
+
+                await ResubscribeAllAsync();
 
                 while (_socket.State == WebSocketState.Open && !stoppingToken.IsCancellationRequested)
                 {
@@ -239,25 +250,61 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
             _sendLock.Release();
         }
     }
-
     private async Task ResubscribeAllAsync()
     {
-        var currentSubscriptions = _subscribedSymbols.Keys.ToList();
+        // Wait until the socket is connected before resubscribing
+        //while (_state != ConnectionState.Running)
+        //{
+        //    await Task.Delay(1000);
+        //}
+
+        var currentSubscriptions = _symbolSubscriptionManager.GetAllSubscribedSymbols().ToList();
         _subscribedSymbols.Clear();
 
-        foreach (var key in currentSubscriptions)
+        foreach (var symbol in currentSubscriptions)
         {
-            var parts = key.Split('_');
-            if (parts.Length != 2) continue;
+            //var parts = key.Split('_');
+            //if (parts.Length != 2) continue;
 
-            var type = parts[0];
-            var symbol = parts[1];
+            //var type = parts[0];
+            //var symbol = parts[1];
+            await SubscribeToAllAsync(symbol);
+        
 
-            await SubscribeAsync(symbol, isQuote: type == "Q", isBar: type == "B");
+            //switch (type)
+            //{
+            //    case "T":
+            //        await SubscribeToTradesAsync(symbol);
+            //        break;
+            //    case "Q":
+            //        await SubscribeToQuotesAsync(symbol);
+            //        break;
+            //    case "B":
+            //        await SubscribeToBarsAsync(symbol);
+            //        break;
+            //}
         }
     }
 
-    public async Task SubscribeAsync(string symbol, bool isQuote = false, bool isBar = false)
+
+    //private async Task ResubscribeAllAsync()
+    //{
+    //    var currentSubscriptions = _subscribedSymbols.Keys.ToList();
+    //    _subscribedSymbols.Clear();
+
+    //    foreach (var key in currentSubscriptions)
+    //    {
+    //        var parts = key.Split('_');
+    //        if (parts.Length != 2) continue;
+
+    //        var type = parts[0];
+    //        var symbol = parts[1];
+
+    //        await SubscribeAsync(symbol, isQuote: type == "Q", isBar: type == "B");
+    //    }
+    //}
+
+    private async Task SubscribeAsync(string symbol, bool isQuote = false, bool isBar = false)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return;
         var key = $"{(isQuote ? "Q" : isBar ? "B" : "T")}_{symbol.ToUpper()}";
@@ -285,7 +332,7 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable
     public Task SubscribeToQuotesAsync(string symbol) => SubscribeAsync(symbol, isQuote: true);
     public Task SubscribeToBarsAsync(string symbol) => SubscribeAsync(symbol, isBar: true);
 
-    public async Task UnsubscribeAsync(string symbol, bool isQuote = false, bool isBar = false)
+    private async Task UnsubscribeAsync(string symbol, bool isQuote = false, bool isBar = false)
     {
         if (string.IsNullOrWhiteSpace(symbol)) return;
 

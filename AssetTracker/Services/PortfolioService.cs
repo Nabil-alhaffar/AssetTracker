@@ -19,13 +19,13 @@ namespace AssetTracker.Services
         public PortfolioService(IHistoricalPortfolioValueRepository historicalPortfolioValueRepository,
                                 IPortfolioRepository portfolioRepository,
                                 IPositionService positionService,
-                                IAlphaVantageStockMarketService alphaVantageStockMarketService
+                                IAlphaVantageStockMarketService alphaVantageStockMarketService,
                                 IFinnhubStockMarketService finnhubStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
             _historicalPortfolioValueRepository = historicalPortfolioValueRepository;
             _positionService = positionService;
-            _alphaVantageStockMarketService = alphaVantageStockMarketService;
+            //_alphaVantageStockMarketService = alphaVantageStockMarketService;
             _finnhubStockMarketService = finnhubStockMarketService;
         }
 

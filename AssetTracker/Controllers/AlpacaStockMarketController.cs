@@ -13,11 +13,11 @@ namespace AssetTracker.Controllers
     public class AlpacaStockMarketController : ControllerBase
     {
         //private readonly IAlpacaStockMarketService _alpacaService;
-        private readonly AlpacaWebSocketService _alpacaWebSocketService;
+        private readonly IAlpacaWebSocketService _alpacaWebSocketService;
         private readonly IAlpacaStockMarketService _alpacaStockMarketService;
         private readonly ILogger<AlpacaStockMarketController> _logger;
 
-        public AlpacaStockMarketController(AlpacaWebSocketService alpacaService, IAlpacaStockMarketService alpacaStockMarketService, ILogger<AlpacaStockMarketController> logger)
+        public AlpacaStockMarketController(IAlpacaWebSocketService alpacaService, IAlpacaStockMarketService alpacaStockMarketService, ILogger<AlpacaStockMarketController> logger)
         {
             _alpacaWebSocketService = alpacaService;
             _alpacaStockMarketService = alpacaStockMarketService;
@@ -46,46 +46,29 @@ namespace AssetTracker.Controllers
             return Ok(new { message = result ? "Socket restarted." : "Failed to restart socket." });
         }
 
+
+        [HttpPost("disconnect")]
+        public async Task<IActionResult> Disconnect()
+        {
+            await _alpacaWebSocketService.DisconnectAsync();
+            return Ok($"Disconnect Successful.");
+        }
+
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
-            return Ok(new { status = _alpacaWebSocketService._state.ToString() });
+            return Ok(new { status = _alpacaWebSocketService.State.ToString() });
         }
 
-        [HttpPost("subscribe/all/{symbol}")]
-        public async Task<IActionResult> SubscribeToStock(string symbol)
-        {
-            if (string.IsNullOrWhiteSpace(symbol))
-                return BadRequest("Symbol is required.");
 
-            _logger.LogInformation($"Received subscription request for {symbol}");
-            await _alpacaWebSocketService.SubscribeToAllAsync(symbol);
-            return Ok($"Subscribed to {symbol} (trades, quotes, bars)");
-            //if (string.IsNullOrWhiteSpace(symbol))
-            //    return BadRequest("Symbol is required.");
-            //_logger.LogInformation($"Received subscription request for {symbol}");
-            //await _alpacaWebSocketService.SubscribeAsync(symbol,true, true);
-            //return Ok($"Subscribed to {symbol}");
-        }
-        [HttpPost("subscribe/trades/{symbol}")]
-        public async Task<IActionResult> SubscribeToTrades(string symbol)
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string q)
         {
-            await _alpacaWebSocketService.SubscribeToTradesAsync(symbol);
-            return Ok($"Subscribed to trades for {symbol}");
-        }
+            if (string.IsNullOrWhiteSpace(q))
+                return BadRequest("Query string 'q' is required.");
 
-        [HttpPost("subscribe/quotes/{symbol}")]
-        public async Task<IActionResult> SubscribeToQuotes(string symbol)
-        {
-            await _alpacaWebSocketService.SubscribeToQuotesAsync(symbol);
-            return Ok($"Subscribed to quotes for {symbol}");
-        }
-
-        [HttpPost("subscribe/bars/{symbol}")]
-        public async Task<IActionResult> SubscribeToBars(string symbol)
-        {
-            await _alpacaWebSocketService.SubscribeToBarsAsync(symbol);
-            return Ok($"Subscribed to bars for {symbol}");
+            var results = await _alpacaStockMarketService.SearchAsync(q);
+            return Ok(results);
         }
 
         [HttpGet("snapshot/{symbol}")]
@@ -164,51 +147,66 @@ namespace AssetTracker.Controllers
         }
 
 
-        [HttpPost("unsubscribe/all/{symbol}")]
-        public async Task<IActionResult> UnsubscribeFromStock(string symbol)
-        {
-            await _alpacaWebSocketService.UnsubscribeFromAllAsync(symbol);
-            return Ok($"Unsubscribed from all updates for {symbol}");
-        }
-
-        [HttpPost("unsubscribe/trades/{symbol}")]
-        public async Task<IActionResult> UnsubscribeFromTrades(string symbol)
-        {
-            await _alpacaWebSocketService.UnsubscribeFromTradesAsync(symbol);
-            return Ok($"Unsubscribed from trades for {symbol}");
-        }
-
-        [HttpPost("unsubscribe/quotes/{symbol}")]
-        public async Task<IActionResult> UnsubscribeFromQuotes(string symbol)
-        {
-            await _alpacaWebSocketService.UnsubscribeFromQuotesAsync(symbol);
-            return Ok($"Unsubscribed from quotes for {symbol}");
-        }
-
-        [HttpPost("unsubscribe/bars/{symbol}")]
-        public async Task<IActionResult> UnsubscribeFromBars(string symbol)
-        {
-            await _alpacaWebSocketService.UnsubscribeFromBarsAsync(symbol);
-            return Ok($"Unsubscribed from bars for {symbol}");
-        }
-
-        [HttpPost("disconnect")]
-        public async Task<IActionResult> Disconnect()
-        {
-            await _alpacaWebSocketService.DisconnectAsync();
-            return Ok($"Disconnect Successful.");
-        }
-
-        [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string q)
-        {
-            if (string.IsNullOrWhiteSpace(q))
-                return BadRequest("Query string 'q' is required.");
-
-            var results = await _alpacaStockMarketService.SearchAsync(q);
-            return Ok(results);
-        }
 
 
+        //[HttpPost("subscribe/all/{symbol}")]
+        //public async Task<IActionResult> SubscribeToStock(string symbol)
+        //{
+        //    if (string.IsNullOrWhiteSpace(symbol))
+        //        return BadRequest("Symbol is required.");
+
+        //    _logger.LogInformation($"Received subscription request for {symbol}");
+        //    await _alpacaWebSocketService.SubscribeToAllAsync(symbol);
+        //    return Ok($"Subscribed to {symbol} (trades, quotes, bars)");
+
+        //}
+        //[HttpPost("subscribe/trades/{symbol}")]
+        //public async Task<IActionResult> SubscribeToTrades(string symbol)
+        //{
+        //    await _alpacaWebSocketService.SubscribeToTradesAsync(symbol);
+        //    return Ok($"Subscribed to trades for {symbol}");
+        //}
+
+        //[HttpPost("subscribe/quotes/{symbol}")]
+        //public async Task<IActionResult> SubscribeToQuotes(string symbol)
+        //{
+        //    await _alpacaWebSocketService.SubscribeToQuotesAsync(symbol);
+        //    return Ok($"Subscribed to quotes for {symbol}");
+        //}
+
+        //[HttpPost("subscribe/bars/{symbol}")]
+        //public async Task<IActionResult> SubscribeToBars(string symbol)
+        //{
+        //    await _alpacaWebSocketService.SubscribeToBarsAsync(symbol);
+        //    return Ok($"Subscribed to bars for {symbol}");
+        //}
+
+        //[HttpPost("unsubscribe/all/{symbol}")]
+        //public async Task<IActionResult> UnsubscribeFromStock(string symbol)
+        //{
+        //    await _alpacaWebSocketService.UnsubscribeFromAllAsync(symbol);
+        //    return Ok($"Unsubscribed from all updates for {symbol}");
+        //}
+
+        //[HttpPost("unsubscribe/trades/{symbol}")]
+        //public async Task<IActionResult> UnsubscribeFromTrades(string symbol)
+        //{
+        //    await _alpacaWebSocketService.UnsubscribeFromTradesAsync(symbol);
+        //    return Ok($"Unsubscribed from trades for {symbol}");
+        //}
+
+        //[HttpPost("unsubscribe/quotes/{symbol}")]
+        //public async Task<IActionResult> UnsubscribeFromQuotes(string symbol)
+        //{
+        //    await _alpacaWebSocketService.UnsubscribeFromQuotesAsync(symbol);
+        //    return Ok($"Unsubscribed from quotes for {symbol}");
+        //}
+
+        //[HttpPost("unsubscribe/bars/{symbol}")]
+        //public async Task<IActionResult> UnsubscribeFromBars(string symbol)
+        //{
+        //    await _alpacaWebSocketService.UnsubscribeFromBarsAsync(symbol);
+        //    return Ok($"Unsubscribed from bars for {symbol}");
+        //}
     }
 }

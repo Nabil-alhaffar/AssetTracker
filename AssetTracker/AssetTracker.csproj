@@ -40,6 +40,7 @@
     <None Remove="Models\Alpaca\" />
     <None Remove="Models\Alpaca\MarketDataUpdates\" />
     <None Remove="Models\Finnhub\" />
+    <None Remove="Models\Enums\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -56,5 +57,6 @@
     <Folder Include="Models\Alpaca\" />
     <Folder Include="Models\Alpaca\MarketDataUpdates\" />
     <Folder Include="Models\Finnhub\" />
+    <Folder Include="Models\Enums\" />
   </ItemGroup>
 </Project>

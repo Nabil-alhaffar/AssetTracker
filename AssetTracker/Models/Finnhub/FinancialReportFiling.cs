@@ -9,11 +9,20 @@ namespace AssetTracker.Models.Finnhub
         [JsonPropertyName("symbol")]
         public string Symbol { get; set; }
 
-        [JsonPropertyName("reportDate")]
-        public string? ReportDate { get; set; }
+        [JsonPropertyName("acceptedDate")]
+        public string? AcceptedDate { get; set; }
 
-        [JsonPropertyName("filingDate")]
-        public string? FilingDate { get; set; }
+        [JsonPropertyName("filedDate")]
+        public string? FiledDate { get; set; }
+
+        [JsonPropertyName("startDate")]
+        public string? StartDate { get; set; }
+
+        [JsonPropertyName("endDate")]
+        public string? endDate { get; set; }
+
+        [JsonPropertyName("cik")]
+        public string ? CIK { get; set; }
 
         [JsonPropertyName("accessNumber")]
         public string? AccessNumber { get; set; }
@@ -23,7 +32,16 @@ namespace AssetTracker.Models.Finnhub
 
         [JsonPropertyName("report")]
         public FinancialReport Report { get; set; }
+
+        [JsonPropertyName("quarter")]
+        public int? Quarter { get; set; }
+
+        [JsonPropertyName("uear")]
+        public int? Year { get; set; }
     }
+     
+
+      
 
 }
 

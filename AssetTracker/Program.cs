@@ -96,8 +96,14 @@ builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
 
 builder.Services.AddSingleton<SymbolSubscriptionManager>();
-builder.Services.AddSingleton<AlpacaWebSocketService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<AlpacaWebSocketService>());
+// Register AlpacaWebSocketService as both interface and concrete type
+builder.Services.AddSingleton<AlpacaWebSocketService>(); // Concrete type registration
+builder.Services.AddSingleton<IAlpacaWebSocketService>(sp =>
+    sp.GetRequiredService<AlpacaWebSocketService>()); // Interface registration
+
+// Register as hosted service using the concrete type
+builder.Services.AddHostedService(sp =>
+    sp.GetRequiredService<AlpacaWebSocketService>());
 builder.Services.AddSignalR().AddJsonProtocol(options =>
 {
     options.PayloadSerializerOptions.PropertyNameCaseInsensitive = false;
