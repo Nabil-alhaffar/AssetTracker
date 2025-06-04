@@ -9,7 +9,7 @@ namespace AssetTracker.Services.Interfaces
     public interface IAlpacaStockMarketService
     {
         //public Task SubscribeToStockAsync(string symbol, CancellationToken stoppingToken);
-        public Task<string> GetSnapshotAsync(string symbol);
+        public Task<string> GetSnapshotsAsync(List<string> symbols);
         public Task<List<AlpacaNewsItem>> GetNewsAsync(string symbol, int limit = 20);
 
         public Task<AlpacaBarsResponse> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01");

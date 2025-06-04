@@ -71,16 +71,22 @@ namespace AssetTracker.Controllers
             return Ok(results);
         }
 
-        [HttpGet("snapshot/{symbol}")]
-        public async Task<IActionResult> GetSnapshot(string symbol)
+        [HttpGet("snapshots")]
+        public async Task<IActionResult> GetSnapshots([FromQuery] List<string> symbols)
         {
-            var snapshot = await _alpacaStockMarketService.GetSnapshotAsync(symbol); // synchronous
-            if (snapshot == null)
+            if (symbols == null || !symbols.Any())
             {
-                return NotFound("Stock not found.");
+                return BadRequest("At least one symbol must be provided.");
             }
 
-            return Ok(new { snapshot });
+            var snapshots = await _alpacaStockMarketService.GetSnapshotsAsync(symbols);
+
+            if (snapshots == null)
+            {
+                return NotFound("No stock data found.");
+            }
+
+            return Ok(new { snapshots });
         }
 
         [HttpGet("{symbol}/historicaldata/{timeframe}")]

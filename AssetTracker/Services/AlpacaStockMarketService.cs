@@ -44,12 +44,17 @@ namespace AssetTracker.Services
             _client.DefaultRequestHeaders.Add("APCA-API-KEY-ID", _apiKey);
             _client.DefaultRequestHeaders.Add("APCA-API-SECRET-KEY", _apiSecret);
         }
-        public async Task<string> GetSnapshotAsync(string symbol)
+
+        public async Task<string> GetSnapshotsAsync(List<string> symbols)
         {
-            //using var client = new HttpClient();
+            if (symbols == null || symbols.Count == 0)
+            {
+                throw new ArgumentException("Symbols list cannot be null or empty.");
+            }
 
+            var symbolQuery = string.Join(",", symbols);
+            var url = $"/v2/stocks/snapshots?symbols={symbolQuery}";
 
-            var url = $"/v2/stocks/{symbol}/snapshot";
             var response = await _client.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
@@ -59,9 +64,10 @@ namespace AssetTracker.Services
             }
             else
             {
-                throw new Exception($"Snapshot fetch failed: {response.StatusCode}");
+                throw new Exception($"Batch snapshot fetch failed: {response.StatusCode}");
             }
         }
+
         public async Task<AlpacaBarsResponse?> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01")
         {
             var url = $"/v2/stocks/{symbol}/bars?start={start}&timeframe={timeframe}";
