@@ -109,6 +109,18 @@ namespace AssetTracker.Services
 
             }
         }
+
+        public async Task <List<string>> GetAllWatchedTickersByUserIdAsync (Guid userId)
+        {
+           List<string> tickers = new(); 
+           var watchlists = await _watchlistRepository.GetUserWatchlistsAsync(userId);
+           foreach (var watchlist in watchlists)
+            {
+                tickers.AddRange(watchlist.Symbols);
+            }
+            return tickers.Distinct().ToList();
+
+        }
     }
 
 }

@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using System.Runtime.ConstrainedExecution;
 using Hangfire.Dashboard.BasicAuthorization;
 using AssetTracker.Helpers;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +77,7 @@ else
     builder.Services.AddSingleton<IPortfolioRepository, MongoPortfolioRepository>();
     builder.Services.AddSingleton<IUserRepository, MongoUserRepository>();
     builder.Services.AddSingleton<IWatchlistRepository, MongoWatchlistRepository>();
+    builder.Services.AddSingleton<IUserSessionRepository, MongoUserSessionRepository>();
 }
 
 // Register Hosted Services
@@ -94,6 +96,7 @@ builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
+builder.Services.AddSingleton<IUserSessionManager, UserSessionManager>();
 
 builder.Services.AddSingleton<SymbolSubscriptionManager>();
 // Register AlpacaWebSocketService as both interface and concrete type
@@ -185,6 +188,11 @@ builder.Services.AddTransient<HangfireTaskScheduler>();
 
 var redisConnection = $"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]},password={builder.Configuration["Redis:Password"]}";
 builder.Services.AddStackExchangeRedisCache(options => { options.Configuration = redisConnection; });
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    return ConnectionMultiplexer.Connect(redisConnection);
+});
 
 // Alpaca API Clients
 builder.Services.AddSingleton<IAlpacaTradingClient>(sp =>

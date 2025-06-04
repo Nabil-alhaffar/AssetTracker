@@ -364,11 +364,19 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWeb
 
     public async Task DisconnectAsync() => await StopSocketAsync();
 
-    public void Dispose()
+    public override void Dispose()
     {
-        _socket?.Dispose();
-        _sendLock.Dispose();
-        _socketCts?.Dispose();
+        
+        
+            _socket?.Dispose();
+            _sendLock.Dispose();
+            _socketCts?.Dispose();
+
+            _symbolSubscriptionManager.OnSymbolSubscribed -= SubscribeToAllAsync;
+            _symbolSubscriptionManager.OnSymbolUnsubscribed -= UnsubscribeFromAllAsync;
+        
+
+        base.Dispose();
     }
 
 

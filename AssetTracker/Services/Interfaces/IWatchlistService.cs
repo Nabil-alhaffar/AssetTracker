@@ -17,6 +17,9 @@ namespace AssetTracker.Services.Interfaces
         public Task AddSymbolToWatchlistAsync(Guid userId, Guid watchlistId, string symbol);
 
         public Task RemoveSymbolFromWatchlistAsync(Guid userId, Guid watchlistId, string symbol);
+
+        public Task<List<string>> GetAllWatchedTickersByUserIdAsync(Guid userId);
+
     }
 }
 
