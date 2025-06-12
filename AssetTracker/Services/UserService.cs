@@ -178,9 +178,21 @@ namespace AssetTracker.Services
 
         }
 
+        public async Task UpdateUserTimeZoneAsync(Guid userId, string timeZoneId)
+        {
+            try
+            {
+                var user = await GetUserAsync(userId);
+                user.TimeZoneId = timeZoneId;
+                await _userRepository.UpdateUserAsync(user);
+            }
 
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating timezone: " ,ex);
+            }
 
-
+        }
 
 
 

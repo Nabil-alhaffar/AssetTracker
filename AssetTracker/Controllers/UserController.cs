@@ -3,6 +3,7 @@ using AssetTracker.Models;
 using AssetTracker.Services;
 using Microsoft.AspNetCore.Mvc;
 using AssetTracker.Services.Interfaces;
+using AssetTracker.Helpers;
 
 namespace AssetTracker.Controllers
 {
@@ -78,6 +79,13 @@ namespace AssetTracker.Controllers
             {
                 return BadRequest($"Error resetting username: {ex.Message}");
             }
+        }
+
+        [HttpPut("{userId}/timezone")]
+        public async Task<IActionResult> UpdateTimeZone( Guid userId, [FromBody] TimeZoneUpdateRequest model)
+        {
+            await _userService.UpdateUserTimeZoneAsync(userId, model.TimeZoneId);
+            return Ok(new { message = "Time zone updated successfully" });
         }
         //[HttpPost("verify-password")]
         //public async Task<IActionResult> VerifyPassword([FromBody] string username, [FromBody] Guid userId, [FromBody] string password)

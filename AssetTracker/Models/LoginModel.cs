@@ -10,6 +10,8 @@ namespace AssetTracker.Models
 
         [JsonPropertyName("password")]
         public string Password { get; set; }
+
+        public string? TimeZoneId { get; set; }
     }
 }
 

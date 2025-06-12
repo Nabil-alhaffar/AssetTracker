@@ -41,12 +41,7 @@ namespace AssetTracker.Models
 
         public DateTime? RefreshTokenExpiryTime { get; set; }
 
-        public void ClearRefreshToken()
-        {
-            RefreshToken = null;
-            RefreshTokenExpiryTime = default;
-        }
-
+        public string? TimeZoneId { get; set; } = "UTC";
 
         public User()
         {

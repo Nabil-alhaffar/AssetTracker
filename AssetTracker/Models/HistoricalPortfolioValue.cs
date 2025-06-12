@@ -14,6 +14,7 @@ namespace AssetTracker.Models
         public DateOnly Date { get; set; }
         //public decimal MarketValue { get; set; }
         public decimal TotalValue { get; set; }
+
     }
 }
 

@@ -6,6 +6,7 @@ using Newtonsoft.Json.Converters;
 using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using AssetTracker.Helpers;
 
 namespace AssetTracker.Models
 {
@@ -29,6 +30,9 @@ namespace AssetTracker.Models
         public OrderType Type { get; set; }
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+
+
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]

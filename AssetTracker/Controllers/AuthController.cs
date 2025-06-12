@@ -52,7 +52,8 @@ namespace AssetTracker.Controllers
                     UserName = model.UserName,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
-                    Email = model.Email
+                    Email = model.Email,
+                    TimeZoneId = model.TimeZoneId
                 };
 
                 await _userService.RegisterUserAsync(user, model.Password);
@@ -102,6 +103,7 @@ namespace AssetTracker.Controllers
 
             try
             {
+         
                 // Authenticate user
                 var user = await _userService.AuthenticateUserAsync(model.UserName, model.Password);
 
@@ -120,7 +122,11 @@ namespace AssetTracker.Controllers
                 {
                     await _symbolSubscriptionManager.SubscribeUserToSymbolAsync(user.UserId, symbol);
                 }
-
+                if (model.TimeZoneId != null && model.TimeZoneId!=user.TimeZoneId)
+                {
+                    user.TimeZoneId = model.TimeZoneId;
+                    await _userService.UpdateUserTimeZoneAsync(user.UserId, model.TimeZoneId);
+                }
                 await _userSessionManager.StartSessionAsync(user.UserId, sessionId, Request.HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers["User-Agent"]);
 
 
@@ -131,9 +137,10 @@ namespace AssetTracker.Controllers
                     firstName = user.FirstName,
                     lastName = user.LastName,
                     email = user.Email,
-                    sessionId = sessionId,  // Add session ID to the response
-                    token = token,           // Include JWT token for further requests
-                    refreshToken = refreshToken
+                    sessionId = sessionId,  
+                    token = token,          
+                    refreshToken = refreshToken,
+                    timeZoneId = user.TimeZoneId
                 }) ;
             }
             catch (UnauthorizedAccessException)

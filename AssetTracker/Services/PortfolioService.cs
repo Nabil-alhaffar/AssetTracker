@@ -11,22 +11,28 @@ namespace AssetTracker.Services
 {
     public class PortfolioService : IPortfolioService
     {
+        private readonly IUserService _userService;
         private readonly IPortfolioRepository _portfolioRepository;
         private readonly IHistoricalPortfolioValueRepository _historicalPortfolioValueRepository;
         private readonly IPositionService _positionService;
         private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService;
         private readonly IFinnhubStockMarketService _finnhubStockMarketService;
+
         public PortfolioService(IHistoricalPortfolioValueRepository historicalPortfolioValueRepository,
                                 IPortfolioRepository portfolioRepository,
                                 IPositionService positionService,
                                 IAlphaVantageStockMarketService alphaVantageStockMarketService,
-                                IFinnhubStockMarketService finnhubStockMarketService)
+                                IFinnhubStockMarketService finnhubStockMarketService,
+                                IUserService userService)
         {
+
+            _userService = userService;
             _portfolioRepository = portfolioRepository;
             _historicalPortfolioValueRepository = historicalPortfolioValueRepository;
             _positionService = positionService;
             //_alphaVantageStockMarketService = alphaVantageStockMarketService;
             _finnhubStockMarketService = finnhubStockMarketService;
+
         }
 
         public async Task<Portfolio> GetUserPortfolioAsync(Guid userId)
@@ -157,9 +163,17 @@ namespace AssetTracker.Services
         // Fetch market value from a specified number of days ago
         private async Task<decimal?> GetTotalValueDaysAgo(Guid userId, int days)
         {
-            var pastDate = DateOnly.FromDateTime(DateTime.Now).AddDays(-days);
-            return await _historicalPortfolioValueRepository.GetTotalValueOnDateAsync(userId, pastDate) ??
-                   await GetClosestAvailableTotalValue(userId, pastDate);
+            var user = await _userService.GetUserAsync(userId);
+
+            // Default to UTC if no timezone is set
+            var timeZoneId = string.IsNullOrEmpty(user.TimeZoneId) ? "UTC" : user.TimeZoneId;
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+            var userLocalNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
+            var pastDate = DateOnly.FromDateTime(userLocalNow.AddDays(-days));
+
+            return await _historicalPortfolioValueRepository.GetTotalValueOnDateAsync(userId, pastDate)
+                   ?? await GetClosestAvailableTotalValue(userId, pastDate);
         }
 
         // Try to get the closest available market value within the last 7 days
@@ -193,8 +207,12 @@ namespace AssetTracker.Services
         // Method to store the market value of the portfolio for a specific user
         public async Task StoreTotalValueAsync(Guid userId, decimal marketValue)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            await _historicalPortfolioValueRepository.StoreTotalValueAsync(userId, today, marketValue);
+            var user = await _userService.GetUserAsync(userId);
+            var timeZoneId = string.IsNullOrEmpty(user.TimeZoneId) ? "UTC" : user.TimeZoneId;
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+            var userLocalToday = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone));
+            await _historicalPortfolioValueRepository.StoreTotalValueAsync(userId, userLocalToday, marketValue);
         }
 
         // Get total cost for all positions in the portfolio

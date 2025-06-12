@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 using System.Text.Json.Serialization;
 using System.Runtime.Serialization;
-
+using AssetTracker.Helpers;
 namespace AssetTracker.Models
 {
     public sealed record CashFlowLog
@@ -30,7 +30,7 @@ namespace AssetTracker.Models
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
-
+        //public DateTime LocalTimeStamp  => TimezoneHelper.ConvertUtcToLocal(Timestamp);
 
     }
     [JsonConverter(typeof(JsonStringEnumConverter))]

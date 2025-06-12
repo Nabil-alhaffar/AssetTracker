@@ -16,6 +16,7 @@ namespace AssetTracker.Services.Interfaces
         public Task ResetUsernameAsync(Guid userId, string newUsername);
         public Task ClearRefreshTokenAsync(Guid userId);
         public Task UpdateUserRefreshTokenAsync(Guid userId, string refreshToken, DateTime refreshTokenExpiryTime);
+        public Task UpdateUserTimeZoneAsync(Guid userId, string timeZoneId);
 
 
 
