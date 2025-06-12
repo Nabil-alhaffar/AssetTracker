@@ -12,7 +12,7 @@ namespace AssetTracker.Models
 
         [Required]
         [BsonRepresentation(BsonType.String)]
-        public Guid UserId { get; set; } = Guid.NewGuid();
+        public Guid UserId { get; set; } 
 
         [Required]
         public string FirstName { get; set; }
@@ -36,6 +36,17 @@ namespace AssetTracker.Models
 
         [Required]
         public string PasswordSalt { get; set; }
+
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        public void ClearRefreshToken()
+        {
+            RefreshToken = null;
+            RefreshTokenExpiryTime = default;
+        }
+
 
         public User()
         {

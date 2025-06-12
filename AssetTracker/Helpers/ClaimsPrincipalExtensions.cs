@@ -1,5 +1,9 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace AssetTracker.Helpers
 {
@@ -10,6 +14,6 @@ namespace AssetTracker.Helpers
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return Guid.TryParse(userIdClaim, out var id) ? id : throw new UnauthorizedAccessException("Invalid or missing user ID.");
         }
+
     }
 }
-

@@ -84,7 +84,7 @@ namespace AssetTracker.Services
             await AddUserAsync(user);
         }
 
-        public async Task ResetPassword(Guid userId, string newPassword) 
+        public async Task ResetPasswordAsync(Guid userId, string newPassword) 
         {
             var user = await GetUserAsync(userId);
             if (user == null)
@@ -100,7 +100,7 @@ namespace AssetTracker.Services
             user.PasswordHash = hashedPassword;
             await _userRepository.UpdateUserAsync(user);
         }
-        public async Task ResetUsername(Guid userId, string newUsername)
+        public async Task ResetUsernameAsync(Guid userId, string newUsername)
         {
             var user = await GetUserAsync(userId);
             if (user == null)
@@ -112,7 +112,7 @@ namespace AssetTracker.Services
             user.UserName = newUsername;
             await _userRepository.UpdateUserAsync(user);
         }
-        public async Task ResetEmail(Guid userId, string newEmail)
+        public async Task ResetEmailAsync(Guid userId, string newEmail)
         {
             var user = await GetUserAsync(userId);
             if (user == null)
@@ -145,6 +145,42 @@ namespace AssetTracker.Services
 
             return user;
         }
+
+        public async Task UpdateUserRefreshTokenAsync(Guid userId, string refreshToken,  DateTime refreshTokenExpiryTime)
+        {
+            try
+            {
+                var user = await _userRepository.GetUserByIDAsync(userId);
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = refreshTokenExpiryTime;
+                await _userRepository.UpdateUserAsync(user);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to update user refresh token", ex);
+            }
+
+        }
+        public async Task ClearRefreshTokenAsync(Guid userId)
+        {
+            try
+            {
+                var user = await GetUserAsync(userId);
+
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = default;
+                await _userRepository.UpdateUserAsync(user);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Refresh token could not be cleared:", ex);
+            }
+
+        }
+
+
+
+
 
 
 

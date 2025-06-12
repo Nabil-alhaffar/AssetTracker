@@ -5,12 +5,18 @@ using AssetTracker.Services;
 using Microsoft.AspNetCore.Mvc;
 using AssetTracker.Services.Interfaces;
 using AssetTracker.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+
 namespace AssetTracker.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
         private readonly IWatchlistService _watchlistService;
@@ -18,7 +24,8 @@ namespace AssetTracker.Controllers
         private readonly IUserSessionManager _userSessionManager;
         private readonly SymbolSubscriptionManager _symbolSubscriptionManager;
         public AuthController(IUserService userService, IAuthService authService, SymbolSubscriptionManager symbolSubscriptionManager,
-                              IWatchlistService watchlistService, IPortfolioService portfolioService, IUserSessionManager userSessionManager)
+                              IWatchlistService watchlistService, IPortfolioService portfolioService, IUserSessionManager userSessionManager
+                              , IConfiguration configuration)
         {
             _userService = userService;
             _authService = authService;
@@ -26,6 +33,7 @@ namespace AssetTracker.Controllers
             _portfolioService = portfolioService;
             _symbolSubscriptionManager = symbolSubscriptionManager;
             _userSessionManager = userSessionManager;
+            _configuration = configuration;
         }
 
         // Endpoint to register a new user
@@ -58,9 +66,9 @@ namespace AssetTracker.Controllers
             }
         }
 
-        // Endpoint to authenticate a user
 
         [HttpPost("logout")]
+        [AllowAnonymous]
         public async Task<IActionResult>Logout([FromBody] LogoutModel model)
         {
             try
@@ -99,7 +107,10 @@ namespace AssetTracker.Controllers
 
                 // Generate JWT token
                 var token = _authService.GenerateJwtToken(user);
-
+                var refreshToken = _authService.GenerateRefreshToken();
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+                await _userService.UpdateUserRefreshTokenAsync(user.UserId, refreshToken, (DateTime)user.RefreshTokenExpiryTime);
                 var sessionId = Guid.NewGuid().ToString();
 
                 var watchlistsSymbols = await _watchlistService.GetAllWatchedTickersByUserIdAsync(user.UserId);
@@ -121,7 +132,8 @@ namespace AssetTracker.Controllers
                     lastName = user.LastName,
                     email = user.Email,
                     sessionId = sessionId,  // Add session ID to the response
-                    token = token           // Include JWT token for further requests
+                    token = token,           // Include JWT token for further requests
+                    refreshToken = refreshToken
                 }) ;
             }
             catch (UnauthorizedAccessException)
@@ -133,11 +145,48 @@ namespace AssetTracker.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
+        [HttpPost("refresh-token")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Refresh([FromBody] TokenRequest request)
+        {
+            try
+            {
+                var principal = JwtHelpers.GetPrincipalFromExpiredToken(request.Token, _configuration);
+                var userIdStr = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
+                    return Unauthorized();
+
+                var user = await _userService.GetUserAsync(userId);
+                if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+                {
+                    return Unauthorized();
+                }
+
+                var newJwt = _authService.GenerateJwtToken(user);
+                var newRefreshToken = _authService.GenerateRefreshToken();
+
+                await _userService.UpdateUserRefreshTokenAsync(user.UserId, newRefreshToken, DateTime.UtcNow.AddDays(7));
+
+                return Ok(new
+                {
+                    token = newJwt,
+                    refreshToken = newRefreshToken
+                });
+            }
+            catch (SecurityTokenException ex)
+            {
+                return Unauthorized(new { message = "Invalid or expired token." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 
-    // Model for user registration
 
-
-    // Model for user login
 
 }

@@ -9,6 +9,8 @@ namespace AssetTracker.Services.Interfaces
 
         public string GenerateJwtToken(User user);
 
+        public string GenerateRefreshToken();
+
 
     }
 }

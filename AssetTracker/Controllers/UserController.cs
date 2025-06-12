@@ -41,7 +41,7 @@ namespace AssetTracker.Controllers
         {
             try
             {
-                await _userService.ResetPassword(userId, request.NewPassword);
+                await _userService.ResetPasswordAsync(userId, request.NewPassword);
 
                 return Ok("Password has been successfully reset");
 
@@ -56,7 +56,7 @@ namespace AssetTracker.Controllers
         {
             try
             {
-                await _userService.ResetEmail(userId, request.NewEmail);
+                await _userService.ResetEmailAsync(userId, request.NewEmail);
                 return Ok("Email has been successfully reset");
 
             }
@@ -70,7 +70,7 @@ namespace AssetTracker.Controllers
         {
             try
             {
-                await _userService.ResetUsername(userId, request.NewUsername);
+                await _userService.ResetUsernameAsync(userId, request.NewUsername);
                 return Ok("Username has been successfully reset");
 
             }
