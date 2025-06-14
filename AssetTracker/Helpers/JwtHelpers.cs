@@ -33,5 +33,6 @@ namespace AssetTracker.Helpers
             return principal;
         }
     }
+
 }
 

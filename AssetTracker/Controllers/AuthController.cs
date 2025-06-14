@@ -70,30 +70,63 @@ namespace AssetTracker.Controllers
 
         [HttpPost("logout")]
         [AllowAnonymous]
-        public async Task<IActionResult>Logout([FromBody] LogoutModel model)
+        public async Task<IActionResult> Logout([FromBody] LogoutModel model)
         {
             try
             {
-                var userId = User.GetUserId(); // Retrieve user ID from JWT claims
+                // Try to get token from Authorization header
+                var authHeader = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
+                {
+                    return Unauthorized(new { message = "Missing token" });
+                }
 
-                // Unsubscribe user from all symbols
+                var token = authHeader.Substring("Bearer ".Length);
+
+                // Use helper to get claims from expired token
+                var principal = JwtHelpers.GetPrincipalFromExpiredToken(token, _configuration); // You implement this
+                var userId = principal.GetUserId(); // Your extension method
+
                 await _symbolSubscriptionManager.UnsubscribeUserFromAllAsync(userId);
-
-                // Optional: Clear session state or in-memory data (if implemented)
                 await _userSessionManager.EndSessionAsync(userId, model.SessionId);
-
-                return Ok(new { message = "Logout successful" });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized(new { message = "User is not authenticated" });
+                Response.Cookies.Delete("refreshToken");
+                await _userService.ClearRefreshTokenAsync(userId);
+                return Ok(new { message = "Logout successful (from expired token)" });
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
-
         }
+
+
+
+        //[HttpPost("logout")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult>Logout([FromBody] LogoutModel model)
+        //{
+        //    try
+        //    {
+        //        var userId = User.GetUserId(); // Retrieve user ID from JWT claims
+
+        //        // Unsubscribe user from all symbols
+        //        await _symbolSubscriptionManager.UnsubscribeUserFromAllAsync(userId);
+
+        //        // Optional: Clear session state or in-memory data (if implemented)
+        //        await _userSessionManager.EndSessionAsync(userId, model.SessionId);
+
+        //        return Ok(new { message = "Logout successful" });
+        //    }
+        //    catch (UnauthorizedAccessException)
+        //    {
+        //        return Unauthorized(new { message = "User is not authenticated" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+
+        //}
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
@@ -111,7 +144,7 @@ namespace AssetTracker.Controllers
                 var token = _authService.GenerateJwtToken(user);
                 var refreshToken = _authService.GenerateRefreshToken();
                 user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
                 await _userService.UpdateUserRefreshTokenAsync(user.UserId, refreshToken, (DateTime)user.RefreshTokenExpiryTime);
                 var sessionId = Guid.NewGuid().ToString();
 
@@ -129,6 +162,14 @@ namespace AssetTracker.Controllers
                 }
                 await _userSessionManager.StartSessionAsync(user.UserId, sessionId, Request.HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers["User-Agent"]);
 
+                Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true, // Only over HTTPS
+                    SameSite = SameSiteMode.Strict, // Or Lax if you're supporting cross-site auth
+                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    IsEssential = true
+                }) ;
 
                 return Ok(new
                 {
@@ -139,7 +180,7 @@ namespace AssetTracker.Controllers
                     email = user.Email,
                     sessionId = sessionId,  
                     token = token,          
-                    refreshToken = refreshToken,
+                    //refreshToken = refreshToken,
                     timeZoneId = user.TimeZoneId
                 }) ;
             }
@@ -153,21 +194,31 @@ namespace AssetTracker.Controllers
             }
         }
 
-
         [HttpPost("refresh-token")]
         [AllowAnonymous]
-        public async Task<IActionResult> Refresh([FromBody] TokenRequest request)
+        public async Task<IActionResult> Refresh()
         {
             try
             {
-                var principal = JwtHelpers.GetPrincipalFromExpiredToken(request.Token, _configuration);
+                var authHeader = Request.Headers["Authorization"].ToString();
+
+                if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer "))
+                {
+                    return Unauthorized(new { message = "Missing or invalid authorization header" });
+                }
+
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+
+                var principal = JwtHelpers.GetPrincipalFromExpiredToken(token, _configuration);
                 var userIdStr = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
                     return Unauthorized();
 
                 var user = await _userService.GetUserAsync(userId);
-                if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+                var refreshToken = Request.Cookies["refreshToken"];
+
+                if (string.IsNullOrEmpty(refreshToken) || user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
                 {
                     return Unauthorized();
                 }
@@ -177,10 +228,17 @@ namespace AssetTracker.Controllers
 
                 await _userService.UpdateUserRefreshTokenAsync(user.UserId, newRefreshToken, DateTime.UtcNow.AddDays(7));
 
+                Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                });
+
                 return Ok(new
                 {
-                    token = newJwt,
-                    refreshToken = newRefreshToken
+                    token = newJwt
                 });
             }
             catch (SecurityTokenException ex)
@@ -192,6 +250,57 @@ namespace AssetTracker.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+        //[HttpPost("refresh-token")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> Refresh([FromBody] TokenRequest request)
+        //{
+        //    try
+        //    {
+        //        var principal = JwtHelpers.GetPrincipalFromExpiredToken(request.Token, _configuration);
+        //        var userIdStr = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        //        if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
+        //            return Unauthorized();
+
+        //        var user = await _userService.GetUserAsync(userId);
+        //        var refreshToken = Request.Cookies["refreshToken"];
+
+        //        if (string.IsNullOrEmpty(refreshToken) || user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
+        //        {
+        //            return Unauthorized();
+        //        }
+
+        //        var newJwt = _authService.GenerateJwtToken(user);
+        //        var newRefreshToken = _authService.GenerateRefreshToken();
+
+        //        await _userService.UpdateUserRefreshTokenAsync(user.UserId, newRefreshToken, DateTime.UtcNow.AddDays(7));
+
+        //        Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
+        //        {
+        //            HttpOnly = true,
+        //            Secure = true,
+        //            SameSite = SameSiteMode.Strict,
+        //            Expires = DateTimeOffset.UtcNow.AddDays(7),
+        //            IsEssential = true
+
+        //        }) ;
+
+
+        //        return Ok(new
+        //        {
+        //            token = newJwt,
+        //            //refreshToken = newRefreshToken
+        //        });
+        //    }
+        //    catch (SecurityTokenException ex)
+        //    {
+        //        return Unauthorized(new { message = "Invalid or expired token." });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = ex.Message });
+        //    }
+        //}
     }
 
 
