@@ -275,17 +275,39 @@ builder.Services.Configure<HttpsRedirectionOptions>(options =>
 });
 
 
+builder.Services.AddCookiePolicy(options =>
+{
+    options.CheckConsentNeeded = context => false;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+
+});
+
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddDefaultPolicy(policy =>
+//    {
+//        policy
+//            .AllowAnyHeader()
+//            .AllowAnyMethod()
+//            .SetIsOriginAllowed(_ => true) 
+//            .AllowCredentials();
+
+//    });
+//});
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
         policy
+            .WithOrigins("http://localhost:8081") // ✅ replace with actual origins
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .SetIsOriginAllowed(_ => true) 
-            .AllowCredentials();           
+            .AllowCredentials();
     });
 });
+
 // Build Application
 var app = builder.Build();
 app.UseRouting();
@@ -329,6 +351,7 @@ await symbolService.InitializeAsync();
 
 //app.UseCors("AllowAllOrigins");
 app.UseCors();
+app.UseCookiePolicy();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

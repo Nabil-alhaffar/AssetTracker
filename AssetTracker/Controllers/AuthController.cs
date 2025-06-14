@@ -166,9 +166,13 @@ namespace AssetTracker.Controllers
                 {
                     HttpOnly = true,
                     Secure = true, // Only over HTTPS
-                    SameSite = SameSiteMode.Strict, // Or Lax if you're supporting cross-site auth
+                    SameSite = SameSiteMode.None, // Or Lax if you're supporting cross-site auth
                     Expires = DateTimeOffset.UtcNow.AddDays(7),
-                    IsEssential = true
+                    IsEssential = true,
+                    Path = "/",
+                    Domain = "ec2-18-188-45-142.us-east-2.compute.amazonaws.com"
+
+
                 }) ;
 
                 return Ok(new
@@ -232,8 +236,11 @@ namespace AssetTracker.Controllers
                 {
                     HttpOnly = true,
                     Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    IsEssential= true,
+                    Path="/",
+                    Domain = "ec2-18-188-45-142.us-east-2.compute.amazonaws.com"
                 });
 
                 return Ok(new
