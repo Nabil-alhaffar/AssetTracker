@@ -42,7 +42,7 @@ This API is the foundation for a future cross-platform frontend (web & mobile) t
 
 ---
 
-##API Usage Examples:
+## API Usage Examples:
 
 ### Authentication
     •   POST /api/auth/register --> Registers a new user and creates a new virtual profile. 
