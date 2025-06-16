@@ -7,20 +7,42 @@ using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Services
 {
+    /// <summary>
+    /// Service for managing user watchlists.
+    /// </summary>
     public class WatchlistService : IWatchlistService
     {
         private readonly IWatchlistRepository _watchlistRepository;
         public readonly IUserRepository _userRepository;
 
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WatchlistService"/> class.
+        /// </summary>
+        /// <param name="settings">Application settings.</param>
+        /// <param name="watchlistRepository">Watchlist repository interface.</param>
+        /// <param name="userRepository">User repository interface.</param>
         public WatchlistService(AppSettings settings, IWatchlistRepository watchlistRepository, IUserRepository userRepository)
         {
             _watchlistRepository = watchlistRepository;
             _userRepository = userRepository;
         }
 
+        /// <summary>
+        /// Gets all watchlists for a specific user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>A list of the user's watchlists.</returns>
         public async Task<List<Watchlist>> GetUserWatchlistsAsync(Guid userId) =>
             await _watchlistRepository.GetUserWatchlistsAsync(userId);
-         
+
+
+        /// <summary>
+        /// Adds a new watchlist for the user and optionally adds stock symbols.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watchlistName">The name of the new watchlist.</param>
+        /// <param name="symbols">Optional list of stock symbols to add.</param>
         public async Task AddWatchlistAsync(Guid userId, string watchlistName, string[]? symbols = null)
         {
             // Check if the watchlist exceeds the max limit
@@ -54,7 +76,11 @@ namespace AssetTracker.Services
             }
         }
 
-
+        /// <summary>
+        /// Removes a watchlist for a user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watchlistId">The ID of the watchlist to remove.</param>
         public async Task RemoveWatchlistAsync(Guid userId, Guid watchlistId)
         {
             try
@@ -79,6 +105,13 @@ namespace AssetTracker.Services
             //}
         }
 
+
+        /// <summary>
+        /// Adds stock symbols to a user's watchlist.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watchlistId">The watchlist ID.</param>
+        /// <param name="symbols">List of stock symbols to add.</param>
         public async Task AddSymbolsToWatchlistAsync(Guid userId, Guid watchlistId, IEnumerable <string> symbols)
         {
             try
@@ -93,7 +126,7 @@ namespace AssetTracker.Services
                 var incomingCount = symbols.Count();
 
                 if (existingCount + incomingCount > 50)
-                    throw new Exception("Adding these symbols would exceed the 50-stock limit.");
+                    throw new Exception("Adding these symbol(s) would exceed the 50-stock limit.");
 
                 foreach (var symbol in symbols.Distinct(StringComparer.OrdinalIgnoreCase))
                 {
@@ -105,7 +138,7 @@ namespace AssetTracker.Services
             }
             catch(Exception ex)
             {
-                throw new Exception("Unable to add symbol to watchlist", ex);
+                throw new Exception("Unable to add symbol(s) to watchlist", ex);
             }
             //var user = await _userRepository.GetUserByIDAsync(userId); // Assuming this method exists
             //if (user != null)
@@ -121,7 +154,12 @@ namespace AssetTracker.Services
         }
 
 
-
+        /// <summary>
+        /// Removes stock symbols from a user's watchlist.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watchlistId">The watchlist ID.</param>
+        /// <param name="symbols">List of symbols to remove.</param>
         public async Task RemoveSymbolsFromWatchlistAsync(Guid userId, Guid watchlistId, IEnumerable<string> symbols)
         {
             try
@@ -142,10 +180,15 @@ namespace AssetTracker.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Unable to remove symbol from watchlist", ex);
+                throw new Exception("Unable to remove symbol(s) from watchlist", ex);
             }
         }
 
+        /// <summary>
+        /// Gets all unique stock symbols from all of a user's watchlists.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <returns>List of all distinct stock symbols.</returns>
         public async Task <List<string>> GetAllWatchedTickersByUserIdAsync (Guid userId)
         {
            List<string> tickers = new(); 
@@ -158,6 +201,12 @@ namespace AssetTracker.Services
 
         }
 
+        /// <summary>
+        /// Gets the watchlist ID by its name for a specific user.
+        /// </summary>
+        /// <param name="userId">The user ID.</param>
+        /// <param name="watchlistName">The name of the watchlist.</param>
+        /// <returns>The watchlist ID if found.</returns>
         public async Task<Guid?> GetUserWatchlistIdByName(Guid userId, string watchlistName)
         {
             var watchlists = await _watchlistRepository.GetUserWatchlistsAsync(userId);

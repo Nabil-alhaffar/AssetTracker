@@ -9,10 +9,15 @@ using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using Microsoft.Extensions.Caching.Distributed;
 using AssetTracker.Services.Interfaces;
-
+using AssetTracker.Models.Enums;
+using AssetTracker.Models.AlphaVantage;
 namespace AssetTracker.Services
 {
-	public class AlphaVantageStockMarketService: IAlphaVantageStockMarketService
+
+    /// <summary>
+    /// Interface for interacting with the Alpha Vantage stock market data API.
+    /// </summary>
+    public class AlphaVantageStockMarketService: IAlphaVantageStockMarketService
 	{
         private readonly HttpClient _httpClient;
         private readonly string APIKey;
@@ -28,6 +33,12 @@ namespace AssetTracker.Services
             APIKey = configuration["AlphaVantage:ApiKey"]; // Fetch API Key from appsettings.json
 
         }
+
+        /// <summary>
+        /// Retrieves the latest stock price for a given symbol from Alpha Vantage or cache.
+        /// </summary>
+        /// <param name="symbol">The stock symbol to query.</param>
+        /// <returns>The latest price as a decimal.</returns>
         public async Task<decimal> GetStockPriceAsync(string symbol)
         {
             var cacheKey = $"StockLastPrice:{symbol}";
@@ -57,6 +68,11 @@ namespace AssetTracker.Services
             //return double.TryParse(closePrice, out double price) ? price : 0;
         }
 
+        /// <summary>
+        /// Retrieves the global quote for a given stock symbol, including price, volume, and daily changes.
+        /// </summary>
+        /// <param name="symbol">The stock symbol.</param>
+        /// <returns>A <see cref="GlobalQuote"/> object containing quote information.</returns>
         public async Task<GlobalQuote> GetGlobalQuoteAsync(string symbol)
         {
             var cacheKey = $"StockGlobalQuote:{symbol}";
@@ -97,6 +113,16 @@ namespace AssetTracker.Services
             return globalQuote;
         }
 
+
+        /// <summary>
+        /// Fetches and caches technical indicators for a stock (e.g. RSI, BBANDS, SMA, EMA).
+        /// </summary>
+        /// <param name="symbol">The stock symbol.</param>
+        /// <param name="requestedIndicators">A list of indicator names (e.g. "RSI", "BBANDS").</param>
+        /// <param name="interval">Interval for the indicators (e.g. "daily").</param>
+        /// <param name="timePeriod">Time period for the indicators (default is 14).</param>
+        /// <param name="limit">The number of most recent entries to return.</param>
+        /// <returns>A dictionary of indicator data grouped by date.</returns>
         public async Task<Dictionary<string, Dictionary<string, object>>> GetStockIndicatorsAsync (string symbol, List<string> requestedIndicators, string interval = "daily", int timePeriod = 14, int limit = 100)
         {
             var cacheKey = $"StockIndicators:{symbol}:{interval}:{timePeriod}";
@@ -215,6 +241,12 @@ namespace AssetTracker.Services
                     .ToDictionary(kv => kv.Key, kv => kv.Value));
         }
 
+        /// <summary>
+        /// Retrieves historical OHLCV stock data for a given symbol and interval.
+        /// </summary>
+        /// <param name="symbol">The stock symbol.</param>
+        /// <param name="interval">The time interval ("daily", "weekly", "monthly", or intraday like "5min").</param>
+        /// <returns>A list of <see cref="HistoricalData"/> entries.</returns>
         public async Task<IEnumerable<HistoricalData>> GetHistoricalDataAsync(string symbol, string interval = "daily")
         {
             var function = interval.ToLower() switch
@@ -254,6 +286,11 @@ namespace AssetTracker.Services
             .ToList();
         }
 
+        /// <summary>
+        /// Fetches the company profile, current price, 52-week data, EPS, sector, and quote info for a stock.
+        /// </summary>
+        /// <param name="symbol">The stock symbol.</param>
+        /// <returns>A <see cref="Stock"/> object with detailed overview data.</returns>
         public async Task<Stock> GetStockOverviewAsync(string symbol)
         {
             var cacheKey = $"StockOverview:{symbol}";
@@ -317,12 +354,24 @@ namespace AssetTracker.Services
                 return null;
             }
         }
+
+        /// <summary>
+        /// Constructs a Clearbit logo URL for a company's website.
+        /// </summary>
+        /// <param name="website">The official website of the company.</param>
+        /// <returns>A URL pointing to the company logo hosted on Clearbit.</returns>
         public string GetCompanyLogoUrl(string website)
         {
             string domain = DomainExtractor(website);
             return $"https://logo.clearbit.com/{domain}";
         }
 
+
+        /// <summary>
+        /// Extracts the domain from a URL string, stripping "www." if present.
+        /// </summary>
+        /// <param name="url">The full website URL.</param>
+        /// <returns>The domain portion of the URL.</returns>
         private string DomainExtractor(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -349,77 +398,32 @@ namespace AssetTracker.Services
             }
         }
 
-        private Stock.Sector ParseSector(string sector)
+
+
+        /// <summary>
+        /// Parses a sector string into a <see cref="Sector"/> enum.
+        /// </summary>
+        /// <param name="sector">The sector name as a string.</param>
+        /// <returns>The matching <see cref="Sector"/> enum value, or InformationTechnology by default.</returns>
+        private Sector ParseSector(string sector)
         {
             return sector?.ToLower() switch
             {
-                "energy" => Stock.Sector.Energy,
-                "materials" => Stock.Sector.Materials,
-                "industrials" => Stock.Sector.Industrials,
-                "consumer discretionary" => Stock.Sector.ConsumerDiscretionary,
-                "consumer staples" => Stock.Sector.ConsumerStaples,
-                "healthcare" => Stock.Sector.Healthcare,
-                "financials" => Stock.Sector.Financials,
-                "information technology" => Stock.Sector.InformationTechnology,
-                "communication services" => Stock.Sector.CommunicationServices,
-                "utilities" => Stock.Sector.Utilities,
-                "real estate" => Stock.Sector.RealEstate,
-                _ => Stock.Sector.InformationTechnology
-            };
-        }
-    }
-    public class AlphaVantageTimeSeries
-    {
-        [JsonProperty("Time Series (5min)")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries5Min { get; set; }
-
-        [JsonProperty("Time Series (15min)")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries15Min { get; set; }
-
-        [JsonProperty("Time Series (30min)")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries30Min { get; set; }
-
-        [JsonProperty("Time Series (60min)")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> TimeSeries60Min { get; set; }
-
-        [JsonProperty("Time Series (Daily)")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> DailyTimeSeries { get; set; }
-
-        [JsonProperty("Weekly Time Series")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> WeeklyTimeSeries { get; set; }
-
-        [JsonProperty("Monthly Time Series")]
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> MonthlyTimeSeries { get; set; }
-
-        public Dictionary<string, AlphaVantageTimeSeriesEntry> GetTimeSeries(string function)
-        {
-            return function switch
-            {
-                "TIME_SERIES_DAILY" => DailyTimeSeries,
-                "TIME_SERIES_WEEKLY" => WeeklyTimeSeries,
-                "TIME_SERIES_MONTHLY" => MonthlyTimeSeries,
-                _ => TimeSeries5Min ?? TimeSeries15Min ?? TimeSeries30Min ?? TimeSeries60Min
+                "energy" => Sector.Energy,
+                "materials" => Sector.Materials,
+                "industrials" => Sector.Industrials,
+                "consumer discretionary" => Sector.ConsumerDiscretionary,
+                "consumer staples" => Sector.ConsumerStaples,
+                "healthcare" => Sector.Healthcare,
+                "financials" => Sector.Financials,
+                "information technology" => Sector.InformationTechnology,
+                "communication services" => Sector.CommunicationServices,
+                "utilities" => Sector.Utilities,
+                "real estate" => Sector.RealEstate,
+                _ => Sector.InformationTechnology
             };
         }
     }
 
-
-    public class AlphaVantageTimeSeriesEntry
-    {
-        [JsonProperty("1. open")]
-        public decimal Open { get; set; }
-
-        [JsonProperty("2. high")]
-        public decimal High { get; set; }
-
-        [JsonProperty("3. low")]
-        public decimal Low { get; set; }
-
-        [JsonProperty("4. close")]
-        public decimal Close { get; set; }
-
-        [JsonProperty("5. volume")]
-        public long Volume { get; set; }
-    }
 }
 

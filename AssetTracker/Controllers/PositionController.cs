@@ -19,7 +19,14 @@ namespace AssetTracker.Controllers
             _positionService = positionService;
 
         }
-    
+
+        /// <summary>
+        /// Splits a user's stock position based on a specified split factor.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol</param>
+        /// <param name="splitFactor">Factor by which the position should be split</param>
+        /// <returns>Success or error message</returns>
         [HttpPut("{userId}/split/{symbol}")]
         public async Task<IActionResult> SplitPositionAsync(Guid userId, string symbol, int splitFactor)
         {
@@ -31,6 +38,14 @@ namespace AssetTracker.Controllers
 
             return Ok("Position split successfully.");
         }
+
+        /// <summary>
+        /// Checks if a stop loss condition has been triggered for a given position.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol</param>
+        /// <param name="stopLossPrice">Stop loss threshold price</param>
+        /// <returns>Boolean result indicating whether stop loss was triggered</returns>
         [HttpGet("{userId}/check-stoploss/{symbol}")]
         public async Task<IActionResult> CheckPositionForStopLossAsync(Guid userId, string symbol, [FromQuery] decimal stopLossPrice)
         {
@@ -42,6 +57,13 @@ namespace AssetTracker.Controllers
 
             return Ok(new { StopLossTriggered = isStopLossTriggered });
         }
+
+        /// <summary>
+        /// Updates the profit and loss for a user's specific position.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol</param>
+        /// <returns>Success message or error</returns>
         [HttpGet("{userId}/update-profit-loss/{symbol}")]
         public async Task<IActionResult> UpdatePositionProfitLossAsync(Guid userId, string symbol)
         {
@@ -51,6 +73,13 @@ namespace AssetTracker.Controllers
             return Ok("Position's profit/loss updated successfully.");
         }
 
+
+        /// <summary>
+        /// Retrieves a summary of a user's specific stock position.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol</param>
+        /// <returns>Position summary object or error message</returns>
         [HttpGet("{userId}/get-position-summary/{symbol}")]
         public async Task<IActionResult> GetPositionSummary(Guid userId, string symbol)
         {

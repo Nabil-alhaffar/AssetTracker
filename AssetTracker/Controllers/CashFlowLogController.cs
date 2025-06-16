@@ -12,11 +12,19 @@ namespace AssetTracker.Controllers
     public class CashFlowLogController: ControllerBase
 	{
 		private readonly ICashFlowLogService _cashFlowLogService;
+
+
 		public CashFlowLogController(ICashFlowLogService cashFlowLogService)
 		{
 			_cashFlowLogService = cashFlowLogService;
 		}
 
+
+        /// <summary>
+        /// Retrieves all cash flow logs for a specific user.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>List of logs or error</returns>
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetAllUserLogs(Guid userId)
 		{
@@ -31,6 +39,11 @@ namespace AssetTracker.Controllers
 			}
 		}
 
+
+        /// <summary>
+        /// Retrieves all cash flow logs in the system.
+        /// </summary>
+        /// <returns>All logs or error</returns>
         [HttpGet("All")]
         public async Task<IActionResult> GetAllLogs()
         {
@@ -45,6 +58,11 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves a specific cash flow log by transaction ID.
+        /// </summary>
+        /// <param name="transactionId">Transaction log ID</param>
+        /// <returns>Log entry or error</returns>
         [HttpGet("{transactionId}")]
         public async Task<IActionResult> GetLogById(Guid transactionId)
         {
@@ -58,6 +76,12 @@ namespace AssetTracker.Controllers
                 return BadRequest(ex);
             }
         }
+
+        /// <summary>
+        /// Creates a new cash flow log.
+        /// </summary>
+        /// <param name="log">CashFlowLog object from request body</param>
+        /// <returns>Success or error</returns>
         [HttpPost("Create")]
         public async Task<IActionResult> CreateLog([FromBody] CashFlowLog log)
         {
@@ -70,6 +94,12 @@ namespace AssetTracker.Controllers
 
 
         }
+
+        /// <summary>
+        /// Deletes an existing cash flow log by ID.
+        /// </summary>
+        /// <param name="logId">Log ID to delete</param>
+        /// <returns>Success or error</returns>
         [HttpPost("Delete")]
         public async Task<IActionResult> DeleteLog([FromBody] Guid logId)
         {

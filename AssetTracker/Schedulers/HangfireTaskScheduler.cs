@@ -1,15 +1,26 @@
 ﻿using AssetTracker.Services;
 using Hangfire;
 
+/// <summary>
+/// Handles scheduling of recurring Hangfire background tasks.
+/// </summary>
 public class HangfireTaskScheduler
 {
     private readonly ILogger<HangfireTaskScheduler> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HangfireTaskScheduler"/> class.
+    /// </summary>
+    /// <param name="logger">The logger instance used to log information.</param>
     public HangfireTaskScheduler(ILogger<HangfireTaskScheduler> logger)
     {
         _logger = logger;
     }
 
+
+    /// <summary>
+    /// Configures recurring Hangfire jobs for updating portfolio data and market value history.
+    /// </summary>
     public void Configure()
     {
         _logger.LogInformation("Scheduling recurring tasks...");

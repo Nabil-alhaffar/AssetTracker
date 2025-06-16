@@ -19,6 +19,11 @@ namespace AssetTracker.Controllers
             _watchlistService = watchlistService;
         }
 
+        /// <summary>
+        /// Retrieves all watchlists for a given user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <returns>List of the user's watchlists or an error response</returns>
         [HttpGet("{userId}")]
         public async Task<ActionResult<List<Watchlist>>> GetUserWatchlists(Guid userId)
         {
@@ -38,6 +43,12 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Adds a new watchlist for the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <param name="request">The watchlist name and optional initial symbols</param>
+        /// <returns>Success or error message</returns>
         [HttpPost("{userId}")]
         public async Task<IActionResult> AddWatchlist(Guid userId, [FromBody]AddWatchlistRequest request  )
         {
@@ -53,6 +64,14 @@ namespace AssetTracker.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// Removes a specific watchlist for a user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <param name="watchlistId">The unique identifier of the watchlist</param>
+        /// <returns>Success or error message</returns>
         [HttpDelete("{userId}/{watchlistId}")]
         public async Task<IActionResult> RemoveWatchlist(Guid userId, Guid watchlistId)
         {
@@ -67,13 +86,20 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Adds one or more symbols to a user's watchlist.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <param name="watchlistId">The unique identifier of the watchlist</param>
+        /// <param name="request">List of symbols to add</param>
+        /// <returns>Success or error message</returns>
         [HttpPost("{userId}/{watchlistId}/add-symbol")]
         public async Task<IActionResult> AddSymbolToWatchlist(Guid userId, Guid watchlistId, [FromBody] AdjustWatchlistRequest request)
         {
             try
             {
                 await _watchlistService.AddSymbolsToWatchlistAsync(userId, watchlistId, request.Symbols);
-                return Ok(new { message = "Symbol added to watchlist successfully." });
+                return Ok(new { message = "Symbol(s) added to watchlist successfully." });
             }
             catch (Exception ex)
             {
@@ -81,13 +107,22 @@ namespace AssetTracker.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// Removes one or more symbols from a user's watchlist.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user</param>
+        /// <param name="watchlistId">The unique identifier of the watchlist</param>
+        /// <param name="request">List of symbols to remove</param>
+        /// <returns>Success or error message</returns>
         [HttpPost("{userId}/{watchlistId}/remove-symbol")]
         public async Task<IActionResult> RemoveSymbolFromWatchlist(Guid userId, Guid watchlistId, [FromBody] AdjustWatchlistRequest request)
         {
             try
             {
                 await _watchlistService.RemoveSymbolsFromWatchlistAsync(userId, watchlistId, request.Symbols);
-                return Ok(new { message = "Symbol removed from watchlist successfully." });
+                return Ok(new { message = "Symbol(s) removed from watchlist successfully." });
             }
             catch (Exception ex)
             {

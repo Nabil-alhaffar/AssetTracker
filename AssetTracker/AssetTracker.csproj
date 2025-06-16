@@ -42,6 +42,7 @@
     <None Remove="Models\Finnhub\" />
     <None Remove="Models\Enums\" />
     <None Remove="Models\DTOs\" />
+    <None Remove="Models\AlphaVantage\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -60,5 +61,6 @@
     <Folder Include="Models\Finnhub\" />
     <Folder Include="Models\Enums\" />
     <Folder Include="Models\DTOs\" />
+    <Folder Include="Models\AlphaVantage\" />
   </ItemGroup>
 </Project>

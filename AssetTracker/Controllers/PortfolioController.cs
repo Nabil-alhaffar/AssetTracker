@@ -28,6 +28,11 @@ namespace AssetTracker.Controllers
             _cashFlowLogService = cashFlowLogService;
         }
 
+        /// <summary>
+        /// Retrieves a summary of the user's portfolio including market value, cost, and PnL.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>Portfolio summary or error message</returns>
         [HttpGet("summary/{userId}")]
         public async Task<IActionResult> GetPortfolioSummary(Guid userId)
         {
@@ -54,6 +59,12 @@ namespace AssetTracker.Controllers
 
             }
         }
+
+        /// <summary>
+        /// Retrieves the user's full portfolio data.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>Portfolio object or error message</returns>
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUserPortfolio(Guid userId)
         {
@@ -73,6 +84,13 @@ namespace AssetTracker.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Retrieves portfolio performance over a specified number of days.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="days">Number of days to evaluate performance</param>
+        /// <returns>Performance metrics including PnL and percentage return</returns>
         [HttpGet("performance/{userId}")]
         public async Task<IActionResult> GetPortfolioPerformance(Guid userId, int days)
         {
@@ -95,6 +113,13 @@ namespace AssetTracker.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Retrieves transaction history for a specific stock position.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol</param>
+        /// <returns>List of historical transactions</returns>
         [HttpGet("history/{userId}")]
         public async Task<IActionResult> GetPositionHistory(Guid userId, string symbol)
         {
@@ -106,6 +131,13 @@ namespace AssetTracker.Controllers
             return Ok(new { message = "Position history retrieved successfully.", history });
         }
 
+
+        /// <summary>
+        /// Deposits funds into a user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="depositAmount">Amount to deposit</param>
+        /// <returns>Success message or error</returns>
         [HttpPost("deposit-funds/{userId}")]
         [Authorize]
         public async Task <IActionResult> DepositFunds(Guid userId, decimal depositAmount)
@@ -133,7 +165,12 @@ namespace AssetTracker.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Withdraws funds from a user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="withdrawAmount">Amount to withdraw</param>
+        /// <returns>Success message or error</returns>
         [HttpPost("withdraw-funds/{userId}")]
         [Authorize]
         public async Task<IActionResult> WithdrawFunds(Guid userId, decimal withdrawAmount)
@@ -159,6 +196,14 @@ namespace AssetTracker.Controllers
 
             }
         }
+
+
+        /// <summary>
+        /// Retrieves a user's stock position for a specific symbol.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol</param>
+        /// <returns>Position object or error</returns>
         [HttpGet("Positions/{userId}/{symbol}")]
         public async Task<IActionResult> GetPositionBySymbol(Guid userId, string symbol)
         {
@@ -173,6 +218,11 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves all stock positions in a user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>List of positions or error</returns>
         [HttpGet ("Positions/{userId}")]
         public async Task<IActionResult> GetPortfolioPositionsByUserId(Guid userId)
         {
@@ -189,6 +239,11 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Triggers an update for the user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>Success message or error</returns>
         [HttpPost("UpdatePortfolio/{userId}")]
         public async Task<IActionResult> UpdatePortfolioByUserId(Guid userId)
         {
@@ -203,134 +258,6 @@ namespace AssetTracker.Controllers
             }
         }
 
-
-
-        //// Add a new position to the portfolio
-        //[HttpPost("add-position/{userId}")]
-        //public async Task<ActionResult> AddPositionToPortfolio([FromBody] Position position,Guid userId)
-        //{
-
-        //    //Portfolio portfolio1 = await _portfolioService.GetPortfolioAsync(userId);
-        //    User user = await _userService.GetUserAsync(userId);
-        //    //if (portfolio1 == null)
-        //    //{
-        //    //    return NotFound($"cannot find portfolio");
-        //    //}
-        //    if(user == null) {
-        //        return NotFound("User not found");
-        //    }
-
-        //    if (!ModelState.IsValid)
-        //    {
-        //       return BadRequest(ModelState);
-        //    }  
-        //    var portfolio = user.Portfolio;
-        //    if (portfolio == null)
-        //    {
-        //        return NotFound("Portfolio not found.");
-        //    }
-        //    position.PortfolioId = portfolio.PortfolioId;
-        //    position.UserId = userId;
-        //    try
-        //    {
-        //        await _portfolioService.AddPositionToPortfolioAsync(position, userId);
-        //        return Ok("Position added or updated successfully.");
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest($"Error: {ex.Message}"); // Handle any unexpected errors
-
-        //    }
-
-
-
-        // Add the position to the portfolio
-
-        //user.Portfolio.Positions.Add(position);
-
-        //    return Ok("Position added successfully.");
-        //    //try
-        //    //{
-        //    //    await _portfolioService.AddPositionToPortfolioAsync(position,userId);
-        //    //    return Ok("Position added successfully");
-        //    //}
-        //    //catch (Exception ex)
-        //    //{
-        //    //    return BadRequest(ex.Message); // Handle errors gracefully
-        //    //}
-        //}
-
-        //[HttpDelete("remove-position/{symbol}")]
-        //public async Task<ActionResult> RemovePositionAsync(Guid userId, string symbol)
-        //{
-        //    try
-        //    {
-        //        await _portfolioService.RemovePositionAsync(userId ,symbol);
-        //        return Ok("Position removed successfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message); // Handle errors gracefully
-        //    }
-        //}
-        //[HttpGet("all")]
-
-
-
-        //public async Task<ActionResult> GetAllPositionsAsync(Guid userId)
-        //{
-        //    try
-        //    {
-        //        var positions = await _portfolioService.GetAllPositionsAsync(userId);
-        //        return Ok(positions);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message); // Handle errors gracefully
-        //    }
-        //}
-
-        //[HttpGet("{userId}")]
-        //public async Task<IActionResult> GetPortfolioAsync(int userId)
-        //{
-        //    var portfolio = await _portfolioService.GetUserPortfolioAsync(userId);
-
-        //    if (portfolio == null)
-        //        return NotFound("Portfolio not found for the given user.");
-
-        //    return Ok(portfolio);
-        //}
-        //// Get the total portfolio value
-        //[HttpGet("total-value/{userId}")]
-        //public async Task<ActionResult<double>> GetTotalValue(Guid userId)
-        //{
-        //    try
-        //    {
-        //        var totalValue = await _portfolioService.GetTotalValueAsync(userId);
-        //        return Ok(new { userId, totalValue });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-
-        //}
-
-        //// Get the total Profit & Loss
-        //[HttpGet("total-pnl/{userId}")]
-        //public async Task<ActionResult<double>> GetTotalProfitAndLoss(Guid userId)
-        //{
-        //    try
-        //    {
-        //        var totalProfitLoss = await _portfolioService.GetTotalProfitAndLossAsync( userId);
-        //        return Ok(totalProfitLoss);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message); // Handle errors gracefully
-        //    };
-        //}
     }
 }
 

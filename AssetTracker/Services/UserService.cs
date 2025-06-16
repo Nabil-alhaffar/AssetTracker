@@ -10,22 +10,37 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AssetTracker.Services
 {
-	public class UserService:IUserService
+
+    /// <summary>
+    /// Provides services related to user management such as registration, authentication,
+    /// profile updates, and portfolio initialization.
+    /// </summary>
+    public class UserService:IUserService
 	{
         private readonly IUserRepository _userRepository;
         private readonly IPortfolioRepository _portfolios;
         private readonly IPasswordService _passwordService;
 
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserService"/> class.
+        /// </summary>
+        /// <param name="passwordService">The password hashing and verification service.</param>
+        /// <param name="userRepository">Repository to manage user data.</param>
+        /// <param name="portfolioRepository">Repository to manage portfolio data.</param>
         public UserService(IPasswordService passwordService , IUserRepository userRepository,  IPortfolioRepository portfolioRepository)
 		{
             _userRepository = userRepository;
             _portfolios = portfolioRepository;
             _passwordService = passwordService;
 
-    }
+        }
 
-    public async Task AddUserAsync(User user)
+        /// <summary>
+        /// Adds a user and initializes their portfolio.
+        /// </summary>
+        /// <param name="user">The user to add.</param>
+        public async Task AddUserAsync(User user)
         {
             if (user == null)
             {
@@ -47,20 +62,41 @@ namespace AssetTracker.Services
             // Add user logic
         }
 
+        /// <summary>
+        /// Retrieves a user by ID.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <returns>The user object.</returns>
         public async Task<User> GetUserAsync(Guid userId)
         {
             return await _userRepository.GetUserByIDAsync(userId);
         }
 
+
+        /// <summary>
+        /// Retrieves all users.
+        /// </summary>
+        /// <returns>A collection of all users.</returns>
         public async Task<IEnumerable<User>> GetUsersAsync()
         {
             return await _userRepository.GetUsersAsync();
         }
 
+
+        /// <summary>
+        /// Removes a user by ID.
+        /// </summary>
+        /// <param name="userId">The ID of the user to remove.</param>
         public async Task RemoveUsersAsync(Guid userId)
         {
            await _userRepository.RemoveUserAsync(userId);
         }
+
+        /// <summary>
+        /// Registers a new user with a password.
+        /// </summary>
+        /// <param name="user">The user to register.</param>
+        /// <param name="password">The password to hash and store.</param>
         public async Task RegisterUserAsync(User user, string password)
         {
             if (string.IsNullOrEmpty(password))
@@ -84,6 +120,12 @@ namespace AssetTracker.Services
             await AddUserAsync(user);
         }
 
+
+        /// <summary>
+        /// Resets the password for a given user.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <param name="newPassword">The new password to set.</param>
         public async Task ResetPasswordAsync(Guid userId, string newPassword) 
         {
             var user = await GetUserAsync(userId);
@@ -100,6 +142,12 @@ namespace AssetTracker.Services
             user.PasswordHash = hashedPassword;
             await _userRepository.UpdateUserAsync(user);
         }
+
+        /// <summary>
+        /// Resets the username for a user.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <param name="newUsername">The new username.</param>
         public async Task ResetUsernameAsync(Guid userId, string newUsername)
         {
             var user = await GetUserAsync(userId);
@@ -112,6 +160,12 @@ namespace AssetTracker.Services
             user.UserName = newUsername;
             await _userRepository.UpdateUserAsync(user);
         }
+
+        /// <summary>
+        /// Resets the email address for a user.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <param name="newEmail">The new email address.</param>
         public async Task ResetEmailAsync(Guid userId, string newEmail)
         {
             var user = await GetUserAsync(userId);
@@ -132,8 +186,12 @@ namespace AssetTracker.Services
             await _userRepository.UpdateUserAsync(user);
         }
 
-
-        // Method to authenticate a user
+        /// <summary>
+        /// Authenticates a user by username and password.
+        /// </summary>
+        /// <param name="username">The user's username.</param>
+        /// <param name="password">The user's password.</param>
+        /// <returns>The authenticated user object.</returns>
         public async Task<User> AuthenticateUserAsync(string username, string password)
         {
             var user = await _userRepository.GetUserByUsernameAsync(username);
@@ -146,6 +204,13 @@ namespace AssetTracker.Services
             return user;
         }
 
+
+        /// <summary>
+        /// Updates the refresh token for a user.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <param name="refreshToken">The new refresh token.</param>
+        /// <param name="refreshTokenExpiryTime">The expiry time of the refresh token.</param>
         public async Task UpdateUserRefreshTokenAsync(Guid userId, string refreshToken,  DateTime refreshTokenExpiryTime)
         {
             try
@@ -161,6 +226,11 @@ namespace AssetTracker.Services
             }
 
         }
+
+        /// <summary>
+        /// Clears the refresh token for a user.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
         public async Task ClearRefreshTokenAsync(Guid userId)
         {
             try
@@ -178,6 +248,12 @@ namespace AssetTracker.Services
 
         }
 
+
+        /// <summary>
+        /// Updates the user's preferred time zone.
+        /// </summary>
+        /// <param name="userId">The ID of the user.</param>
+        /// <param name="timeZoneId">The time zone identifier (e.g., "America/New_York").</param>
         public async Task UpdateUserTimeZoneAsync(Guid userId, string timeZoneId)
         {
             try

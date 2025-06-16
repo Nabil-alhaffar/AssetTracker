@@ -1,4 +1,10 @@
-﻿using AssetTracker.Services;
+﻿/// <summary>
+/// Program entry point for the AssetTracker ASP.NET Core application.
+/// Responsible for configuring services, middleware, authentication, repositories, Hangfire, Redis,
+/// Alpaca clients, and SignalR.
+/// </summary>
+
+using AssetTracker.Services;
 using AssetTracker.Repositories;
 using AssetTracker.Services.Interfaces;
 using AssetTracker.Repositories.MockRepositories;
@@ -31,35 +37,45 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/// <summary>
+/// Load base and environment-specific configuration files and environment variables.
+/// </summary>
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
-//Fetch secrets from AWS Secrets Manager
+
+/// <summary>
+/// Register AWS Secrets Manager and helper for secure secret access.
+/// </summary>
 builder.Services.AddSingleton<IAmazonSecretsManager>(sp =>
-    new AmazonSecretsManagerClient(RegionEndpoint.USEast2)); // Change region if needed
+    new AmazonSecretsManagerClient(RegionEndpoint.USEast2));
 builder.Services.AddSingleton<AwsSecretsManagerHelper>();
 
 var serviceProvider = builder.Services.BuildServiceProvider();
 var secretsHelper = serviceProvider.GetRequiredService<AwsSecretsManagerHelper>();
 
-// Fetch secrets from AWS
+/// <summary>
+/// Fetch secrets from AWS Secrets Manager and inject into configuration.
+/// </summary>
 var secrets = Task.Run(() => secretsHelper.GetSecretsAsync("AssetTrackerSecrets")).Result;
 
 foreach (var secret in secrets)
 {
     var configKey = secret.Key.Replace("__", ":");
     builder.Configuration[configKey] = secret.Value;
-    //Console.WriteLine($"config key={configKey}");
-    //Console.WriteLine($"secret val={secret.Value}");
-
 }
-// UseMockStore setting
+
+/// <summary>
+/// Determine which repository implementations to use based on configuration.
+/// </summary>
 var useMockStore = builder.Configuration.GetValue<bool>("UseMockStore");
 builder.Services.AddSingleton(new AppSettings { UseMockStore = useMockStore });
 
-// Dependency Injection for Repositories
+/// <summary>
+/// Register repository services depending on whether mocking is enabled.
+/// </summary>
 if (useMockStore)
 {
     builder.Services.AddSingleton<ICashFlowLogRepository, CashFlowLogRepository>();
@@ -80,14 +96,15 @@ else
     builder.Services.AddSingleton<IUserSessionRepository, MongoUserSessionRepository>();
 }
 
-// Register Hosted Services
-//builder.Services.AddHostedService<AlpacaStockMarketService>();
-
-// Register Stock Market Services
+/// <summary>
+/// Register services for stock market data providers.
+/// </summary>
 builder.Services.AddSingleton<IAlpacaStockMarketService, AlpacaStockMarketService>();
 builder.Services.AddSingleton<IAlphaVantageStockMarketService, AlphaVantageStockMarketService>();
 
-// Register Application Services
+/// <summary>
+/// Register application services for DI.
+/// </summary>
 builder.Services.AddScoped<IWatchlistService, WatchlistService>();
 builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddScoped<IPositionService, PositionService>();
@@ -99,40 +116,49 @@ builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
 builder.Services.AddSingleton<IUserSessionManager, UserSessionManager>();
 
 builder.Services.AddSingleton<SymbolSubscriptionManager>();
-// Register AlpacaWebSocketService as both interface and concrete type
-builder.Services.AddSingleton<AlpacaWebSocketService>(); // Concrete type registration
-builder.Services.AddSingleton<IAlpacaWebSocketService>(sp =>
-    sp.GetRequiredService<AlpacaWebSocketService>()); // Interface registration
 
-// Register as hosted service using the concrete type
+/// <summary>
+/// Register Alpaca WebSocket service and hosted service.
+/// </summary>
+builder.Services.AddSingleton<AlpacaWebSocketService>();
+builder.Services.AddSingleton<IAlpacaWebSocketService>(sp =>
+    sp.GetRequiredService<AlpacaWebSocketService>());
 builder.Services.AddHostedService(sp =>
     sp.GetRequiredService<AlpacaWebSocketService>());
+
+/// <summary>
+/// Add SignalR with JSON configuration for enum serialization.
+/// </summary>
 builder.Services.AddSignalR().AddJsonProtocol(options =>
 {
     options.PayloadSerializerOptions.PropertyNameCaseInsensitive = false;
     options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// MongoDB Configuration
+/// <summary>
+/// Set up MongoDB client and inject PortfolioDB.
+/// </summary>
 var mongoDbConnectionString = builder.Configuration["MongoDB:ConnectionString"];
 var mongoClient = new MongoClient(mongoDbConnectionString);
 var mongoDatabase = mongoClient.GetDatabase("PortfolioDB");
 builder.Services.AddSingleton(mongoDatabase);
 
-//var certFilePath = "certs/mycert.cer";
-//var certPassword = "StrongCertPassword123";
-
-
+/// <summary>
+/// Load SSL certificate and configure Kestrel for HTTPS.
+/// </summary>
 var certFilePath = builder.Configuration["Cert:Path"];
 var certPassword = builder.Configuration["Cert:Password"];
 
+//var certFilePath = "certs/mycert.cer";
+//var certPassword = "StrongCertPassword123";
+
 //Console.WriteLine($"Certificate Path: {certFilePath}");
 //Console.WriteLine($"Certificate Password: {certPassword}");
+
 if (string.IsNullOrEmpty(certFilePath) || string.IsNullOrEmpty(certPassword))
 {
     throw new Exception("Certificate file path or password not configured.");
 }
-
 
 try
 {
@@ -143,19 +169,17 @@ try
         {
             httpsOptions.ServerCertificate = certificate;
         });
-        options.Listen(IPAddress.Any, 80);   // HTTP port
+        options.Listen(IPAddress.Any, 80);
         options.Listen(IPAddress.Any, 5001, listenOptions =>
         {
-            listenOptions.UseHttps();        // HTTPS port with a certificate
+            listenOptions.UseHttps();
         });
         options.Listen(IPAddress.Any, 443, listenOptions =>
         {
-            listenOptions.UseHttps();        // HTTPS port with a certificate
+            listenOptions.UseHttps();
         });
     });
 
-
-    // Use certificate (e.g., add to services for HTTPS)
     builder.Services.AddSingleton(certificate);
 }
 catch (CryptographicException ex)
@@ -164,9 +188,9 @@ catch (CryptographicException ex)
     throw;
 }
 
-
-
-// Hangfire Configuration
+/// <summary>
+/// Configure Hangfire with MongoDB storage and register server.
+/// </summary>
 var hangfireDatabaseName = "HangfireDB";
 builder.Services.AddHangfire(config =>
 {
@@ -183,23 +207,22 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 builder.Services.AddTransient<HangfireTaskScheduler>();
 
-// Redis Configuration
-//var redisConnection = $"127.0.0.1:{builder.Configuration["Redis:Port"]},password={builder.Configuration["Redis:Password"]}";
-
+/// <summary>
+/// Configure Redis and caching services.
+/// </summary>
 var redisConnection = $"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]},password={builder.Configuration["Redis:Password"]}";
 builder.Services.AddStackExchangeRedisCache(options => { options.Configuration = redisConnection; });
-
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     return ConnectionMultiplexer.Connect(redisConnection);
 });
 
-// Alpaca API Clients
+/// <summary>
+/// Set up Alpaca trading and streaming API clients.
+/// </summary>
 builder.Services.AddSingleton<IAlpacaTradingClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-
-
     var securityKey = new SecretKey(config["Alpaca:ApiKey"], config["Alpaca:ApiSecret"]);
     return Alpaca.Markets.Environments.Paper.GetAlpacaTradingClient(securityKey);
 });
@@ -211,22 +234,24 @@ builder.Services.AddSingleton<IAlpacaDataStreamingClient>(sp =>
     return Alpaca.Markets.Environments.Paper.GetAlpacaDataStreamingClient(securityKey);
 });
 
-
-// HTTP Client
+/// <summary>
+/// Configure HTTP and stock API clients.
+/// </summary>
 builder.Services.AddHttpClient();
-
 builder.Services.AddHttpClient<IFinnhubStockMarketService, FinnhubService>();
 
-
-
-// JSON Configuration
+/// <summary>
+/// Configure JSON serialization.
+/// </summary>
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = false;
 });
 
-// Authentication & Authorization
+/// <summary>
+/// Configure JWT authentication.
+/// </summary>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -246,7 +271,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAuthenticatedUser", policy => policy.RequireAuthenticatedUser());
 });
 
-// Swagger Configuration
+/// <summary>
+/// Configure Swagger with JWT support.
+/// </summary>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -269,19 +296,38 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+/// <summary>
+/// Force HTTPS redirection.
+/// </summary>
 builder.Services.Configure<HttpsRedirectionOptions>(options =>
 {
     options.HttpsPort = 443;
 });
 
-
+/// <summary>
+/// Set up cookie policy for SameSite and consent handling.
+/// </summary>
 builder.Services.AddCookiePolicy(options =>
 {
     options.CheckConsentNeeded = context => false;
     options.MinimumSameSitePolicy = SameSiteMode.None;
-
 });
 
+/// <summary>
+/// Configure CORS for specific front-end origin.
+/// </summary>
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:8081")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 //builder.Services.AddCors(options =>
 //{
@@ -296,70 +342,63 @@ builder.Services.AddCookiePolicy(options =>
 //    });
 //});
 
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy
-            .WithOrigins("http://localhost:8081") // ✅ replace with actual origins
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
-
-// Build Application
+/// <summary>
+/// Build and configure the web application.
+/// </summary>
 var app = builder.Build();
+
 app.UseRouting();
 
-// Configure Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-
 }
 
-
+/// <summary>
+/// Configure Hangfire dashboard with basic authentication.
+/// </summary>
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { new BasicAuthAuthorizationFilter(
-                    new BasicAuthAuthorizationFilterOptions
-                    {
-                        RequireSsl = false,
-                        SslRedirect = false,
-                        LoginCaseSensitive = true,
-                        Users = new[]
-                        {
-                            new BasicAuthAuthorizationUser
-                            {
-                                Login = "Admin",
-                                PasswordClear = builder.Configuration["Hangfire:Password"]
-
-                            }
-                        }
-                    }) }
+        new BasicAuthAuthorizationFilterOptions
+        {
+            RequireSsl = false,
+            SslRedirect = false,
+            LoginCaseSensitive = true,
+            Users = new[]
+            {
+                new BasicAuthAuthorizationUser
+                {
+                    Login = "Admin",
+                    PasswordClear = builder.Configuration["Hangfire:Password"]
+                }
+            }
+        }) }
 });
 
+/// <summary>
+/// Run startup Hangfire task and preload Alpaca symbols.
+/// </summary>
 var hangfireTaskScheduler = app.Services.GetRequiredService<HangfireTaskScheduler>();
 hangfireTaskScheduler.Configure();
 
-// Load Symbol cache at startup
 var symbolService = app.Services.GetRequiredService<IAlpacaStockMarketService>();
 await symbolService.InitializeAsync();
 
-
-//app.UseCors("AllowAllOrigins");
 app.UseCors();
 app.UseCookiePolicy();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+/// <summary>
+/// Map SignalR hub endpoint.
+/// </summary>
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapHub<MarketDataHub>("/hubs/marketdata");
 });
 
 app.Run();
-

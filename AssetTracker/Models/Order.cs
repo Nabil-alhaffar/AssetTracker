@@ -1,43 +1,58 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json.Linq;
-using System.Runtime.Serialization;
-using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using AssetTracker.Helpers;
 using AssetTracker.Models.Enums;
 
 namespace AssetTracker.Models
 {
+    /// <summary>
+    /// Represents a trade order placed by a user.
+    /// </summary>
     public sealed record Order
     {
-        [BsonId]  // MongoDB will map _id to this property
-        public ObjectId MongoId { get; set; } // MongoDB uses ObjectId by default
+        /// <summary>
+        /// Gets or sets the MongoDB ObjectId.
+        /// </summary>
+        [BsonId]
+        public ObjectId MongoId { get; set; }
 
+        /// <summary>
+        /// Gets or sets the unique identifier of the order.
+        /// </summary>
         [BsonRepresentation(BsonType.String)]
         public Guid OrderId { get; set; } = Guid.NewGuid();
 
+        /// <summary>
+        /// Gets or sets the unique identifier of the user placing the order.
+        /// </summary>
         [BsonRepresentation(BsonType.String)]
         public Guid UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the stock symbol for which the order is placed.
+        /// </summary>
         [Required]
         public string Symbol { get; set; } = null!;
+
+        /// <summary>
+        /// Gets or sets the quantity of shares in the order.
+        /// </summary>
         [Required]
         public decimal Quantity { get; set; }
 
+        /// <summary>
+        /// Gets or sets the price per share for the order.
+        /// </summary>
         public decimal Price { get; set; }
 
+        /// <summary>
+        /// Gets or sets the side of the order (Buy, Sell, Short, CloseShort).
+        /// </summary>
         public OrderSide Side { get; set; }
 
+        /// <summary>
+        /// Gets or sets the UTC timestamp when the order was placed.
+        /// </summary>
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-
-
     }
-
-
-
-
 }
-

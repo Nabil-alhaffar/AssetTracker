@@ -16,6 +16,9 @@ using AssetTracker.Models.Enums;
 
 namespace AssetTracker.Services
 {
+    /// <summary>
+    /// Provides stock trading operations.
+    /// </summary>
     public class StockService : IStockService
     {
         private readonly IPositionService _positionService;
@@ -33,7 +36,12 @@ namespace AssetTracker.Services
             _orderRepository = orderRepository;
 
         }
-
+        /// <summary>
+        /// Executes a trade request for the specified user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user executing the trade.</param>
+        /// <param name="tradeRequest">The trade request details.</param>
+        /// <returns>A task that returns a <see cref="TradeResponse"/> indicating the result of the trade execution.</returns>
         public async Task<TradeResponse> ExecuteTradeAsync(Guid userId, TradeRequest tradeRequest)
         {
             if (tradeRequest.Quantity <= 0)
@@ -44,13 +52,13 @@ namespace AssetTracker.Services
             var availableFunds = await _portfolioService.GetAvailableFundsAsync(userId);
             var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
 
-            if (tradeRequest.Type == OrderSide.Buy && position != null && position.Type == PositionType.Short)
+            if (tradeRequest.Side == OrderSide.Buy && position != null && position.Type == PositionType.Short)
                 return new TradeResponse(false, "Close your short position before buying long.");
 
-            if (tradeRequest.Type == OrderSide.Short && position != null && position.Type == PositionType.Long)
+            if (tradeRequest.Side == OrderSide.Short && position != null && position.Type == PositionType.Long)
                 return new TradeResponse(false, "Sell your long position before shorting.");
 
-            switch (tradeRequest.Type)
+            switch (tradeRequest.Side)
             {
                 case OrderSide.Buy:
                     if (totalValue > availableFunds)
@@ -87,14 +95,14 @@ namespace AssetTracker.Services
                 Symbol = tradeRequest.Symbol,
                 Quantity = tradeRequest.Quantity,
                 Price = price,
-                Side = tradeRequest.Type,
+                Side = tradeRequest.Side,
                 Timestamp = DateTime.UtcNow
             };
 
             await _positionService.UpdatePositionAsync(order);
             await _orderRepository.AddOrderAsync(order);
 
-            return new TradeResponse(true, $"{tradeRequest.Type} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
+            return new TradeResponse(true, $"{tradeRequest.Side} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
         }
     }
 }

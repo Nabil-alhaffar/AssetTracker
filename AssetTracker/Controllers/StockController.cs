@@ -20,6 +20,12 @@ namespace AssetTracker.Controller
             _stockService = stockService; 
         }
 
+
+        /// <summary>
+        /// Executes a buy or sell trade for the authenticated user based on the provided trade request.
+        /// </summary>
+        /// <param name="tradeRequest">Object containing trade details including symbol, quantity, and trade type</param>
+        /// <returns>Trade response object indicating success or failure of the trade</returns>
         [HttpPost("execute-trade")]
         [Authorize]
         public async Task<IActionResult> ExecuteTrade( TradeRequest tradeRequest)

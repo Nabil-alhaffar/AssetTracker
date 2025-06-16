@@ -12,6 +12,10 @@ using AssetTracker.Repositories.MongoDBRepositories;
 using AssetTracker.Models.Enums;
 namespace AssetTracker.Services
 {
+
+    /// <summary>
+    /// Service for managing user positions in a portfolio, including updates, summaries, and history tracking.
+    /// </summary>
     public class PositionService : IPositionService
     {
         private readonly ILogger<PositionService> _logger;
@@ -19,7 +23,12 @@ namespace AssetTracker.Services
         private readonly IAlphaVantageStockMarketService _alphaVantageStockMarketService; // Added to get current stock price
         private readonly Dictionary<Guid, List<PositionHistory>> _positionHistoryStorage = new();
 
-        // Constructor
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PositionService"/> class.
+        /// </summary>
+        /// <param name="logger">Logger for logging information.</param>
+        /// <param name="portfolioRepository">Repository for accessing portfolio data.</param>
+        /// <param name="alphaVantageStockMarketService">Service for fetching stock market data.</param>
         public PositionService(ILogger<PositionService> logger, IPortfolioRepository portfolioRepository, IAlphaVantageStockMarketService alphaVantageStockMarketService)
         {
             _portfolioRepository = portfolioRepository;
@@ -27,7 +36,12 @@ namespace AssetTracker.Services
             _logger = logger;
         }
 
-        // Split a position based on the split factor
+        /// <summary>
+        /// Splits a position in the user's portfolio based on a split factor.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Stock symbol.</param>
+        /// <param name="splitFactor">Factor to split the position by.</param>
         public async Task SplitPositionAsync(Guid userId, string symbol, int splitFactor)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
@@ -44,7 +58,13 @@ namespace AssetTracker.Services
             }
         }
 
-        // Check if a position has triggered the stop loss
+        /// <summary>
+        /// Checks if a position has triggered a stop-loss condition.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Stock symbol.</param>
+        /// <param name="stopLossPrice">Price threshold for stop loss.</param>
+        /// <returns>True if stop loss is triggered, otherwise false.</returns>
         public async Task<bool> CheckPositionForStopLossAsync(Guid userId, string symbol, decimal stopLossPrice)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
@@ -67,7 +87,11 @@ namespace AssetTracker.Services
             return false;  // Stop loss not triggered
         }
 
-        // Update Profit & Loss for a given position
+        /// <summary>
+        /// Updates the profit and loss of a position based on the current price.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Stock symbol.</param>
         public async Task UpdatePositionProfitLossAsync(Guid userId, string symbol)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
@@ -88,7 +112,10 @@ namespace AssetTracker.Services
         // Add or update a position in the portfolio
 
 
-        // Add position history
+        /// <summary>
+        /// Adds a position transaction history record for a user.
+        /// </summary>
+        /// <param name="history">Position history record.</param>
         public async Task AddPositionHistoryAsync(PositionHistory history)
         {
             if (!_positionHistoryStorage.ContainsKey(history.UserId))
@@ -99,6 +126,12 @@ namespace AssetTracker.Services
              _positionHistoryStorage[history.UserId].Add(history);
         }
 
+        /// <summary>
+        /// Retrieves the position history for a user, optionally filtered by symbol.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Optional stock symbol to filter by.</param>
+        /// <returns>List of position history records.</returns>
         public async Task<List<PositionHistory>> GetPositionHistoryAsync(Guid userId, string symbol)
         {
             if (!_positionHistoryStorage.TryGetValue(userId, out var history))
@@ -114,7 +147,12 @@ namespace AssetTracker.Services
         }
 
 
-        // Get PositionSummary for a user and symbol
+        /// <summary>
+        /// Gets a summary of a specific position in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Stock symbol.</param>
+        /// <returns>Position summary object or null if position is not found.</returns>
         public async Task<PositionSummary> GetPositionSummaryAsync(Guid userId, string symbol)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(userId);
@@ -144,6 +182,13 @@ namespace AssetTracker.Services
 
             return null; // Return null if position not found
         }
+
+        /// <summary>
+        /// Gets a summary of a specific position in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Stock symbol.</param>
+        /// <returns>Position summary object or null if position is not found.</returns>
         private async Task<PnL> GetPositionPnL (Position position)
         {
             decimal openPNL = 0;
@@ -177,12 +222,24 @@ namespace AssetTracker.Services
             };
         }
 
+
+        /// <summary>
+        /// Retrieves a specific position by symbol from the user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier.</param>
+        /// <param name="symbol">Stock symbol.</param>
+        /// <returns>The position object, or null if not found.</returns>
         public async Task<Position> GetPositionAsync(Guid userId, string symbol)
         {
             return await _portfolioRepository.GetUserPositionBySymbol(userId, symbol);
 
         }
 
+
+        /// <summary>
+        /// Updates a user's portfolio based on the given filled order.
+        /// </summary>
+        /// <param name="order">Order that affects the position.</param>
         public async Task UpdatePositionAsync(Order order)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(order.UserId);

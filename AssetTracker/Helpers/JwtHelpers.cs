@@ -6,8 +6,21 @@ using System.Text;
 
 namespace AssetTracker.Helpers
 {
-	public static class JwtHelpers
+
+    /// <summary>
+    /// Helper methods for handling JWT tokens.
+    /// </summary>
+    public static class JwtHelpers
 	{
+
+        /// <summary>
+        /// Validates a JWT token ignoring its expiration and extracts the <see cref="ClaimsPrincipal"/> from it.
+        /// This is typically used to get user claims from an expired token during a refresh token process.
+        /// </summary>
+        /// <param name="token">The JWT token string to validate and parse.</param>
+        /// <param name="configuration">The application configuration to get JWT settings like issuer, audience, and secret key.</param>
+        /// <returns>A <see cref="ClaimsPrincipal"/> extracted from the token.</returns>
+        /// <exception cref="SecurityTokenException">Thrown when the token is invalid or has an unexpected signing algorithm.</exception>
         public static ClaimsPrincipal GetPrincipalFromExpiredToken(string token, IConfiguration configuration)
         {
             var tokenValidationParameters = new TokenValidationParameters

@@ -29,6 +29,13 @@ namespace AssetTracker.Services
         private List<SymbolLookupResult> _symbolCache = new();
         private readonly SemaphoreSlim _loadLock = new(1, 1);
 
+
+        /// <summary>
+        /// Creates a new instance of <see cref="AlpacaStockMarketService"/>.
+        /// Initializes HttpClient with Alpaca API credentials and base URL.
+        /// </summary>
+        /// <param name="configuration">Configuration to read API keys from.</param>
+        /// <param name="logger">Logger instance for logging.</param>
         public AlpacaStockMarketService(IConfiguration configuration, ILogger<AlpacaStockMarketService> logger)
         //IAlpacaDataStreamingClient dataClient, IAlpacaTradingClient tradingClient)
         { 
@@ -45,6 +52,13 @@ namespace AssetTracker.Services
             _client.DefaultRequestHeaders.Add("APCA-API-SECRET-KEY", _apiSecret);
         }
 
+        /// <summary>
+        /// Gets batch snapshots for the specified list of symbols from Alpaca.
+        /// </summary>
+        /// <param name="symbols">List of stock symbols to fetch snapshots for. Cannot be null or empty.</param>
+        /// <returns>Raw JSON string containing snapshot data.</returns>
+        /// <exception cref="ArgumentException">Thrown if <paramref name="symbols"/> is null or empty.</exception>
+        /// <exception cref="Exception">Thrown if the HTTP request to Alpaca API fails.</exception>
         public async Task<string> GetSnapshotsAsync(List<string> symbols)
         {
             if (symbols == null || symbols.Count == 0)
@@ -68,6 +82,14 @@ namespace AssetTracker.Services
             }
         }
 
+
+        /// <summary>
+        /// Gets historical bars (OHLCV) data for a given stock symbol.
+        /// </summary>
+        /// <param name="symbol">Stock symbol to query.</param>
+        /// <param name="timeframe">Timeframe for bars (e.g., "1Day"). Defaults to "1Day".</param>
+        /// <param name="start">Start date for historical data in ISO format (yyyy-MM-dd). Defaults to "2024-01-01".</param>
+        /// <returns>An <see cref="AlpacaBarsResponse"/> containing bar data, or null if request fails.</returns>
         public async Task<AlpacaBarsResponse?> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01")
         {
             var url = $"/v2/stocks/{symbol}/bars?start={start}&timeframe={timeframe}";
@@ -85,6 +107,13 @@ namespace AssetTracker.Services
             return barsResponse;
         }
 
+
+        /// <summary>
+        /// Retrieves recent news articles related to a specific stock symbol.
+        /// </summary>
+        /// <param name="symbol">The stock symbol to get news for.</param>
+        /// <param name="limit">Maximum number of news items to return. Defaults to 20.</param>
+        /// <returns>List of <see cref="AlpacaNewsItem"/> objects.</returns>
         public async Task<List<AlpacaNewsItem>> GetNewsAsync(string symbol, int limit = 20)
         {
             var url = $"/v1beta1/news?symbols={symbol}&limit={limit}";
@@ -100,8 +129,10 @@ namespace AssetTracker.Services
             return result?.News ?? new List<AlpacaNewsItem>();
         }
 
-        //Screener
-
+        /// <summary>
+        /// Retrieves the list of most active stocks from Alpaca screener.
+        /// </summary>
+        /// <returns>An <see cref="AlpacaMostActiveResponse"/> containing the most active stocks.</returns>
         public async Task <AlpacaMostActiveResponse> GetMostActivesAsync()
         {
             var url = $"/v1beta1/screener/stocks/most-actives";
@@ -117,6 +148,11 @@ namespace AssetTracker.Services
             return result!;
         }
 
+        /// <summary>
+        /// Retrieves market movers for a given market type.
+        /// </summary>
+        /// <param name="marketType">Market type such as "nasdaq", "nyse", etc.</param>
+        /// <returns>An <see cref="AlpacaMarketMoversResponse"/> containing movers data.</returns>
         public async Task<AlpacaMarketMoversResponse> GetMarketMoversAsync(string marketType)
         {
             var url = $"/v1beta1/screener/{marketType}/movers";
@@ -131,6 +167,14 @@ namespace AssetTracker.Services
             return result!;
 
         }
+
+
+
+        /// <summary>
+        /// Searches the cached symbol metadata for symbols or names containing the given query string.
+        /// </summary>
+        /// <param name="query">Query string to search for.</param>
+        /// <returns>Top 10 matching <see cref="SymbolLookupResult"/> objects.</returns>
         public Task<List<SymbolLookupResult>> SearchAsync(string query)
         {
             query = query.ToUpperInvariant();
@@ -147,11 +191,21 @@ namespace AssetTracker.Services
             return Task.FromResult(results);
 
         }
+
+        /// <summary>
+        /// Initializes the service by loading symbol metadata cache from Alpaca API.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task InitializeAsync()
         {
             await LoadSymbolMetadataAsync();
         }
 
+
+        /// <summary>
+        /// Loads and caches active tradable asset metadata from Alpaca API.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         private async Task LoadSymbolMetadataAsync()
         {
             await _loadLock.WaitAsync();

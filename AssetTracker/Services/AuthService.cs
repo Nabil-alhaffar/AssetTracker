@@ -15,7 +15,9 @@ using Microsoft.IdentityModel.Tokens;
 namespace AssetTracker.Services
 {
 
-
+    /// <summary>
+    /// Handles user authentication and JWT/refresh token generation.
+    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
@@ -29,7 +31,12 @@ namespace AssetTracker.Services
             _configuration = configuration;
         }
 
-        // Authenticate user
+        /// <summary>
+        /// Authenticates a user based on username and password.
+        /// </summary>
+        /// <param name="username">The username of the user.</param>
+        /// <param name="password">The password of the user.</param>
+        /// <returns>The authenticated <see cref="User"/> object if successful; otherwise, null.</returns>
         public async Task<User> AuthenticateUserAsync(string username, string password)
         {
             var user = await _userRepository.GetUserByUsernameAsync(username);
@@ -39,7 +46,11 @@ namespace AssetTracker.Services
             return user;
         }
 
-        // Generate JWT token
+        /// <summary>
+        /// Generates a JSON Web Token (JWT) for the specified user.
+        /// </summary>
+        /// <param name="user">The user for whom the JWT will be generated.</param>
+        /// <returns>A signed JWT token string.</returns>
         public string GenerateJwtToken(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]));
@@ -62,6 +73,11 @@ namespace AssetTracker.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+
+        /// <summary>
+        /// Generates a cryptographically secure refresh token.
+        /// </summary>
+        /// <returns>A Base64-encoded refresh token string.</returns>
         public string GenerateRefreshToken()
         {
             var randomBytes = new byte[64];

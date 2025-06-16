@@ -9,6 +9,9 @@ using AssetTracker.Services.Interfaces;
 
 namespace AssetTracker.Services
 {
+    /// <summary>
+    /// Provides portfolio-related operations such as retrieving portfolio details, positions, and updating funds.
+    /// </summary>
     public class PortfolioService : IPortfolioService
     {
         private readonly IUserService _userService;
@@ -35,6 +38,12 @@ namespace AssetTracker.Services
 
         }
 
+
+        /// <summary>
+        /// Retrieves the portfolio for a specific user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>The user's portfolio.</returns>
         public async Task<Portfolio> GetUserPortfolioAsync(Guid userId)
         {
             try
@@ -49,6 +58,11 @@ namespace AssetTracker.Services
             }
         }
 
+        /// <summary>
+        /// Returns a summary of the user's portfolio including market value, cost, cash balance, PNL, and returns.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>A summary of the portfolio.</returns>
         public async Task<PortfolioSummary> GetPortfolioSummaryAsync(Guid userId)
         {
             try
@@ -80,6 +94,13 @@ namespace AssetTracker.Services
                 throw new Exception($"Error calculating portfolio summary: {ex.Message}");
             }
         }
+
+
+        /// <summary>
+        /// Calculates the open PnL (profit and loss) and return percentage for all open positions in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>A PnL object containing the open PnL value and percentage.</returns>
         private async Task<PnL> GetOpenPNLAsync(Guid userId)
         {
             decimal openPNL = 0;
@@ -101,6 +122,12 @@ namespace AssetTracker.Services
             }
             return new PnL { PNLValue = openPNL, PNLPercentage = openReturnPercentage };
         }
+
+        /// <summary>
+        /// Gets the current total value of the user's portfolio including market value and available funds.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>Total value of the portfolio.</returns>
         public async Task<decimal> GetCurrentTotalValue(Guid userId)
         {
             try
@@ -117,6 +144,13 @@ namespace AssetTracker.Services
             }
 
         }
+
+        /// <summary>
+        /// Calculates the performance of the portfolio over a number of days.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="days">The number of days in the past to compare performance.</param>
+        /// <returns>Portfolio performance metrics.</returns>
         public async Task<PortfolioPerformance> GetPortfolioPerformanceAsync(Guid userId, int days)
         {
             try
@@ -160,7 +194,12 @@ namespace AssetTracker.Services
             }
         }
 
-        // Fetch market value from a specified number of days ago
+        /// <summary>
+        /// Retrieves the total portfolio value from a specified number of days ago, falling back to the closest available value within the past week if not found.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="days">The number of days in the past.</param>
+        /// <returns>The total portfolio value or null if unavailable.</returns>
         private async Task<decimal?> GetTotalValueDaysAgo(Guid userId, int days)
         {
             var user = await _userService.GetUserAsync(userId);
@@ -176,7 +215,12 @@ namespace AssetTracker.Services
                    ?? await GetClosestAvailableTotalValue(userId, pastDate);
         }
 
-        // Try to get the closest available market value within the last 7 days
+        /// <summary>
+        /// Attempts to find the closest available total portfolio value for a user up to 7 days before the requested date.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="requestedDate">The date from which to begin the search.</param>
+        /// <returns>The closest total portfolio value or null if none is found.</returns>
         private async Task<decimal?> GetClosestAvailableTotalValue(Guid userId, DateOnly requestedDate)
         {
             for (int i = 1; i <= 7; i++) // Try up to a week back
@@ -189,7 +233,11 @@ namespace AssetTracker.Services
             return null; // No valid historical data found
         }
 
-        // Get current market value for all positions in the portfolio
+        /// <summary>
+        /// Computes the total current market value of all positions in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>The total current market value.</returns>
         private async Task<decimal> GetCurrentMarketValue(Guid userId)
         {
             var positions = await _portfolioRepository.GetPositionsByUserId(userId);
@@ -204,7 +252,13 @@ namespace AssetTracker.Services
             return totalMarketValue;
         }
 
-        // Method to store the market value of the portfolio for a specific user
+
+        /// <summary>
+        /// Stores the total market value of the user's portfolio for today.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="marketValue">The total market value to store.</param>
+        /// <returns>A task representing the asynchronous operation.</returns
         public async Task StoreTotalValueAsync(Guid userId, decimal marketValue)
         {
             var user = await _userService.GetUserAsync(userId);
@@ -215,7 +269,11 @@ namespace AssetTracker.Services
             await _historicalPortfolioValueRepository.StoreTotalValueAsync(userId, userLocalToday, marketValue);
         }
 
-        // Get total cost for all positions in the portfolio
+        /// <summary>
+        /// Calculates the total cost basis for all positions in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>The total cost of all positions.</returns
         private async Task<decimal> GetTotalCost(Guid userId)
         {
             var positions = await _portfolioRepository.GetPositionsByUserId(userId);
@@ -229,6 +287,13 @@ namespace AssetTracker.Services
 
             return totalCost;
         }
+
+        /// <summary>
+        /// Gets a specific position by stock symbol for a user.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="symbol">The stock symbol.</param>
+        /// <returns>The position object.</returns>
         public async Task<Position> GetUserPositionBySymbol(Guid userId, string symbol)
         {
             ;
@@ -245,7 +310,12 @@ namespace AssetTracker.Services
         }
 
 
-        // Update available funds in the portfolio (e.g., deposit/withdraw funds)
+        /// <summary>
+        /// Updates the available funds in the user's portfolio (e.g., deposit or withdrawal).
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <param name="additionalAmount">The amount to add (or subtract) from available funds.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task UpdateAvailableFundsAsync(Guid userId, decimal additionalAmount)
         {
             if (userId == null)
@@ -263,7 +333,11 @@ namespace AssetTracker.Services
             await _portfolioRepository.UpdatePortfolioAsync(portfolio);
         }
 
-        // Get available funds for the user
+        /// <summary>
+        /// Gets the available funds in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>The available cash balance.</returns>
         public async Task<decimal> GetAvailableFundsAsync(Guid userId)
         {
             if (userId == null)
@@ -275,7 +349,11 @@ namespace AssetTracker.Services
             return portfolio.AvailableFunds;
         }
 
-        // Fetch and return all positions for the user, including current prices
+        /// <summary>
+        /// Retrieves all positions in the user's portfolio.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>A dictionary of positions keyed by stock symbol.</returns>
         public async Task<Dictionary<string, Position>> GetPortfolioPositionsAsync(Guid userId)
         {
             if (userId == null)
@@ -292,6 +370,11 @@ namespace AssetTracker.Services
             //}
             return positions;
         }
+
+        /// <summary>
+        /// Updates all user portfolios by refreshing prices and position ratios.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task UpdatePortfolioForAllUsersAsync()
         {
             var users = await _portfolioRepository.GetAllUserIdsAsync(); 
@@ -301,6 +384,13 @@ namespace AssetTracker.Services
             }
 
         }
+
+
+        /// <summary>
+        /// Updates a specific user's portfolio prices and ratios based on the latest market data.
+        /// </summary>
+        /// <param name="userId">The unique identifier of the user.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task UpdatePortfolioByUserId(Guid userId)
         {
             try
@@ -327,8 +417,10 @@ namespace AssetTracker.Services
 
 
         }
-
-        // Method to update market values once a day for all users
+        /// <summary>
+        /// Updates and stores the total portfolio values for all users for the current day.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task UpdateTotalValuesForAllUsersAsync()
         {
             var users = await _portfolioRepository.GetAllUserIdsAsync(); 

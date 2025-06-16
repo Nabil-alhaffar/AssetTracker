@@ -18,7 +18,11 @@ namespace AssetTracker.Controllers
             _userService = userService;
         }
 
-
+        /// <summary>
+        /// Retrieves a user by their unique identifier.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>User object if found, otherwise 404 Not Found</returns>
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUser(Guid userId)
         {
@@ -26,6 +30,12 @@ namespace AssetTracker.Controllers
             if (user == null) return NotFound("User not found");
             return Ok(user);
         }
+
+
+        /// <summary>
+        /// Retrieves a list of all registered users.
+        /// </summary>
+        /// <returns>List of users and the count, or 404 if none exist</returns>
         [HttpGet("Get-all")]
         public async Task <IActionResult> GetAllUsers()
         {
@@ -37,6 +47,13 @@ namespace AssetTracker.Controllers
             return Ok(new { count = users.Count(), users });
 
         }
+
+        /// <summary>
+        /// Resets the password for the specified user.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="request">New password to be set</param>
+        /// <returns>Confirmation message or error details</returns>
         [HttpPatch("{userId}/reset-password")]
         public async Task <IActionResult> ResetPassword (Guid userId,[FromBody] ResetPasswordRequest request)
         {
@@ -52,6 +69,14 @@ namespace AssetTracker.Controllers
                 return BadRequest($"Error resetting password: {ex.Message}");
             }
         }
+
+
+        /// <summary>
+        /// Resets the email address for the specified user.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="request">New email to be set</param>
+        /// <returns>Confirmation message or error details</returns>
         [HttpPatch("{userId}/reset-email")]
         public async Task<IActionResult> ResetEmail(Guid userId, [FromBody] ResetEmailRequest request)
         {
@@ -66,6 +91,14 @@ namespace AssetTracker.Controllers
                 return BadRequest($"Error resetting email: {ex.Message}");
             }
         }
+
+
+        /// <summary>
+        /// Resets the username for the specified user.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="request">New username to be set</param>
+        /// <returns>Confirmation message or error details</returns>
         [HttpPatch("{userId}/reset-username")]
         public async Task<IActionResult> ResetUsername(Guid userId, [FromBody] ResetUsernameRequest request)
         {
@@ -81,6 +114,12 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Updates the time zone setting for the specified user.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="model">Time zone information</param>
+        /// <returns>Confirmation message on successful update</returns>
         [HttpPut("{userId}/timezone")]
         public async Task<IActionResult> UpdateTimeZone( Guid userId, [FromBody] TimeZoneUpdateRequest model)
         {

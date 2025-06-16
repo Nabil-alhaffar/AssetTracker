@@ -18,7 +18,14 @@ namespace AssetTracker.Controllers
 			_symbolSubscriptionManager = symbolSubscriptionManager;
 		}
 
-		[HttpPost("{userId}/subscribe-to-Symbol/{symbol}")]
+
+        /// <summary>
+        /// Subscribes the specified user to updates for a particular stock symbol.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol to subscribe to</param>
+        /// <returns>Confirmation message of subscription</returns>
+        [HttpPost("{userId}/subscribe-to-Symbol/{symbol}")]
         public async Task <IActionResult>  SubscribeUserToSymbol(Guid userId, string symbol)
 		{
 			try
@@ -31,6 +38,13 @@ namespace AssetTracker.Controllers
 				throw new Exception(ex.Message);
 			}
 		}
+
+        /// <summary>
+        /// Unsubscribes the specified user from updates for a particular stock symbol.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="symbol">Stock symbol to unsubscribe from</param>
+        /// <returns>Confirmation message of unsubscription</returns>
         [HttpPost("{userId}/Unsubscribe-from-symbol/{symbol}")]
         public async Task <IActionResult> UnsubscribeUserFromSymbol(Guid userId, string symbol)
 		{
@@ -46,7 +60,11 @@ namespace AssetTracker.Controllers
         }
 
 
-
+        /// <summary>
+        /// Unsubscribes the specified user from all subscribed stock symbols.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>Confirmation message of unsubscription from all symbols</returns>
         [HttpPost("{userId}/Unsubscribe-from-all")]
         public async Task <IActionResult> UnsubscribeUserFromAll(Guid userId)
 		{
@@ -61,6 +79,11 @@ namespace AssetTracker.Controllers
             }
 
         }
+        /// <summary>
+        /// Retrieves all stock symbols the specified user is currently subscribed to.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>List of subscribed stock symbols</returns>
         [HttpGet("/{userId}/symbols")]
         public async Task<IActionResult> GetUserSubscribedSymbols(Guid userId)
         {
@@ -76,6 +99,11 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves all users subscribed to the specified stock symbol.
+        /// </summary>
+        /// <param name="symbol">Stock symbol</param>
+        /// <returns>List of user IDs subscribed to the symbol</returns>
         [HttpGet("/{symbol}/subscribed-users")]
         public async Task<IActionResult> GetUsersSubscribedToSymbol(string symbol)
         {
