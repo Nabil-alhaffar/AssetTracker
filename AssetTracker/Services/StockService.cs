@@ -12,6 +12,7 @@ using AssetTracker.Repositories;
 using AssetTracker.Services.Interfaces;
 using AssetTracker.Repositories.Interfaces;
 using AssetTracker.Repositories.MongoDBRepositories;
+using AssetTracker.Models.Enums;
 
 namespace AssetTracker.Services
 {
@@ -33,50 +34,50 @@ namespace AssetTracker.Services
 
         }
 
-        public async Task<TradeResult> ExecuteTradeAsync(Guid userId, TradeRequest tradeRequest)
+        public async Task<TradeResponse> ExecuteTradeAsync(Guid userId, TradeRequest tradeRequest)
         {
             if (tradeRequest.Quantity <= 0)
-                return new TradeResult(false, "Quantity must be greater than 0");
+                return new TradeResponse(false, "Quantity must be greater than 0");
 
             var price = await _alphaVantageStockMarketService.GetStockPriceAsync(tradeRequest.Symbol);
             var totalValue = tradeRequest.Quantity * price;
             var availableFunds = await _portfolioService.GetAvailableFundsAsync(userId);
             var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
 
-            if (tradeRequest.Type == OrderType.Buy && position != null && position.Type == Position.PositionType.Short)
-                return new TradeResult(false, "Close your short position before buying long.");
+            if (tradeRequest.Type == OrderSide.Buy && position != null && position.Type == PositionType.Short)
+                return new TradeResponse(false, "Close your short position before buying long.");
 
-            if (tradeRequest.Type == OrderType.Short && position != null && position.Type == Position.PositionType.Long)
-                return new TradeResult(false, "Sell your long position before shorting.");
+            if (tradeRequest.Type == OrderSide.Short && position != null && position.Type == PositionType.Long)
+                return new TradeResponse(false, "Sell your long position before shorting.");
 
             switch (tradeRequest.Type)
             {
-                case OrderType.Buy:
+                case OrderSide.Buy:
                     if (totalValue > availableFunds)
-                        return new TradeResult(false, "Insufficient funds.");
+                        return new TradeResponse(false, "Insufficient funds.");
                     await _portfolioService.UpdateAvailableFundsAsync(userId, -totalValue);
                     break;
 
-                case OrderType.Sell:
+                case OrderSide.Sell:
                     if (position == null || position.Quantity < tradeRequest.Quantity)
-                        return new TradeResult(false, "Not enough shares to sell.");
+                        return new TradeResponse(false, "Not enough shares to sell.");
                     await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
                     break;
 
-                case OrderType.Short:
+                case OrderSide.Short:
                     await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
                     break;
 
-                case OrderType.CloseShort:
+                case OrderSide.CloseShort:
                     if (position == null || position.Quantity >= 0)
-                        return new TradeResult(false, "No short positions to close.");
+                        return new TradeResponse(false, "No short positions to close.");
                     if (-position.Quantity < tradeRequest.Quantity)
-                        return new TradeResult(false, "Cannot buy back more shares than were shorted.");
+                        return new TradeResponse(false, "Cannot buy back more shares than were shorted.");
                     await _portfolioService.UpdateAvailableFundsAsync(userId, -totalValue);
                     break;
 
                 default:
-                    return new TradeResult(false, "Invalid trade type.");
+                    return new TradeResponse(false, "Invalid trade type.");
             }
 
             // ✅ Create an `Order` object
@@ -86,14 +87,14 @@ namespace AssetTracker.Services
                 Symbol = tradeRequest.Symbol,
                 Quantity = tradeRequest.Quantity,
                 Price = price,
-                Type = tradeRequest.Type,
+                Side = tradeRequest.Type,
                 Timestamp = DateTime.UtcNow
             };
 
             await _positionService.UpdatePositionAsync(order);
             await _orderRepository.AddOrderAsync(order);
 
-            return new TradeResult(true, $"{tradeRequest.Type} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
+            return new TradeResponse(true, $"{tradeRequest.Type} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
         }
     }
 }

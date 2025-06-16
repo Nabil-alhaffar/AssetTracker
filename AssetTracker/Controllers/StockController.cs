@@ -28,7 +28,7 @@ namespace AssetTracker.Controller
 
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Get the userId from the JWT token
 
-            TradeResult tradeResult = await _stockService.ExecuteTradeAsync(userId, tradeRequest);
+            TradeResponse tradeResult = await _stockService.ExecuteTradeAsync(userId, tradeRequest);
             return tradeResult.Success ? Ok(tradeResult) : BadRequest(tradeResult);
 
         }

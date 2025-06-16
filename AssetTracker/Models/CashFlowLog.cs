@@ -3,7 +3,7 @@ using System;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations;
-
+using AssetTracker.Models.Enums;
 using System.Text.Json.Serialization;
 using System.Runtime.Serialization;
 using AssetTracker.Helpers;
@@ -33,25 +33,6 @@ namespace AssetTracker.Models
         //public DateTime LocalTimeStamp  => TimezoneHelper.ConvertUtcToLocal(Timestamp);
 
     }
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum TransactionType {
-        [EnumMember(Value = "DEPOSIT")]
-        Deposit,
 
-        [EnumMember(Value = "WITHDRAWAL")]
-        Withdrawal,
-
-        [EnumMember(Value = "TRANSFER")]
-        Transfer,
-
-        [EnumMember(Value = "FEE")]
-        Fee,
-
-        [EnumMember(Value = "INTEREST")]
-        Interest,
-
-        [EnumMember(Value = "ADJUSTMENT")]
-        Adjustment,
-    }
 }
 

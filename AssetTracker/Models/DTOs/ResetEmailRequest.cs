@@ -3,7 +3,7 @@ namespace AssetTracker.Models
 {
     public sealed record ResetEmailRequest
     {
-        public string NewEmail { get; set; }
+        public string NewEmail { get; set; } = null!;
     }
 
 }

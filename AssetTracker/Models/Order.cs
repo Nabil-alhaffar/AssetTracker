@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using AssetTracker.Helpers;
+using AssetTracker.Models.Enums;
 
 namespace AssetTracker.Models
 {
@@ -21,13 +22,13 @@ namespace AssetTracker.Models
         [BsonRepresentation(BsonType.String)]
         public Guid UserId { get; set; }
         [Required]
-        public string Symbol { get; set; }
+        public string Symbol { get; set; } = null!;
         [Required]
         public decimal Quantity { get; set; }
 
         public decimal Price { get; set; }
 
-        public OrderType Type { get; set; }
+        public OrderSide Side { get; set; }
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
@@ -35,22 +36,7 @@ namespace AssetTracker.Models
 
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum OrderType
-    {
-        [EnumMember(Value = "BUY")]
-        Buy,
 
-
-        [EnumMember(Value = "SELL")]
-        Sell,
-
-        [EnumMember(Value = "SHORT")]
-        Short,
-        [EnumMember(Value = "CLOSE_SHORT")]
-
-        CloseShort
-    }
 
 
 }

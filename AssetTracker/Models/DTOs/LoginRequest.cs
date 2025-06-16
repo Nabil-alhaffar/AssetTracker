@@ -3,13 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace AssetTracker.Models
 {
-    public class LoginModel
+    public class LoginRequest
     {
         [JsonPropertyName("username")]
-        public string UserName { get; set; }
+        public string UserName { get; set; } = null!;
 
         [JsonPropertyName("password")]
-        public string Password { get; set; }
+        public string Password { get; set; } = null!;
 
         public string? TimeZoneId { get; set; }
     }

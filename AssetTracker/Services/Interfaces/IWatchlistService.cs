@@ -10,15 +10,18 @@ namespace AssetTracker.Services.Interfaces
 
         public Task<List<Watchlist>> GetUserWatchlistsAsync(Guid userId);
 
-        public Task AddWatchlistAsync(Guid userId, Watchlist watchlist);
+        public Task AddWatchlistAsync(Guid userId, string watchlistName, string[]? symbols = null);
 
         public Task RemoveWatchlistAsync(Guid userId, Guid watchlistId);
 
-        public Task AddSymbolToWatchlistAsync(Guid userId, Guid watchlistId, string symbol);
+        public Task AddSymbolsToWatchlistAsync(Guid userId, Guid watchlistId, IEnumerable<string> symbols);
 
-        public Task RemoveSymbolFromWatchlistAsync(Guid userId, Guid watchlistId, string symbol);
+        public Task RemoveSymbolsFromWatchlistAsync(Guid userId, Guid watchlistId, IEnumerable<string> symbol);
 
         public Task<List<string>> GetAllWatchedTickersByUserIdAsync(Guid userId);
+
+
+        public Task<Guid?> GetUserWatchlistIdByName(Guid userId, string watchlistName);
 
     }
 }

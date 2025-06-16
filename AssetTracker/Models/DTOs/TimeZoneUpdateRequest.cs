@@ -8,7 +8,7 @@ namespace AssetTracker.Models
     {
         [Required]
         [RegularExpression(@"^[A-Za-z/_]+$", ErrorMessage = "Invalid time zone format.")]
-        public string TimeZoneId { get; set; }
+        public string TimeZoneId { get; set; } = null!;
     }
 }
 

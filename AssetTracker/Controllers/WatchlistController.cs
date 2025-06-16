@@ -4,6 +4,7 @@ using AssetTracker.Models;
 using AssetTracker.Services;
 using System.Threading.Tasks;
 using AssetTracker.Services.Interfaces;
+using AssetTracker.Models.DTOs;
 
 namespace AssetTracker.Controllers
 {
@@ -38,11 +39,12 @@ namespace AssetTracker.Controllers
         }
 
         [HttpPost("{userId}")]
-        public async Task<IActionResult> AddWatchlist(Guid userId, [FromBody] Watchlist watchlist)
+        public async Task<IActionResult> AddWatchlist(Guid userId, [FromBody]AddWatchlistRequest request  )
         {
             try
             {
-                await _watchlistService.AddWatchlistAsync(userId, watchlist);
+                await _watchlistService.AddWatchlistAsync(userId, request.WatchlistName, request.Symbols);
+
                 return Ok(new { message = "Watchlist added successfully." });
             }
             catch (Exception ex)
@@ -66,11 +68,11 @@ namespace AssetTracker.Controllers
         }
 
         [HttpPost("{userId}/{watchlistId}/add-symbol")]
-        public async Task<IActionResult> AddSymbolToWatchlist(Guid userId, Guid watchlistId, [FromBody] string symbol)
+        public async Task<IActionResult> AddSymbolToWatchlist(Guid userId, Guid watchlistId, [FromBody] AdjustWatchlistRequest request)
         {
             try
             {
-                await _watchlistService.AddSymbolToWatchlistAsync(userId, watchlistId, symbol);
+                await _watchlistService.AddSymbolsToWatchlistAsync(userId, watchlistId, request.Symbols);
                 return Ok(new { message = "Symbol added to watchlist successfully." });
             }
             catch (Exception ex)
@@ -80,11 +82,11 @@ namespace AssetTracker.Controllers
         }
 
         [HttpPost("{userId}/{watchlistId}/remove-symbol")]
-        public async Task<IActionResult> RemoveSymbolFromWatchlist(Guid userId, Guid watchlistId, [FromBody] string symbol)
+        public async Task<IActionResult> RemoveSymbolFromWatchlist(Guid userId, Guid watchlistId, [FromBody] AdjustWatchlistRequest request)
         {
             try
             {
-                await _watchlistService.RemoveSymbolFromWatchlistAsync(userId, watchlistId, symbol);
+                await _watchlistService.RemoveSymbolsFromWatchlistAsync(userId, watchlistId, request.Symbols);
                 return Ok(new { message = "Symbol removed from watchlist successfully." });
             }
             catch (Exception ex)

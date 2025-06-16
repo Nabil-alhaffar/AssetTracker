@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-
+using AssetTracker.Models.Enums;
 namespace AssetTracker.Models
 {
 	public sealed record Position
@@ -43,22 +43,7 @@ namespace AssetTracker.Models
         //{
         //    return (Stock.CurrentPrice - AveragePurchasePrice) * Quantity;
         //}
-        [JsonConverter(typeof(JsonStringEnumConverter))]
 
-        public enum PositionType
-        {
-           [EnumMember(Value = "LONG")]
-            Long,
-
-           [EnumMember(Value = "SHORT")]
-            Short,
-
-            [EnumMember(Value = "OPTIONS")]
-            Options,
-
-            [EnumMember(Value = "FUTURES")]
-            Futures
-        }
         public Position()
 		{
 

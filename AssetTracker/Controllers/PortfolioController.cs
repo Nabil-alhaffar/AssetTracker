@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.ComponentModel.DataAnnotations;
-
+using AssetTracker.Models.Enums;
 namespace AssetTracker.Controllers
 {
     [Route("api/[controller]")]

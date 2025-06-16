@@ -14,7 +14,7 @@ namespace AssetTracker.Models
         [JsonPropertyName("userId")]
         public Guid UserId { get; set; }
         [JsonPropertyName("sessionId")]
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = null!;
 
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
@@ -22,10 +22,10 @@ namespace AssetTracker.Models
         [JsonPropertyName("EndedAt")]
         public DateTime? EndedAt { get; set; }
 
-        public string IpAddress { get; set; }  // optional
+        public string IpAddress { get; set; } = null!; 
 
         [JsonPropertyName("userAgent")]
-        public string UserAgent { get; set; }  // optional
+        public string UserAgent { get; set; } = null!; 
     }
 }
 

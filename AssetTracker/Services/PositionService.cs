@@ -9,7 +9,7 @@ using AssetTracker.Services.Interfaces;
 using AssetTracker.Repositories.Interfaces;
 using static AssetTracker.Models.Position;
 using AssetTracker.Repositories.MongoDBRepositories;
-
+using AssetTracker.Models.Enums;
 namespace AssetTracker.Services
 {
     public class PositionService : IPositionService
@@ -152,11 +152,11 @@ namespace AssetTracker.Services
             decimal averageEntryPrice = position.AveragePurchasePrice;
             decimal quantity = position.Quantity;
 
-            if (position.Type == Position.PositionType.Long) // Long position
+            if (position.Type == PositionType.Long) // Long position
             {
                 openPNL += (currentPrice - averageEntryPrice) * quantity;
             }
-            else if (position.Type == Position.PositionType.Short) // Short position
+            else if (position.Type == PositionType.Short) // Short position
             {
                 openPNL += (averageEntryPrice - currentPrice) * Math.Abs(quantity);
             }
@@ -194,10 +194,10 @@ namespace AssetTracker.Services
             if (!positions.TryGetValue(order.Symbol, out var position))
             {
                 // 2a) If no position exists, only Buy or Short can create one
-                if (order.Type == OrderType.Sell || order.Type == OrderType.CloseShort)
-                    throw new InvalidOperationException($"Cannot {order.Type} when no existing {order.Symbol} position.");
+                if (order.Side == OrderSide.Sell || order.Side == OrderSide.CloseShort)
+                    throw new InvalidOperationException($"Cannot {order.Side} when no existing {order.Symbol} position.");
 
-                var qty = (order.Type == OrderType.Short ? -order.Quantity : order.Quantity);
+                var qty = (order.Side == OrderSide.Short ? -order.Quantity : order.Quantity);
                 position = new Position
                 {
                     UserId = order.UserId,
@@ -205,7 +205,7 @@ namespace AssetTracker.Services
                     Quantity = qty,
                     AveragePurchasePrice = order.Price,
                     CurrentPrice = order.Price,
-                    Type = order.Type == OrderType.Short
+                    Type = order.Side == OrderSide.Short
                                            ? PositionType.Short
                                            : PositionType.Long
                 };
@@ -214,15 +214,15 @@ namespace AssetTracker.Services
             else
             {
                 // 3) Existing position: enforce exclusivity
-                if (position.Type == PositionType.Short && order.Type == OrderType.Buy)
+                if (position.Type == PositionType.Short && order.Side == OrderSide.Buy)
                     throw new InvalidOperationException("Must close short before buying long.");
-                if (position.Type == PositionType.Long && order.Type == OrderType.Short)
+                if (position.Type == PositionType.Long && order.Side == OrderSide.Short)
                     throw new InvalidOperationException("Must sell long before shorting.");
 
                 // 4) Apply the fill
-                switch (order.Type)
+                switch (order.Side)
                 {
-                    case OrderType.Buy:
+                    case OrderSide.Buy:
                         // increase long
                         position.AveragePurchasePrice =
                             ((position.AveragePurchasePrice * position.Quantity)
@@ -231,12 +231,12 @@ namespace AssetTracker.Services
                         position.Quantity += order.Quantity;
                         break;
 
-                    case OrderType.Sell:
+                    case OrderSide.Sell:
                         // decrease long
                         position.Quantity -= order.Quantity;
                         break;
 
-                    case OrderType.Short:
+                    case OrderSide.Short:
                         // increase short (more negative)
                         position.AveragePurchasePrice =
                             ((Math.Abs(position.Quantity) * position.AveragePurchasePrice)
@@ -245,7 +245,7 @@ namespace AssetTracker.Services
                         position.Quantity -= order.Quantity;  // e.g. from 0 to -100
                         break;
 
-                    case OrderType.CloseShort:
+                    case OrderSide.CloseShort:
                         // decrease short (less negative)
                         position.Quantity += order.Quantity;  // e.g. from -100 to -70
                         break;
@@ -267,12 +267,12 @@ namespace AssetTracker.Services
             await _portfolioRepository.UpdatePortfolioAsync(portfolio);
 
             // ✅ Determine action type for history logging
-            string actionType = order.Type switch
+            string actionType = order.Side switch
             {
-                OrderType.Buy => "BUY",
-                OrderType.Sell => "SELL",
-                OrderType.Short => "SELL SHORT",
-                OrderType.CloseShort => "BUY TO CLOSE SHORT",
+                OrderSide.Buy => "BUY",
+                OrderSide.Sell => "SELL",
+                OrderSide.Short => "SELL SHORT",
+                OrderSide.CloseShort => "BUY TO CLOSE SHORT",
                 _ => "UNKNOWN"
             };
 

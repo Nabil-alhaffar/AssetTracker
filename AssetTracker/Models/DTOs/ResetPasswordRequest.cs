@@ -3,7 +3,7 @@ namespace AssetTracker.Models
 {
     public sealed record ResetPasswordRequest
     {
-        public string NewPassword { get; set; }
+        public string NewPassword { get; set; } = null!;
     }
 }
 

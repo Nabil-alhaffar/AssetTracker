@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using AssetTracker.Models.DTOs;
 
 namespace AssetTracker.Controllers
 {
@@ -38,7 +39,7 @@ namespace AssetTracker.Controllers
 
         // Endpoint to register a new user
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -57,7 +58,7 @@ namespace AssetTracker.Controllers
                 };
 
                 await _userService.RegisterUserAsync(user, model.Password);
-                await Login( new LoginModel { UserName=  model.UserName, Password =model.Password });
+                await Login( new LoginRequest { UserName=  model.UserName, Password =model.Password });
 
                 return Ok(new { message = "User registered and Logged in successfully" });
             }
@@ -70,7 +71,7 @@ namespace AssetTracker.Controllers
 
         [HttpPost("logout")]
         [AllowAnonymous]
-        public async Task<IActionResult> Logout([FromBody] LogoutModel model)
+        public async Task<IActionResult> Logout([FromBody] LogoutRequest model)
         {
             try
             {
@@ -129,7 +130,7 @@ namespace AssetTracker.Controllers
         //}
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -138,7 +139,7 @@ namespace AssetTracker.Controllers
             {
          
                 // Authenticate user
-                var user = await _userService.AuthenticateUserAsync(model.UserName, model.Password);
+                var user = await _userService.AuthenticateUserAsync(request.UserName, request.Password);
 
                 // Generate JWT token
                 var token = _authService.GenerateJwtToken(user);
@@ -155,10 +156,10 @@ namespace AssetTracker.Controllers
                 {
                     await _symbolSubscriptionManager.SubscribeUserToSymbolAsync(user.UserId, symbol);
                 }
-                if (model.TimeZoneId != null && model.TimeZoneId!=user.TimeZoneId)
+                if (request.TimeZoneId != null && request.TimeZoneId!=user.TimeZoneId)
                 {
-                    user.TimeZoneId = model.TimeZoneId;
-                    await _userService.UpdateUserTimeZoneAsync(user.UserId, model.TimeZoneId);
+                    user.TimeZoneId = request.TimeZoneId;
+                    await _userService.UpdateUserTimeZoneAsync(user.UserId, request.TimeZoneId);
                 }
                 await _userSessionManager.StartSessionAsync(user.UserId, sessionId, Request.HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers["User-Agent"]);
 
@@ -175,17 +176,16 @@ namespace AssetTracker.Controllers
 
                 }) ;
 
-                return Ok(new
+                return Ok(new LoginResponse 
                 {
-                    message = "Login successful",
-                    userId = user.UserId,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    email = user.Email,
-                    sessionId = sessionId,  
-                    token = token,          
-                    //refreshToken = refreshToken,
-                    timeZoneId = user.TimeZoneId
+                    UserId = user.UserId,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    SessionId = sessionId,  
+                    Token = token,          
+                    TimeZoneId = user.TimeZoneId,
+                    Message = "Login Successful!"
                 }) ;
             }
             catch (UnauthorizedAccessException)

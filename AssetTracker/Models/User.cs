@@ -28,7 +28,7 @@ namespace AssetTracker.Models
         public string UserName { get; set; }
 
         //public Portfolio Portfolio { get; set; } = new Portfolio();
-        public List<Watchlist> Watchlists { get; set; } = new List<Watchlist>();
+        //public List<Watchlist> Watchlists { get; set; } = new List<Watchlist>();
 
         // Fields for storing hashed password and salt
         [Required]
@@ -58,7 +58,7 @@ namespace AssetTracker.Models
             this.PasswordSalt = passwordSalt;
 
             //Portfolio = new Portfolio();
-            Watchlists = new List<Watchlist>();
+            //Watchlists = new List<Watchlist>();
         }
     }
 }

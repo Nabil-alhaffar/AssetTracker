@@ -4,7 +4,7 @@ namespace AssetTracker.Services.Interfaces
 {
     public interface IStockService
     {
-        Task<TradeResult> ExecuteTradeAsync(Guid userId, TradeRequest tradeRequest);
+        Task<TradeResponse> ExecuteTradeAsync(Guid userId, TradeRequest tradeRequest);
 
 
         //Task<TradeResult> BuyStockAsync(Guid userId, string symbol, decimal quantity);
