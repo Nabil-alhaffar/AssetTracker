@@ -59,7 +59,7 @@ This API is the foundation for a future cross-platform frontend (web & mobile) t
     •   POST /api/SymbolSubscriptionController/{userId}/subscribe-to-Symbol/{symbol} --> Subscribes user to live updates for a symbol via alpaca WebSocket.
     •   GET /api/FinnHubController/profile/{symbol} --> Retrieves finnhub's financial profile for a ticker. 
     •   GET /api/alpaca/snapshots/ --> Retrieves ticker's latest cumulative snapshop including price, bar, 
-    •   GET /api/alpaca/{symbol}/historicaldata/{timeframe}  --> Retrieves a stock's historical bars (OCHL) based on the provided timeframe. Example: 1Day retrieves daily bars while 5min retrieves the 5min bars and so on. 
+    •   GET /api/alpaca/{symbol}/historicaldata/{timeframe}  --> Retrieves a stock's historical bars (OCHLV) based on the provided timeframe. Example: 1Day retrieves daily bars while 5min retrieves the 5min bars and so on. 
     
 ### US. Equity (Virtual) Trade Execution
     •   POST /api/StockController/execute-trade --> Executes a paper trading order based on fetched real time price data, supporting both long and short trades, and correspondingly updating user positions and portfolios. 
