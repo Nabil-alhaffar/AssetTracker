@@ -1,133 +1,115 @@
-#AssetTracker
+# AssetTracker
 
-    ##Overview:
+## Overview
 
-    AssetTracker is a web API project that enables users to:
+**AssetTracker** is a full-featured, scalable, and extensible **stock trading and portfolio management API** built with ASP.NET Core. It provides individual users with a robust backend to:
 
-        - Register and log in.
+- Register and authenticate securely with JWT.
+- Deposit and withdraw virtual funds.
+- Execute **long and short trades** with real-time updates.
+- Monitor real-time and historical portfolio **performance and valuation**.
+- Access **real-time and historical market data**, indicators, and overviews.
+- Set up and manage watchlists and alerts.
+- Subscribe to **live price updates** via WebSockets (Alpaca).
+- Schedule background tasks using Hangfire.
+- Cache data efficiently using Redis.
+ 
 
-        - Deposit and withdraw money.
+This API is the foundation for a future cross-platform frontend (web & mobile) to offer a complete trading experience.
 
-        - Execute long and short trades.
+---
 
-        - Set up alerts.
+## Tech Stack
 
-        - View portfolio and position summary and performance.
+### 🖥 Backend
+- **ASP.NET Core 7 (C#)**
+- **MongoDB** (NoSQL database)
+- **Redis** (caching layer)
+- **Hangfire** (background job scheduling)
+- **SignalR** (real-time communication)
 
-        - Access historical and real-time stock data and indicators.
+### 📡 APIs
+- **Alpaca** – real-time & historical stock data, WebSockets
+- **Alpha Vantage** – technical indicators, historical data
+- **FinnHub **-- Company profiles and financial and earnings data 
+### 🧰 DevOps & Infrastructure
+- **AWS EC2** – cloud hosting
+- **Docker** – containerization
+- **AWS Secrets Manager** – secure secret storage
 
-        - Manage watchlists.
-        
-        
+### 🎯 Frontend (Currently in development)
+- Expo React Native (Mobile & Web)
 
-    ##Technologies Used:
+---
 
-        ###Backend:
+##API Usage Examples:
 
-            - ASP.NET Core (C#) 
+### Authentication
+    •   POST /api/auth/register --> Registers a new user and creates a new virtual profile. 
+    •   POST /api/auth/login   --> Logins user in and starts a new session when authenticated, returning a JWT access token
+    •   POST /api/auth/refresh --> refreshes JWT access token a valid refresh token is included as HTTP only cookie.
 
-            - MongoDB
+### Portfolio Management
+    •   GET /api/portfolio/{userId} --> Retrieves the user’s portfolio.
+    •   GET /api/portfolio/performance/{userId}?days={days} --> Returns the portfolio performance over the given period.
+    
+### Market Data
+    •   GET /api/AlphaVantageStockMarketController/getPrice/{symbol} --> Fetches current stock price.
+    •   GET /api/AlphaVantageStockMarketController/indicators --> Fetches a list of timestamped technical indicators (EMA, SMA, BBANDS, RSI) based on the selected time period and interval.
+    •   POST /api/SymbolSubscriptionController/{userId}/subscribe-to-Symbol/{symbol} --> Subscribes user to live updates for a symbol via alpaca WebSocket.
+    •   GET /api/FinnHubController/profile/{symbol} --> Retrieves finnhub's financial profile for a ticker. 
+    •   GET /api/alpaca/snapshots/ --> Retrieves ticker's latest cumulative snapshop including price, bar, 
+    •   GET /api/alpaca/{symbol}/historicaldata/{timeframe}  --> Retrieves a stock's historical bars (OCHL) based on the provided timeframe. Example: 1Day retrieves daily bars while 5min retrieves the 5min bars and so on. 
+    
+### US. Equity (Virtual) Trade Execution
+    •   POST /api/StockController/execute-trade --> Executes a paper trading order based on fetched real time price data, supporting both long and short trades, and correspondingly updating user positions and portfolios. 
 
-            - Redis
 
-            - Hangfire (for scheduling)
-            
+### Cash Flow Log Operations
+    •   GET /api/CashFlowLogController/{userId} --> Retrieves all cash flow logs for a specific user.
+    •   GET /api/CashFlowLogController/{transactionId} --> Retrieves a specific cash flow log by transaction ID.
+    •   POST /api/CashFlowLogController/create --> Creates a new cash flow log.
 
-        ###APIs:
+### Position Operations
+    •   PUT /api/PositionController/{userId}/split/{symbol} --> performs a split (or reverse split) on a user's position based on a split factor due to a corresponding corporate action.
+    •   GET /api/PositionController/{userId}/check-stoploss/{symbol} --> Checks and triggers a stop loss order if an a user's stop loss price was reached. 
 
-            - Alpha Vantage
-
-            - Alpaca
-            
-            
-
-        ###Other Tools:
-
-            - Docker
-
-            - AWS EC2
-            
-            
-
-        ###Frontend (Future Considerations):
-
-            React.js, Angular, and/or React Native  (to be decided)
-            
-            
-
-    ##Installation & Setup:
+### Watchlist Operations
+    •   GET /api/WatchlistController/{userId} --> Retrieves all user's watchlists. 
+    •   POST /api/WatchlistController/{userId} --> Allows a user to add a new watchlist. 
+    •   POST /api/WatchlistController/{userId}/{watchlistId}/add-symbol --> Allows a user to add a new symbol to an existing watchlist. 
+    
     
 
-        ###Prerequisites:
 
-            - .NET SDK
+## Installation & Setup
 
-            - MongoDB
+### Prerequisites
 
-            - Redis
+Ensure you have the following installed:
 
-            - Docker (if running in containers)
+- [.NET SDK](https://dotnet.microsoft.com/download)
+- [MongoDB](https://www.mongodb.com/try/download/community)
+- [Redis](https://redis.io/download)
+- [Docker](https://www.docker.com/) (optional, for containerization)
 
-        ###Steps to Clone and Run Locally:
+### Steps to Run Locally
 
-            - Clone the repository: 
-                - git clone https://github.com/Nabil-alhaffar/AssetTracker
-                - cd AssetTracker
+```bash
+# Clone the repository
+git clone https://github.com/Nabil-alhaffar/AssetTracker
+cd AssetTracker
 
-            - Install dependencies and required tools.
+# Restore dependencies
+dotnet restore
 
-            - Configure environment variables in appsettings.json or .env (API keys, AWS secrets, DB connections).
+# Configure environment variables:
+# - API keys for Alpaca, Alpha Vantage, and Finnhub. 
+# - MongoDB and Redis connection strings
+# - Hangfire Password
+# - HTTPS certificate
+# - JWT secret
+# - AWS credentials (if using Secrets Manager)
 
-            -Run the application: dotnet run
-            
-            
-
-
-    ##Usage:
-
-        AssetTracker exposes a RESTful API with the following being some of the key endpoints:
-
-        ### Portfolio Management: 
-            -GET /api/portfolio/{userId} - Retrieves the portfolio for a given user.
-            -GET /api/portfolio/performance/{userId}?days={days}- Fetches the performance summary for a user's portfolio over a specified number of days.
-
-        ###Watchlist:
-
-            - POST /api/watchlist/{userId} - Adds a new watchlist for a user.
-
-        ### Stock Data:
-
-            - GET /api/stock/getPrice/{symbol} - Gets the current stock price for a given symbol.
-            - POST /api/stock/subscribe/{symbol} - Subscribes to real-time updates for a specific stock.
-            
-            
-
-    ##Features in Development:
-
-         Planned enhancements include:
-
-            - Trading bot.
-
-            - AI-driven position evaluator and signal alerts.
-
-            - Frontend (mobile/web app)
-    
-            - Broker integration
-        
-        
-
-    ##Deployment
-
-         AssetTracker is deployed using:
-
-        - AWS EC2 for hosting the backend.
-
-        - Docker for containerization and deployment.
-
-        - Hangfire for job scheduling and background tasks.
-
-        - Future enhancements may include:
-
-        - CI/CD pipelines for automated deployment.
-
-        - Kubernetes for scaling.
+# Run the application
+dotnet run
