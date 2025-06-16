@@ -93,7 +93,7 @@ namespace AssetTracker.Controllers
         /// <param name="watchlistId">The unique identifier of the watchlist</param>
         /// <param name="request">List of symbols to add</param>
         /// <returns>Success or error message</returns>
-        [HttpPost("{userId}/{watchlistId}/add-symbol")]
+        [HttpPost("{userId}/{watchlistId}/add-symbols")]
         public async Task<IActionResult> AddSymbolToWatchlist(Guid userId, Guid watchlistId, [FromBody] AdjustWatchlistRequest request)
         {
             try
@@ -116,7 +116,7 @@ namespace AssetTracker.Controllers
         /// <param name="watchlistId">The unique identifier of the watchlist</param>
         /// <param name="request">List of symbols to remove</param>
         /// <returns>Success or error message</returns>
-        [HttpPost("{userId}/{watchlistId}/remove-symbol")]
+        [HttpPost("{userId}/{watchlistId}/remove-symbols")]
         public async Task<IActionResult> RemoveSymbolFromWatchlist(Guid userId, Guid watchlistId, [FromBody] AdjustWatchlistRequest request)
         {
             try
