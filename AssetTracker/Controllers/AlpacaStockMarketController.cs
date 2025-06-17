@@ -116,9 +116,9 @@ namespace AssetTracker.Controllers
         /// Retrieves historical bar (candlestick) data for a symbol, with optional start date.
         /// </summary>
         [HttpGet("{symbol}/historicaldata/{timeframe}")]
-        public async Task<IActionResult> GetHistoricalBars(string symbol, string timeframe, [FromQuery] string start= "2024-01-01")
+        public async Task<IActionResult> GetHistoricalBars(string symbol, string timeframe, [FromQuery] string start= "2024-01-01",  int limit = 1000)
         {
-            var bars = await _alpacaStockMarketService.GetHistoricalBarsAsync(symbol, timeframe, start); // synchronous
+            var bars = await _alpacaStockMarketService.GetHistoricalBarsAsync(symbol, timeframe, start, limit); // synchronous
             if (bars == null)
             {
                 return NotFound("bars not found.");

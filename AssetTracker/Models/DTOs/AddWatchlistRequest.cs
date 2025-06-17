@@ -1,7 +1,7 @@
 ﻿using System;
 namespace AssetTracker.Models.DTOs
 {
-    /// <summary>
+     /// <summary>
     /// Represents a request to create a new watchlist with an optional list of stock symbols.
     /// </summary>
 	public sealed record AddWatchlistRequest

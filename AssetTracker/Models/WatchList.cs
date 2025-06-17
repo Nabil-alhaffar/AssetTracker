@@ -33,7 +33,7 @@ namespace AssetTracker.Models
         /// <summary>
         /// Name of the watchlist, e.g., "Tech Stocks".
         /// </summary>
-        public string Name { get; set; } = null!;
+        public string WatchlistName { get; set; } = null!;
 
         /// <summary>
         /// List of stock symbols included in the watchlist.

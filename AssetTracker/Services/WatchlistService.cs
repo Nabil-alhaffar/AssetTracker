@@ -57,13 +57,13 @@ namespace AssetTracker.Services
             var existingWatchlists = await _watchlistRepository.GetUserWatchlistsAsync(userId);
 
             // Check if a watchlist with the same name already exists
-            if (existingWatchlists.Any(w => w.Name.Equals(watchlistName, StringComparison.OrdinalIgnoreCase)))
+            if (existingWatchlists.Any(w => w.WatchlistName.Equals(watchlistName, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new Exception("A watchlist with the same name already exists.");
             }
 
 
-            var watchlist = new Watchlist{ Name = watchlistName, UserId = userId };
+            var watchlist = new Watchlist{ WatchlistName = watchlistName, UserId = userId };
 
             await _watchlistRepository.AddWatchlistAsync(userId, watchlist);
 
@@ -211,7 +211,7 @@ namespace AssetTracker.Services
         {
             var watchlists = await _watchlistRepository.GetUserWatchlistsAsync(userId);
 
-            var match = watchlists.FirstOrDefault(w => w.Name.Equals(watchlistName, StringComparison.OrdinalIgnoreCase));
+            var match = watchlists.FirstOrDefault(w => w.WatchlistName.Equals(watchlistName, StringComparison.OrdinalIgnoreCase));
             if (match == null)
                 throw new KeyNotFoundException("Watchlist not found");
             return match?.WatchlistId;
