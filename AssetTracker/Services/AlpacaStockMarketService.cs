@@ -14,6 +14,7 @@ using static System.Net.WebRequestMethods;
 using System.Net.Http.Headers;
 using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using AssetTracker.Models.Alpaca;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AssetTracker.Services
 {
@@ -89,10 +90,16 @@ namespace AssetTracker.Services
         /// <param name="symbol">Stock symbol to query.</param>
         /// <param name="timeframe">Timeframe for bars (e.g., "1Day"). Defaults to "1Day".</param>
         /// <param name="start">Start date for historical data in ISO format (yyyy-MM-dd). Defaults to "2024-01-01".</param>
+        /// <param name="limit">The maximum number of data points to return in the response page.</param>
         /// <returns>An <see cref="AlpacaBarsResponse"/> containing bar data, or null if request fails.</returns>
-        public async Task<AlpacaBarsResponse?> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01")
+        public async Task<AlpacaBarsResponse?> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01", int limit= 1000)
         {
-            var url = $"/v2/stocks/{symbol}/bars?start={start}&timeframe={timeframe}";
+            var url = $"/v2/stocks/{symbol}/bars" +
+             $"?start={start}" +
+             $"&timeframe={timeframe}" +
+             $"&adjustment=split" +
+             $"&limit={limit}";
+
             var response = await _client.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
@@ -218,7 +225,7 @@ namespace AssetTracker.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 //Console.WriteLine("Raw Alpaca assets response: ");
-                Console.WriteLine(content);
+                //Console.WriteLine(content);
                 var assets = JsonSerializer.Deserialize<List<AlpacaAsset>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -229,7 +236,9 @@ namespace AssetTracker.Services
                     .Select(a => new SymbolLookupResult
                     {
                         Symbol = a.Symbol,
-                        Name = a.Name
+                        Name = a.Name,
+                        AssetClass = a.AssetClass,
+                        Exchange = a.Exchange
                     })
                     .OrderBy(r => r.Symbol)
                     .ToList();
@@ -285,7 +294,7 @@ namespace AssetTracker.Services
 
         //    var securityKey = new SecretKey(apiKey, apiSecret);
         //    _dataClient = Alpaca.Markets.Environments.Paper.GetAlpacaDataStreamingClient(securityKey);
-        //    _tradingClient = Alpaca.Markets.Environments.Paper.GetAlpacaTradingClient(securityKey); // ✅ Initialize Trading Client
+        //    _tradingClient = Alpaca.Markets.Environments.Paper.GetAlpacaTradingClient(securityKey); //  Initialize Trading Client
         //}
 
         //protected override async Task ExecuteAsync(CancellationToken stoppingToken)

@@ -84,7 +84,7 @@ namespace AssetTracker.Controllers
         /// </summary>
         /// <param name="userId">User's unique identifier</param>
         /// <returns>List of subscribed stock symbols</returns>
-        [HttpGet("/{userId}/symbols")]
+        [HttpGet("{userId}/symbols")]
         public async Task<IActionResult> GetUserSubscribedSymbols(Guid userId)
         {
             try
@@ -104,7 +104,7 @@ namespace AssetTracker.Controllers
         /// </summary>
         /// <param name="symbol">Stock symbol</param>
         /// <returns>List of user IDs subscribed to the symbol</returns>
-        [HttpGet("/{symbol}/subscribed-users")]
+        [HttpGet("{symbol}/subscribed-users")]
         public async Task<IActionResult> GetUsersSubscribedToSymbol(string symbol)
         {
             try

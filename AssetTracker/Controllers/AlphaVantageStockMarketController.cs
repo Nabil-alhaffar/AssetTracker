@@ -48,7 +48,26 @@ namespace AssetTracker.Controllers
             return Ok(currentPrice);
         }
 
-
+        /// <summary>
+        /// Gets the most recent global quote info including volume.
+        /// </summary>
+        /// <param name="symbol">The stock symbol.</param>
+        /// <returns>Global quote info by AlphaVantage.</returns>
+        /// <response code="200">Returns the stock global quote.</response>
+        /// <response code="404">If the stock is not found.</response>
+        [HttpGet("global-quote")]
+        public async Task<IActionResult> GetGlobalQuote(string symbol)
+        {
+            try
+            {
+                var globalQuote = await _alphaVantageStockMarketService.GetGlobalQuoteAsync(symbol);
+                return Ok(globalQuote);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex);
+            }
+        }
         /// <summary>
         /// Gets detailed stock information including company overview and logo.
         /// </summary>

@@ -1,5 +1,5 @@
 ﻿using System;
-namespace AssetTracker.Services
+namespace AssetTracker.Services.Interfaces
 {
 	public interface IAlertService
 	{

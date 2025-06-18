@@ -1,7 +1,7 @@
 ﻿using System;
 using AssetTracker.Models;
 using Newtonsoft.Json;
-
+using AssetTracker.Services.Interfaces;
 namespace AssetTracker.Services
 {
     public class AlertService:IAlertService

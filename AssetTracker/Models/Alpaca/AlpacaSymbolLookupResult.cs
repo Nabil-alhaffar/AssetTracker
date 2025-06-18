@@ -17,5 +17,19 @@ namespace AssetTracker.Models
         /// Gets or sets the name of the company or asset.
         /// </summary>
         public string? Name { get; set; }
+
+
+
+        /// <summary>
+        /// Gets or sets the asset class (us-equity, crypto, us-options).
+        /// </summary>
+        public string? AssetClass { get; set; }
+
+
+
+        /// <summary>
+        /// Gets or sets the exchange the ticker trades under.
+        /// </summary>
+        public string? Exchange { get; set; }
     }
 }

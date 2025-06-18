@@ -33,7 +33,7 @@ namespace AssetTracker.Services.Interfaces
         /// <param name="timeframe">Timeframe for the bars (e.g., "1Day", "1Min").</param>
         /// <param name="start">Start date for historical data in YYYY-MM-DD format.</param>
         /// <returns>Response containing historical bar data.</returns>
-        Task<AlpacaBarsResponse> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01");
+        Task<AlpacaBarsResponse> GetHistoricalBarsAsync(string symbol, string timeframe = "1Day", string start = "2024-01-01", int limit = 1000);
 
         /// <summary>
         /// Retrieves a list of the most active stocks on the market.
