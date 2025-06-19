@@ -175,6 +175,25 @@ namespace AssetTracker.Services
 
         }
 
+        /// <summary>
+        /// Retrieves Asset by symbol
+        /// </summary>
+        /// <param name="symbol">fetched ticker</param>
+        /// <returns>An <see cref="AlpacaAsset"/> containing asset data.</returns>
+        public async Task<AlpacaAsset> GetAssetBySymbolAsync(string symbol)
+        {
+            var url = $"/v2/assets/{symbol}";
+            var response = await _client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var contentStream = await response.Content.ReadAsStreamAsync();
+            var result = await JsonSerializer.DeserializeAsync<AlpacaAsset>(contentStream, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result!;
+        }
+
 
 
         /// <summary>

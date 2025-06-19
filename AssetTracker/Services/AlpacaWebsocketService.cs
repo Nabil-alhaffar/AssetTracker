@@ -100,6 +100,8 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWeb
     /// <returns>True if the socket start was initiated; otherwise false if already running.</returns>
     public async Task <bool> StartSocketAsync()
     {
+        Console.WriteLine($"[WebSocket] StartSocketAsync called. Current state: {_state}");
+
         lock (_stateLock)
         {
             if (_state is ConnectionState.Starting or ConnectionState.Running)
@@ -124,7 +126,7 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWeb
             _activeUserCount++;
         }
 
-        if (_state == ConnectionState.Stopped)
+        if (_state == ConnectionState.Stopped )
             await StartSocketAsync();
     }
 
@@ -154,13 +156,15 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWeb
     {
         lock (_stateLock)
         {
+            Console.WriteLine($"[WebSocket] StopSocketAsync called. Current state: {_state}");
+
             if (_state is ConnectionState.Stopping or ConnectionState.Stopped)
             {
 
-                _state = ConnectionState.Stopping;
+                
                 return false;
             }
-                
+            _state = ConnectionState.Stopping;
         }
 
         _socketCts.Cancel();
@@ -197,6 +201,8 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWeb
     /// <returns>A task that represents the asynchronous socket operation.</returns>
     private async Task RunSocketAsync(CancellationToken stoppingToken)
     {
+        Console.WriteLine("[WebSocket] RunSocketAsync loop started.");
+
         var buffer = new byte[8192];
 
         while (!stoppingToken.IsCancellationRequested)
@@ -358,22 +364,6 @@ public class AlpacaWebSocketService : BackgroundService, IDisposable, IAlpacaWeb
     }
 
 
-    //private async Task ResubscribeAllAsync()
-    //{
-    //    var currentSubscriptions = _subscribedSymbols.Keys.ToList();
-    //    _subscribedSymbols.Clear();
-
-    //    foreach (var key in currentSubscriptions)
-    //    {
-    //        var parts = key.Split('_');
-    //        if (parts.Length != 2) continue;
-
-    //        var type = parts[0];
-    //        var symbol = parts[1];
-
-    //        await SubscribeAsync(symbol, isQuote: type == "Q", isBar: type == "B");
-    //    }
-    //}
 
     /// <summary>
     /// Subscribes to trade, quote, or bar updates for a specific symbol.

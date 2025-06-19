@@ -91,6 +91,20 @@ namespace AssetTracker.Controllers
             return Ok(results);
         }
 
+
+        /// <summary>
+        /// Searches for an alpaca asset by symbol. 
+        /// </summary>
+        [HttpGet("search")]
+        public async Task<IActionResult> GetAsset([FromQuery] string symbol)
+        {
+            if (string.IsNullOrWhiteSpace(symbol))
+                return BadRequest("Symbol is required.");
+
+            var results = await _alpacaStockMarketService.GetAssetBySymbolAsync(symbol);
+            return Ok(results);
+        }
+
         /// <summary>
         /// Retrieves snapshot data for one or more symbols (latest quote, trade, etc).
         /// </summary>

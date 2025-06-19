@@ -60,5 +60,9 @@ namespace AssetTracker.Services.Interfaces
         /// </summary>
         /// <returns>Task representing the asynchronous operation.</returns>
         Task InitializeAsync();
+
+
+        public Task<AlpacaAsset> GetAssetBySymbolAsync(string symbol);
+
     }
 }
