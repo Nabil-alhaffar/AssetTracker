@@ -247,68 +247,66 @@ namespace AssetTracker.Services
                 throw new KeyNotFoundException($"No portfolio found for user {order.UserId}");
 
             var positions = portfolio.Positions;
-            // 2) Try to get existing position
+
             if (!positions.TryGetValue(order.Symbol, out var position))
             {
-                // 2a) If no position exists, only Buy or Short can create one
-                if (order.Side == OrderSide.Sell || order.Side == OrderSide.CloseShort)
-                    throw new InvalidOperationException($"Cannot {order.Side} when no existing {order.Symbol} position.");
+                // Only open intents should create new positions
+                if (order.Intent == TradeIntent.BuyToClose || order.Intent == TradeIntent.SellToClose)
+                    throw new InvalidOperationException($"Cannot {order.Intent} without an existing position.");
 
-                var qty = (order.Side == OrderSide.Short ? -order.Quantity : order.Quantity);
+                var quantity = order.Intent == TradeIntent.SellToOpen ? -order.Quantity : order.Quantity;
                 position = new Position
                 {
                     UserId = order.UserId,
                     Symbol = order.Symbol,
-                    Quantity = qty,
+                    Quantity = quantity,
                     AveragePurchasePrice = order.Price,
                     CurrentPrice = order.Price,
-                    Type = order.Side == OrderSide.Short
-                                           ? PositionType.Short
-                                           : PositionType.Long
+                    Type = quantity < 0 ? PositionType.Short : PositionType.Long
                 };
                 positions[order.Symbol] = position;
             }
             else
             {
-                // 3) Existing position: enforce exclusivity
-                if (position.Type == PositionType.Short && order.Side == OrderSide.Buy)
-                    throw new InvalidOperationException("Must close short before buying long.");
-                if (position.Type == PositionType.Long && order.Side == OrderSide.Short)
-                    throw new InvalidOperationException("Must sell long before shorting.");
-
-                // 4) Apply the fill
-                switch (order.Side)
+                // Enforce position rules
+                switch (order.Intent)
                 {
-                    case OrderSide.Buy:
-                        // increase long
+                    case TradeIntent.BuyToOpen:
+                        if (position.Type == PositionType.Short)
+                            throw new InvalidOperationException("Must close short before opening long.");
                         position.AveragePurchasePrice =
-                            ((position.AveragePurchasePrice * position.Quantity)
-                             + (order.Price * order.Quantity))
-                            / (position.Quantity + order.Quantity);
+                            ((position.AveragePurchasePrice * position.Quantity) + (order.Price * order.Quantity)) /
+                            (position.Quantity + order.Quantity);
                         position.Quantity += order.Quantity;
                         break;
 
-                    case OrderSide.Sell:
-                        // decrease long
+                    case TradeIntent.BuyToClose:
+                        if (position.Type != PositionType.Short)
+                            throw new InvalidOperationException("No short position to close.");
+                        if (-position.Quantity < order.Quantity)
+                            throw new InvalidOperationException("Trying to buy more than shorted.");
+                        position.Quantity += order.Quantity;
+                        break;
+
+                    case TradeIntent.SellToOpen:
+                        if (position.Type == PositionType.Long)
+                            throw new InvalidOperationException("Must sell long before opening short.");
+                        position.AveragePurchasePrice =
+                            ((Math.Abs(position.Quantity) * position.AveragePurchasePrice) + (order.Price * order.Quantity)) /
+                            (Math.Abs(position.Quantity) + order.Quantity);
                         position.Quantity -= order.Quantity;
                         break;
 
-                    case OrderSide.Short:
-                        // increase short (more negative)
-                        position.AveragePurchasePrice =
-                            ((Math.Abs(position.Quantity) * position.AveragePurchasePrice)
-                             + (order.Price * order.Quantity))
-                            / (Math.Abs(position.Quantity) + order.Quantity);
-                        position.Quantity -= order.Quantity;  // e.g. from 0 to -100
-                        break;
-
-                    case OrderSide.CloseShort:
-                        // decrease short (less negative)
-                        position.Quantity += order.Quantity;  // e.g. from -100 to -70
+                    case TradeIntent.SellToClose:
+                        if (position.Type != PositionType.Long)
+                            throw new InvalidOperationException("No long position to close.");
+                        if (position.Quantity < order.Quantity)
+                            throw new InvalidOperationException("Trying to sell more than owned.");
+                        position.Quantity -= order.Quantity;
                         break;
                 }
 
-                // 5) If fully closed, remove; otherwise update cost/current price
+                // Cleanup if position is fully closed
                 if (position.Quantity == 0)
                 {
                     positions.Remove(order.Symbol);
@@ -316,20 +314,17 @@ namespace AssetTracker.Services
                 else
                 {
                     position.CurrentPrice = order.Price;
-                    // AveragePurchasePrice was only recalculated in the two “adding” cases
                 }
             }
 
-            // 6) Persist
             await _portfolioRepository.UpdatePortfolioAsync(portfolio);
 
-            // ✅ Determine action type for history logging
-            string actionType = order.Side switch
+            string actionType = order.Intent switch
             {
-                OrderSide.Buy => "BUY",
-                OrderSide.Sell => "SELL",
-                OrderSide.Short => "SELL SHORT",
-                OrderSide.CloseShort => "BUY TO CLOSE SHORT",
+                TradeIntent.BuyToOpen => "BUY",
+                TradeIntent.SellToClose => "SELL",
+                TradeIntent.SellToOpen => "SELL SHORT",
+                TradeIntent.BuyToClose => "BUY TO COVER",
                 _ => "UNKNOWN"
             };
 
@@ -345,6 +340,7 @@ namespace AssetTracker.Services
             });
         }
 
-        
+
+
     }
 }

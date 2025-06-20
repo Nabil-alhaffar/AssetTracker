@@ -21,6 +21,12 @@ namespace AssetTracker.Models
         /// <summary>
         /// The side of the order: Buy or Sell.
         /// </summary>
-        public OrderSide Side { get; set; }
+        public TradeSide Side { get; set; }
+
+        /// <summary>
+        /// The intent of the order: (To close or open a position)
+        /// </summary>
+        public TradeIntent Intent { get; set; }
+
     }
 }

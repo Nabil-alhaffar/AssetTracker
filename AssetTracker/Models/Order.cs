@@ -46,9 +46,17 @@ namespace AssetTracker.Models
         public decimal Price { get; set; }
 
         /// <summary>
-        /// Gets or sets the side of the order (Buy, Sell, Short, CloseShort).
+        /// Gets or sets the side of the order (Buy, Sell).
         /// </summary>
-        public OrderSide Side { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public TradeSide Side { get; set; }
+
+
+        /// <summary>
+        /// Gets or sets the int of the order (Buy to open/close, Sell to open/close ).
+        /// </summary>
+        [BsonRepresentation(BsonType.String)]
+        public TradeIntent Intent { get; set; }
 
         /// <summary>
         /// Gets or sets the UTC timestamp when the order was placed.

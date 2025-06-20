@@ -182,7 +182,7 @@ namespace AssetTracker.Services
         /// <returns>An <see cref="AlpacaAsset"/> containing asset data.</returns>
         public async Task<AlpacaAsset> GetAssetBySymbolAsync(string symbol)
         {
-            var url = $"/v2/assets/{symbol}";
+            var url = $"https://paper-api.alpaca.markets/v2/assets/{symbol}";
             var response = await _client.GetAsync(url);
             response.EnsureSuccessStatusCode();
             var contentStream = await response.Content.ReadAsStreamAsync();

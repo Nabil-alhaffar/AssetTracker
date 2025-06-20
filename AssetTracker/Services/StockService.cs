@@ -52,43 +52,54 @@ namespace AssetTracker.Services
             var availableFunds = await _portfolioService.GetAvailableFundsAsync(userId);
             var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
 
-            if (tradeRequest.Side == OrderSide.Buy && position != null && position.Type == PositionType.Short)
-                return new TradeResponse(false, "Close your short position before buying long.");
+            var intent = tradeRequest.Intent;
 
-            if (tradeRequest.Side == OrderSide.Short && position != null && position.Type == PositionType.Long)
-                return new TradeResponse(false, "Sell your long position before shorting.");
+            if (!IsSideIntentCombinationValid(tradeRequest.Side, intent))
+                return new TradeResponse(false, $"Inconsistent side ({tradeRequest.Side}) and intent ({intent}) combination.");
 
-            switch (tradeRequest.Side)
+            switch (intent)
             {
-                case OrderSide.Buy:
+                case TradeIntent.BuyToOpen:
+                    if (position?.Type == PositionType.Short)
+                        return new TradeResponse(false, "Close your short position before opening a long position.");
+
                     if (totalValue > availableFunds)
                         return new TradeResponse(false, "Insufficient funds.");
+
                     await _portfolioService.UpdateAvailableFundsAsync(userId, -totalValue);
                     break;
 
-                case OrderSide.Sell:
-                    if (position == null || position.Quantity < tradeRequest.Quantity)
-                        return new TradeResponse(false, "Not enough shares to sell.");
-                    await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
-                    break;
+                case TradeIntent.BuyToClose:
+                    if (position == null || position.Type != PositionType.Short)
+                        return new TradeResponse(false, "No short position to close.");
 
-                case OrderSide.Short:
-                    await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
-                    break;
-
-                case OrderSide.CloseShort:
-                    if (position == null || position.Quantity >= 0)
-                        return new TradeResponse(false, "No short positions to close.");
                     if (-position.Quantity < tradeRequest.Quantity)
-                        return new TradeResponse(false, "Cannot buy back more shares than were shorted.");
+                        return new TradeResponse(false, "Trying to close more than shorted.");
+
                     await _portfolioService.UpdateAvailableFundsAsync(userId, -totalValue);
+                    break;
+
+                case TradeIntent.SellToOpen:
+                    if (position?.Type == PositionType.Long)
+                        return new TradeResponse(false, "Close your long position before opening a short position.");
+
+                    await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
+                    break;
+
+                case TradeIntent.SellToClose:
+                    if (position == null || position.Type != PositionType.Long)
+                        return new TradeResponse(false, "No long position to sell.");
+
+                    if (position.Quantity < tradeRequest.Quantity)
+                        return new TradeResponse(false, "Not enough shares to sell.");
+
+                    await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
                     break;
 
                 default:
-                    return new TradeResponse(false, "Invalid trade type.");
+                    return new TradeResponse(false, "Unknown trade intent.");
             }
 
-            // ✅ Create an `Order` object
             var order = new Order
             {
                 UserId = userId,
@@ -96,14 +107,30 @@ namespace AssetTracker.Services
                 Quantity = tradeRequest.Quantity,
                 Price = price,
                 Side = tradeRequest.Side,
+                Intent = tradeRequest.Intent,
                 Timestamp = DateTime.UtcNow
             };
 
             await _positionService.UpdatePositionAsync(order);
             await _orderRepository.AddOrderAsync(order);
 
-            return new TradeResponse(true, $"{tradeRequest.Side} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
+            return new TradeResponse(true, $"{intent} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
         }
+
+
+        /// <summary>
+        /// Checks if a trade request is valid or contradictory in the context of intent and side.
+        /// </summary>
+        /// <param name="side">The trade request side</param>
+        /// <param name="intent">The trade request intent.</param>
+        /// <returns> True if the combination is valid, otherwisefalse</returns>
+        private static bool IsSideIntentCombinationValid(TradeSide side, TradeIntent intent)
+        {
+            return (side == TradeSide.Buy && (intent == TradeIntent.BuyToOpen || intent == TradeIntent.BuyToClose)) ||
+                   (side == TradeSide.Sell && (intent == TradeIntent.SellToOpen || intent == TradeIntent.SellToClose));
+        }
+
+
     }
 }
 

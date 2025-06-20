@@ -95,8 +95,8 @@ namespace AssetTracker.Controllers
         /// <summary>
         /// Searches for an alpaca asset by symbol. 
         /// </summary>
-        [HttpGet("search")]
-        public async Task<IActionResult> GetAsset([FromQuery] string symbol)
+        [HttpGet("asset/{symbol}")]
+        public async Task<IActionResult> GetAsset(string symbol)
         {
             if (string.IsNullOrWhiteSpace(symbol))
                 return BadRequest("Symbol is required.");
