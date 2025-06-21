@@ -309,6 +309,11 @@ namespace AssetTracker.Models
         /// </summary>
         public DateTime? PasswordLastChanged { get; set; }
 
+        /// <summary>
+        /// User's roles for authorization.
+        /// </summary>
+        public List<string> Roles { get; set; } = new();
+
         #endregion
 
         #region Compliance & KYC/AML

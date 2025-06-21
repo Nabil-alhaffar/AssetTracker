@@ -575,6 +575,172 @@ namespace AssetTracker.Controllers
             }
         }
 
+        /// <summary>
+        /// Updates user account status.
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="status">New account status</param>
+        /// <param name="reason">Reason for status change</param>
+        /// <returns>Status update confirmation</returns>
+        [HttpPut("{userId}/account-status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateAccountStatus(Guid userId, [FromBody] AccountStatusUpdateRequest request)
+        {
+            try
+            {
+                var user = await _userService.GetUserAsync(userId);
+                if (user == null)
+                    return NotFound("User not found");
+
+                var previousStatus = user.AccountStatus;
+                user.AccountStatus = request.Status;
+                user.UpdatedAt = DateTime.UtcNow;
+                user.AddAuditEvent(AuditEventType.AccountStatusChanged, $"Account status changed from {previousStatus} to {request.Status}. Reason: {request.Reason}", User.GetUserId());
+
+                await _userService.UpdateUserAsync(user);
+
+                return Ok(new { 
+                    message = "Account status updated successfully",
+                    userId = user.UserId,
+                    previousStatus = previousStatus.ToString(),
+                    newStatus = user.AccountStatus.ToString(),
+                    reason = request.Reason
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error updating account status: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Adds a role to a user (admin only).
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="role">Role to add</param>
+        /// <returns>Role addition confirmation</returns>
+        [HttpPost("{userId}/roles")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddRole(Guid userId, [FromBody] string role)
+        {
+            try
+            {
+                var user = await _userService.GetUserAsync(userId);
+                if (user == null)
+                    return NotFound("User not found");
+
+                if (string.IsNullOrWhiteSpace(role))
+                    return BadRequest("Role cannot be empty");
+
+                if (user.Roles.Contains(role))
+                    return BadRequest($"User already has role: {role}");
+
+                user.Roles.Add(role);
+                user.UpdatedAt = DateTime.UtcNow;
+                user.AddAuditEvent(AuditEventType.RoleAdded, $"Role '{role}' added to user", User.GetUserId());
+
+                await _userService.UpdateUserAsync(user);
+
+                return Ok(new { 
+                    message = $"Role '{role}' added successfully",
+                    userId = user.UserId,
+                    roles = user.Roles
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error adding role: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Removes a role from a user (admin only).
+        /// </summary>
+        /// <param name="userId">User ID</param>
+        /// <param name="role">Role to remove</param>
+        /// <returns>Role removal confirmation</returns>
+        [HttpDelete("{userId}/roles/{role}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RemoveRole(Guid userId, string role)
+        {
+            try
+            {
+                var user = await _userService.GetUserAsync(userId);
+                if (user == null)
+                    return NotFound("User not found");
+
+                if (string.IsNullOrWhiteSpace(role))
+                    return BadRequest("Role cannot be empty");
+
+                if (!user.Roles.Contains(role))
+                    return BadRequest($"User does not have role: {role}");
+
+                // Prevent removing the last admin role if this is the only admin
+                if (role == "Admin" && user.Roles.Count(r => r == "Admin") == 1)
+                {
+                    var allUsers = await _userService.GetUsersAsync();
+                    var adminCount = allUsers.Count(u => u.Roles.Contains("Admin"));
+                    if (adminCount <= 1)
+                        return BadRequest("Cannot remove the last admin role");
+                }
+
+                user.Roles.Remove(role);
+                user.UpdatedAt = DateTime.UtcNow;
+                user.AddAuditEvent(AuditEventType.RoleRemoved, $"Role '{role}' removed from user", User.GetUserId());
+
+                await _userService.UpdateUserAsync(user);
+
+                return Ok(new { 
+                    message = $"Role '{role}' removed successfully",
+                    userId = user.UserId,
+                    roles = user.Roles
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error removing role: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets all users with a specific role (admin only).
+        /// </summary>
+        /// <param name="role">Role to filter by</param>
+        /// <returns>List of users with the specified role</returns>
+        [HttpGet("by-role/{role}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetUsersByRole(string role)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(role))
+                    return BadRequest("Role cannot be empty");
+
+                var users = await _userService.GetUsersAsync();
+                var usersWithRole = users.Where(u => u.Roles.Contains(role)).ToList();
+
+                return Ok(new { 
+                    role = role,
+                    count = usersWithRole.Count,
+                    users = usersWithRole.Select(u => new
+                    {
+                        u.UserId,
+                        u.FirstName,
+                        u.LastName,
+                        u.Email,
+                        u.UserName,
+                        u.AccountStatus,
+                        u.Roles,
+                        u.CreatedAt
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error retrieving users by role: {ex.Message}");
+            }
+        }
+
         #region Helper Methods
 
         private UserResponse MapUserToResponse(User user)

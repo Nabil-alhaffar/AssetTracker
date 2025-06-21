@@ -343,8 +343,6 @@ namespace AssetTracker.Controllers
             }
         }
 
-
-
         /// <summary>
         /// Refreshes JWT access token using a valid refresh token.
         /// </summary>
@@ -410,6 +408,176 @@ namespace AssetTracker.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Creates an admin user (for initial setup or admin management).
+        /// This endpoint should be secured in production.
+        /// </summary>
+        /// <param name="model">Admin registration details.</param>
+        /// <returns>Success message on admin creation.</returns>
+        [HttpPost("create-admin")]
+        [AllowAnonymous] // Note: In production, this should be secured
+        public async Task<IActionResult> CreateAdmin([FromBody] RegisterRequest model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                // Validate age requirement (must be 18 or older)
+                var age = DateTime.UtcNow.Year - model.DateOfBirth.Year - 
+                         (DateTime.UtcNow < model.DateOfBirth.AddYears(DateTime.UtcNow.Year - model.DateOfBirth.Year) ? 1 : 0);
+                if (age < 18)
+                {
+                    return BadRequest(new { message = "User must be at least 18 years old to register." });
+                }
+
+                // Create a new admin user object with comprehensive information
+                var user = new User
+                {
+                    UserId = Guid.NewGuid(),
+                    UserName = model.UserName,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    MiddleName = model.MiddleName,
+                    DateOfBirth = model.DateOfBirth,
+                    Gender = model.Gender,
+                    Email = model.Email,
+                    SecondaryEmail = model.SecondaryEmail,
+                    PhoneNumber = model.PhoneNumber,
+                    MobileNumber = model.MobileNumber,
+                    
+                    // Address information
+                    ResidentialAddress = model.ResidentialAddress != null ? new Address
+                    {
+                        StreetAddress1 = model.ResidentialAddress.StreetAddress1,
+                        StreetAddress2 = model.ResidentialAddress.StreetAddress2,
+                        City = model.ResidentialAddress.City,
+                        State = model.ResidentialAddress.State,
+                        PostalCode = model.ResidentialAddress.PostalCode,
+                        Country = model.ResidentialAddress.Country
+                    } : null,
+                    MailingAddress = model.MailingAddress != null ? new Address
+                    {
+                        StreetAddress1 = model.MailingAddress.StreetAddress1,
+                        StreetAddress2 = model.MailingAddress.StreetAddress2,
+                        City = model.MailingAddress.City,
+                        State = model.MailingAddress.State,
+                        PostalCode = model.MailingAddress.PostalCode,
+                        Country = model.MailingAddress.Country
+                    } : null,
+                    CountryOfResidence = model.CountryOfResidence,
+                    Citizenship = model.Citizenship,
+                    TaxId = model.TaxId,
+
+                    // Employment & Financial Information
+                    EmploymentStatus = model.EmploymentStatus,
+                    EmployerName = model.EmployerName,
+                    JobTitle = model.JobTitle,
+                    AnnualIncome = model.AnnualIncome,
+                    NetWorth = model.NetWorth,
+                    LiquidNetWorth = model.LiquidNetWorth,
+                    InvestmentExperience = model.InvestmentExperience,
+                    InvestmentObjectives = model.InvestmentObjectives,
+                    RiskTolerance = model.RiskTolerance,
+                    InvestmentTimeHorizon = model.InvestmentTimeHorizon,
+
+                    // Account Information - Admin gets full permissions
+                    AccountType = model.AccountType,
+                    AccountStatus = AccountStatus.Active, // Admin starts as active
+                    TradingPermissions = new List<TradingPermission> 
+                    { 
+                        TradingPermission.Stocks,
+                        TradingPermission.MarginTrading,
+                        TradingPermission.Options,
+                        TradingPermission.Cryptocurrencies,
+                        TradingPermission.ShortSelling,
+                        TradingPermission.PennyStocks,
+                        TradingPermission.AfterHoursTrading,
+                        TradingPermission.PreMarketTrading,
+                        TradingPermission.InternationalTrading,
+                        TradingPermission.LeveragedETFs,
+                        TradingPermission.InverseETFs
+                    },
+                    MarginApprovalStatus = MarginApprovalStatus.Approved,
+                    OptionsApprovalStatus = OptionsApprovalStatus.Level4,
+                    CryptoApprovalStatus = CryptoApprovalStatus.Approved,
+
+                    // Compliance & KYC/AML - Admin is pre-verified
+                    KycStatus = KycStatus.Verified,
+                    AmlStatus = AmlStatus.Cleared,
+                    IsPoliticallyExposedPerson = model.IsPoliticallyExposedPerson,
+                    SourceOfFundsStatus = SourceOfFundsStatus.Verified,
+
+                    // Admin role
+                    Roles = new List<string> { "Admin" },
+
+                    // Preferences & Settings
+                    TimeZoneId = model.TimeZoneId,
+                    PreferredLanguage = model.PreferredLanguage,
+                    PreferredCurrency = model.PreferredCurrency,
+                    NotificationPreferences = new NotificationPreferences
+                    {
+                        EmailNotifications = model.NotificationPreferences.EmailNotifications,
+                        PushNotifications = model.NotificationPreferences.PushNotifications,
+                        SmsNotifications = model.NotificationPreferences.SmsNotifications,
+                        TradeConfirmations = model.NotificationPreferences.TradeConfirmations,
+                        MarginCallAlerts = model.NotificationPreferences.MarginCallAlerts,
+                        PriceAlerts = model.NotificationPreferences.PriceAlerts,
+                        NewsAlerts = model.NotificationPreferences.NewsAlerts,
+                        MarketingEmails = model.NotificationPreferences.MarketingEmails
+                    },
+                    TradingPreferences = new TradingPreferences
+                    {
+                        ConfirmTrades = model.TradingPreferences.ConfirmTrades,
+                        ShowPnL = model.TradingPreferences.ShowPnL,
+                        AutoSaveCharts = model.TradingPreferences.AutoSaveCharts,
+                        DefaultOrderType = model.TradingPreferences.DefaultOrderType,
+                        DefaultOrderDuration = model.TradingPreferences.DefaultOrderDuration
+                    },
+                    PrivacySettings = new PrivacySettings
+                    {
+                        SharePortfolioData = model.PrivacySettings.SharePortfolioData,
+                        ShareTradingActivity = model.PrivacySettings.ShareTradingActivity,
+                        AllowAnalytics = model.PrivacySettings.AllowAnalytics,
+                        AllowMarketing = model.PrivacySettings.AllowMarketing
+                    },
+
+                    // Security
+                    TwoFactorEnabled = model.EnableTwoFactor,
+                    SecurityQuestions = model.SecurityQuestions.Select(sq => new SecurityQuestion
+                    {
+                        Question = sq.Question,
+                        AnswerHash = _passwordService.HashPassword(sq.Answer, _passwordService.GenerateSalt()) // Hash the answer
+                    }).ToList(),
+
+                    // System fields
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    AccountOpenedDate = DateTime.UtcNow
+                };
+
+                // Add initial audit event
+                user.AddAuditEvent(AuditEventType.AccountCreated, "Admin account created");
+
+                // Register the admin user and hash the password
+                await _userService.RegisterUserAsync(user, model.Password);
+
+                return Ok(new { 
+                    message = "Admin user created successfully",
+                    userId = user.UserId,
+                    username = user.UserName,
+                    email = user.Email,
+                    roles = user.Roles,
+                    accountStatus = user.AccountStatus.ToString(),
+                    note = "Admin user is ready to use with full permissions"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

@@ -125,6 +125,18 @@ namespace AssetTracker.Models.Enums
         /// </summary>
         SecuritySettingsUpdated,
 
+
+        /// <summary>
+        /// Role Added.
+        /// </summary>
+        RoleAdded,
+
+
+        /// <summary>
+        /// RoleRemoved.
+        /// </summary>
+        RoleRemoved,
+
         /// <summary>
         /// Other audit event.
         /// </summary>
