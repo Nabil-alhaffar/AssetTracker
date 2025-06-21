@@ -11,6 +11,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using AssetTracker.Services.Interfaces;
 using AssetTracker.Models.Enums;
 using AssetTracker.Models.AlphaVantage;
+using AssetTracker.Models.Alert;
+
 namespace AssetTracker.Services
 {
 

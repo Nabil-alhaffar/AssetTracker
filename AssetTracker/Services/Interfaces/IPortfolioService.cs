@@ -60,26 +60,32 @@ namespace AssetTracker.Services.Interfaces
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>A task that returns the user's <see cref="Portfolio"/>.</returns>
-        Task<Portfolio> GetUserPortfolioAsync(Guid userId);
+        Task<Portfolio> GetPortfolioAsync(Guid userId);
 
         /// <summary>
-        /// Updates total portfolio values for all users.
+        /// Refreshes total portfolio values for all users.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task UpdateTotalValuesForAllUsersAsync();
+        Task RefreshTotalValuesForAllUsersAsync();
 
         /// <summary>
-        /// Updates portfolio information for all users.
+        /// Updates a specified portfolio.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task UpdatePortfolioForAllUsersAsync();
+        Task UpdatePortfolioAsync(Portfolio portfolio);
 
         /// <summary>
-        /// Updates the portfolio data for a specific user by their user ID.
+        /// Refreshes portfolio information for all users based on current data.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task RefreshPortfolioForAllUsersAsync();
+
+        /// <summary>
+        /// Refreshes the portfolio data for a specific user by their user ID.
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task UpdatePortfolioByUserId(Guid userId);
+        Task RefreshPortfolioByUserId(Guid userId);
 
         // Task<ICollection<Position>> GetAllPositionsAsync(Guid userId);
         // Task AddPositionToPortfolioAsync(Position position, Guid userId);

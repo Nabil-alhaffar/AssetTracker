@@ -46,5 +46,40 @@ namespace AssetTracker.Models
         /// Gets or sets the return percentage of the open positions.
         /// </summary>
         public decimal OpenReturnPercentage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current margin used by open positions.
+        /// </summary>
+        public decimal MarginUsed { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum margin limit available.
+        /// </summary>
+        public decimal MarginLimit { get; set; }
+
+        /// <summary>
+        /// Gets or sets the available buying power (cash + unused margin).
+        /// </summary>
+        public decimal BuyingPower { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's equity (cash + long positions - short positions).
+        /// </summary>
+        public decimal Equity { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the user is currently in a margin call.
+        /// </summary>
+        public bool IsInMarginCall { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maintenance margin requirement as a percentage.
+        /// </summary>
+        public decimal MaintenanceMarginRequirement { get; set; }
+
+        /// <summary>
+        /// Gets or sets the initial margin requirement as a percentage.
+        /// </summary>
+        public decimal InitialMarginRequirement { get; set; }
     }
 }

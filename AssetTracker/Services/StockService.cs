@@ -49,13 +49,22 @@ namespace AssetTracker.Services
 
             var price = await _alphaVantageStockMarketService.GetStockPriceAsync(tradeRequest.Symbol);
             var totalValue = tradeRequest.Quantity * price;
-            var availableFunds = await _portfolioService.GetAvailableFundsAsync(userId);
-            var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
 
+            var portfolio = await _portfolioService.GetPortfolioAsync(userId);
+            if (portfolio == null)
+                return new TradeResponse(false, "Portfolio not found.");
+
+            var position = await _positionService.GetPositionAsync(userId, tradeRequest.Symbol);
             var intent = tradeRequest.Intent;
 
             if (!IsSideIntentCombinationValid(tradeRequest.Side, intent))
                 return new TradeResponse(false, $"Inconsistent side ({tradeRequest.Side}) and intent ({intent}) combination.");
+
+            // Check for margin call - only allow closing positions when in margin call
+            if (portfolio.IsInMarginCall && (intent == TradeIntent.BuyToOpen || intent == TradeIntent.SellToOpen))
+                return new TradeResponse(false, "Cannot open new positions while in margin call. Please close existing positions or add funds.");
+
+            decimal marginRequired = totalValue * portfolio.InitialMarginRequirement;
 
             switch (intent)
             {
@@ -63,37 +72,40 @@ namespace AssetTracker.Services
                     if (position?.Type == PositionType.Short)
                         return new TradeResponse(false, "Close your short position before opening a long position.");
 
-                    if (totalValue > availableFunds)
-                        return new TradeResponse(false, "Insufficient funds.");
+                    if (portfolio.BuyingPower < totalValue)
+                        return new TradeResponse(false, "Insufficient buying power.");
 
-                    await _portfolioService.UpdateAvailableFundsAsync(userId, -totalValue);
+                    portfolio.AvailableFunds -= totalValue;
                     break;
 
                 case TradeIntent.BuyToClose:
                     if (position == null || position.Type != PositionType.Short)
                         return new TradeResponse(false, "No short position to close.");
-
                     if (-position.Quantity < tradeRequest.Quantity)
                         return new TradeResponse(false, "Trying to close more than shorted.");
 
-                    await _portfolioService.UpdateAvailableFundsAsync(userId, -totalValue);
+                    portfolio.AvailableFunds -= totalValue;
+                    portfolio.MarginUsed -= marginRequired;
                     break;
 
                 case TradeIntent.SellToOpen:
                     if (position?.Type == PositionType.Long)
                         return new TradeResponse(false, "Close your long position before opening a short position.");
 
-                    await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
+                    if (portfolio.BuyingPower < marginRequired)
+                        return new TradeResponse(false, "Insufficient buying power to short.");
+
+                    portfolio.MarginUsed += marginRequired;
+                    portfolio.AvailableFunds += totalValue;
                     break;
 
                 case TradeIntent.SellToClose:
                     if (position == null || position.Type != PositionType.Long)
                         return new TradeResponse(false, "No long position to sell.");
-
                     if (position.Quantity < tradeRequest.Quantity)
                         return new TradeResponse(false, "Not enough shares to sell.");
 
-                    await _portfolioService.UpdateAvailableFundsAsync(userId, totalValue);
+                    portfolio.AvailableFunds += totalValue;
                     break;
 
                 default:
@@ -113,9 +125,11 @@ namespace AssetTracker.Services
 
             await _positionService.UpdatePositionAsync(order);
             await _orderRepository.AddOrderAsync(order);
+            await _portfolioService.UpdatePortfolioAsync(portfolio);
 
             return new TradeResponse(true, $"{intent} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
         }
+
 
 
         /// <summary>

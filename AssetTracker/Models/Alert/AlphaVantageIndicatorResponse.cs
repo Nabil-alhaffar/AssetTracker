@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace AssetTracker.Models
+namespace AssetTracker.Models.Alert
 {
     public class AlphaVantageIndicatorResponse
     {

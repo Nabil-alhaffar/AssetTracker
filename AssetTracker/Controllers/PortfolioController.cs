@@ -49,8 +49,13 @@ namespace AssetTracker.Controllers
                     percentagePnL = portfolioSummary.OpenReturnPercentage,
                     dayPnL = portfolioSummary.DayPNL,
                     dayPercentagePnL = portfolioSummary.DayReturnPercentage,
-
-
+                    marginUsed = portfolioSummary.MarginUsed,
+                    marginLimit = portfolioSummary.MarginLimit,
+                    buyingPower = portfolioSummary.BuyingPower,
+                    equity = portfolioSummary.Equity,
+                    isInMarginCall = portfolioSummary.IsInMarginCall,
+                    maintenanceMarginRequirement = portfolioSummary.MaintenanceMarginRequirement,
+                    initialMarginRequirement = portfolioSummary.InitialMarginRequirement
                 }) ;
             }
             catch (Exception err) {
@@ -70,7 +75,7 @@ namespace AssetTracker.Controllers
         {
             try
             {
-                var portfolio = await _portfolioService.GetUserPortfolioAsync(userId);
+                var portfolio = await _portfolioService.GetPortfolioAsync(userId);
                 return Ok(new
                 {
                     portfolio
@@ -249,12 +254,96 @@ namespace AssetTracker.Controllers
         {
             try
             {
-                await _portfolioService.UpdatePortfolioByUserId(userId);
+                await _portfolioService.RefreshPortfolioByUserId(userId);
                 return Ok(new { message = "Portfolio updated successfully." });
             }
             catch
             {
                 return NotFound(new { message = "Portfolio not found." });
+            }
+        }
+
+        /// <summary>
+        /// Sets the margin limit for a user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="marginLimit">The new margin limit amount</param>
+        /// <returns>Success message or error</returns>
+        [HttpPost("margin/limit/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> SetMarginLimit(Guid userId, decimal marginLimit)
+        {
+            try
+            {
+                var portfolio = await _portfolioService.GetPortfolioAsync(userId);
+                portfolio.MarginLimit = marginLimit;
+                await _portfolioService.UpdatePortfolioAsync(portfolio);
+                
+                return Ok(new { message = $"Margin limit updated to ${marginLimit}" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Failed to update margin limit: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Gets the current margin status for a user's portfolio.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <returns>Margin status information</returns>
+        [HttpGet("margin/status/{userId}")]
+        public async Task<IActionResult> GetMarginStatus(Guid userId)
+        {
+            try
+            {
+                var portfolio = await _portfolioService.GetPortfolioAsync(userId);
+                return Ok(new
+                {
+                    marginUsed = portfolio.MarginUsed,
+                    marginLimit = portfolio.MarginLimit,
+                    buyingPower = portfolio.BuyingPower,
+                    equity = portfolio.Equity,
+                    isInMarginCall = portfolio.IsInMarginCall,
+                    maintenanceMarginRequirement = portfolio.MaintenanceMarginRequirement,
+                    initialMarginRequirement = portfolio.InitialMarginRequirement,
+                    marginUtilization = portfolio.MarginLimit > 0 ? (portfolio.MarginUsed / portfolio.MarginLimit) * 100 : 0
+                });
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Adds funds to resolve a margin call.
+        /// </summary>
+        /// <param name="userId">User's unique identifier</param>
+        /// <param name="amount">Amount to add to resolve margin call</param>
+        /// <returns>Success message or error</returns>
+        [HttpPost("margin/resolve/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> ResolveMarginCall(Guid userId, decimal amount)
+        {
+            try
+            {
+                await _portfolioService.UpdateAvailableFundsAsync(userId, amount);
+                
+                CashFlowLog log = new CashFlowLog
+                {
+                    UserId = userId,
+                    Amount = amount,
+                    Type = TransactionType.Deposit,
+                    Description = $"Margin call resolution deposit: Amount: {amount}"
+                };
+                await _cashFlowLogService.AddLogAsync(log);
+                
+                return Ok(new { message = $"Added ${amount} to resolve margin call." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Failed to resolve margin call: {ex.Message}" });
             }
         }
 

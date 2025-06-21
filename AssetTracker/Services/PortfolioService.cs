@@ -44,7 +44,7 @@ namespace AssetTracker.Services
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>The user's portfolio.</returns>
-        public async Task<Portfolio> GetUserPortfolioAsync(Guid userId)
+        public async Task<Portfolio> GetPortfolioAsync(Guid userId)
         {
             try
             {
@@ -73,6 +73,9 @@ namespace AssetTracker.Services
                 // Call performance function with days = 1 (default)
                 var performance = await GetPortfolioPerformanceAsync(userId, 1);
                 var openPnl = await GetOpenPNLAsync(userId);
+                
+                // Get the full portfolio to access margin data
+                var portfolio = await GetPortfolioAsync(userId);
 
                 // Store today's market value
                 //await _historicalPortfolioValueRepository.StoreMarketValueAsync(userId, DateOnly.FromDateTime(DateTime.Now), totalMarketValue);
@@ -86,7 +89,14 @@ namespace AssetTracker.Services
                     OpenPNL = openPnl.PNLValue,
                     OpenReturnPercentage= openPnl.PNLPercentage,
                     DayPNL = performance.PNL,
-                    DayReturnPercentage = performance.ReturnPercentage
+                    DayReturnPercentage = performance.ReturnPercentage,
+                    MarginUsed = portfolio.MarginUsed,
+                    MarginLimit = portfolio.MarginLimit,
+                    BuyingPower = portfolio.BuyingPower,
+                    Equity = portfolio.Equity,
+                    IsInMarginCall = portfolio.IsInMarginCall,
+                    MaintenanceMarginRequirement = portfolio.MaintenanceMarginRequirement,
+                    InitialMarginRequirement = portfolio.InitialMarginRequirement
                 };
             }
             catch (Exception ex)
@@ -372,26 +382,46 @@ namespace AssetTracker.Services
         }
 
         /// <summary>
-        /// Updates all user portfolios by refreshing prices and position ratios.
+        /// Refreshes all user portfolios by updating prices and position ratios.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdatePortfolioForAllUsersAsync()
+        public async Task RefreshPortfolioForAllUsersAsync()
         {
             var users = await _portfolioRepository.GetAllUserIdsAsync(); 
             foreach(var userId in users)
             {
-                await UpdatePortfolioByUserId(userId);
+                await RefreshPortfolioByUserId(userId);
             }
 
         }
 
+        /// <summary>
+        /// Updates a portfolio in the MongoDb Repository. 
+        /// </summary>
+        /// <param name="portfolio">The updated portfolio object.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task UpdatePortfolioAsync(Portfolio portfolio)
+        {
+            try
+            {
+                await _portfolioRepository.UpdatePortfolioAsync(portfolio);
+
+            }
+            catch(Exception ex)
+            {
+                throw new Exception("Update portfolio Failed:",ex);
+            }
+
+        }   
+
+
 
         /// <summary>
-        /// Updates a specific user's portfolio prices and ratios based on the latest market data.
+        /// Refreshes a specific user's portfolio prices and ratios based on the latest market data.
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdatePortfolioByUserId(Guid userId)
+        public async Task RefreshPortfolioByUserId(Guid userId)
         {
             try
             {
@@ -418,10 +448,10 @@ namespace AssetTracker.Services
 
         }
         /// <summary>
-        /// Updates and stores the total portfolio values for all users for the current day.
+        /// Refreshes and stores the total portfolio values for all users for the current day.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdateTotalValuesForAllUsersAsync()
+        public async Task RefreshTotalValuesForAllUsersAsync()
         {
             var users = await _portfolioRepository.GetAllUserIdsAsync(); 
 

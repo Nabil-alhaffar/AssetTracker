@@ -50,8 +50,12 @@ This API is the foundation for a future cross-platform frontend (web & mobile) t
     •   POST /api/auth/refresh --> refreshes JWT access token a valid refresh token is included as HTTP only cookie.
 
 ### Portfolio Management
-    •   GET /api/portfolio/{userId} --> Retrieves the user’s portfolio.
+    •   GET /api/portfolio/{userId} --> Retrieves the user's portfolio.
     •   GET /api/portfolio/performance/{userId}?days={days} --> Returns the portfolio performance over the given period.
+    •   GET /api/portfolio/summary/{userId} --> Returns portfolio summary including margin information.
+    •   POST /api/portfolio/margin/limit/{userId} --> Sets the margin limit for a user's portfolio.
+    •   GET /api/portfolio/margin/status/{userId} --> Gets current margin status for a user's portfolio.
+    •   POST /api/portfolio/margin/resolve/{userId} --> Adds funds to resolve a margin call.
     
 ### Market Data
     •   GET /api/AlphaVantageStockMarketController/getPrice/{symbol} --> Fetches current stock price.
@@ -79,8 +83,10 @@ This API is the foundation for a future cross-platform frontend (web & mobile) t
     •   POST /api/WatchlistController/{userId} --> Allows a user to add a new watchlist. 
     •   POST /api/WatchlistController/{userId}/{watchlistId}/add-symbol --> Allows a user to add a new symbol to an existing watchlist. 
     
-    
-
+### Margin Call Monitoring
+    •   GET /api/alert/margin-calls --> Checks for margin calls across all portfolios.
+    •   GET /api/alert/margin-calls/{userId} --> Gets margin call status for a specific user.
+    •   GET /api/alert/margin-calls/my-status --> Gets margin call status for the authenticated user.
 
 ## Installation & Setup
 

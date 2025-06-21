@@ -78,22 +78,22 @@ builder.Services.AddSingleton(new AppSettings { UseMockStore = useMockStore });
 /// </summary>
 if (useMockStore)
 {
-    builder.Services.AddSingleton<ICashFlowLogRepository, CashFlowLogRepository>();
-    builder.Services.AddSingleton<IPortfolioRepository, PortfolioRepository>();
-    builder.Services.AddSingleton<IUserRepository, UserRepository>();
-    builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
-    builder.Services.AddSingleton<IHistoricalPortfolioValueRepository, HistoricalPortfolioValueRepository>();
-    builder.Services.AddSingleton<IWatchlistRepository, WatchlistRepository>();
+    builder.Services.AddScoped<ICashFlowLogRepository, CashFlowLogRepository>();
+    builder.Services.AddScoped<IPortfolioRepository, PortfolioRepository>();
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
+    builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+    builder.Services.AddScoped<IHistoricalPortfolioValueRepository, HistoricalPortfolioValueRepository>();
+    builder.Services.AddScoped<IWatchlistRepository, WatchlistRepository>();
 }
 else
 {
-    builder.Services.AddSingleton<ICashFlowLogRepository, MongoCashFlowLogRepository>();
-    builder.Services.AddSingleton<IHistoricalPortfolioValueRepository, MongoHistoricalPortfolioValueRepository>();
-    builder.Services.AddSingleton<IOrderRepository, MongoOrderRepository>();
-    builder.Services.AddSingleton<IPortfolioRepository, MongoPortfolioRepository>();
-    builder.Services.AddSingleton<IUserRepository, MongoUserRepository>();
-    builder.Services.AddSingleton<IWatchlistRepository, MongoWatchlistRepository>();
-    builder.Services.AddSingleton<IUserSessionRepository, MongoUserSessionRepository>();
+    builder.Services.AddScoped<ICashFlowLogRepository, MongoCashFlowLogRepository>();
+    builder.Services.AddScoped<IHistoricalPortfolioValueRepository, MongoHistoricalPortfolioValueRepository>();
+    builder.Services.AddScoped<IOrderRepository, MongoOrderRepository>();
+    builder.Services.AddScoped<IPortfolioRepository, MongoPortfolioRepository>();
+    builder.Services.AddScoped<IUserRepository, MongoUserRepository>();
+    builder.Services.AddScoped<IWatchlistRepository, MongoWatchlistRepository>();
+    builder.Services.AddScoped<IUserSessionRepository, MongoUserSessionRepository>();
 }
 
 /// <summary>
@@ -106,14 +106,26 @@ builder.Services.AddSingleton<IAlphaVantageStockMarketService, AlphaVantageStock
 /// Register application services for DI.
 /// </summary>
 builder.Services.AddScoped<IWatchlistService, WatchlistService>();
-builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPositionService, PositionService>();
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
-builder.Services.AddSingleton<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 builder.Services.AddScoped<ICashFlowLogService, CashFlowLogService>();
-builder.Services.AddSingleton<IUserSessionManager, UserSessionManager>();
+builder.Services.AddScoped<IUserSessionManager, UserSessionManager>();
+builder.Services.AddScoped<IAlertService, AlertService>();
+builder.Services.AddScoped<IAlertRepository, MongoAlertRepository>();
+
+// Notification services
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSingleton<IEmailService, MockEmailService>();
+builder.Services.AddSingleton<IPushNotificationService, MockPushNotificationService>();
+builder.Services.AddSingleton<ISmsService, MockSmsService>();
+
+// Background services
+builder.Services.AddHostedService<MarginCallMonitorService>();
+builder.Services.AddHostedService<StockAlertMonitorService>();
 
 builder.Services.AddSingleton<SymbolSubscriptionManager>();
 
