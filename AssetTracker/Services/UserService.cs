@@ -270,7 +270,30 @@ namespace AssetTracker.Services
 
         }
 
+        /// <summary>
+        /// Updates a user's information.
+        /// </summary>
+        /// <param name="user">The updated user object.</param>
+        public async Task UpdateUserAsync(User user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user), "User cannot be null.");
 
+            try
+            {
+                // Validate email if it was changed
+                var existingUser = await _userRepository.GetUserByEmailAsync(user.Email);
+                if (existingUser != null && existingUser.UserId != user.UserId)
+                    throw new InvalidOperationException("Email is already in use.");
+
+                // Update the user in the repository
+                await _userRepository.UpdateUserAsync(user);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to update user", ex);
+            }
+        }
 
     }
 }

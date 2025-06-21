@@ -10,7 +10,8 @@ using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using AssetTracker.Models.DTOs;
-
+using System.Collections.Generic;
+using AssetTracker.Models.Enums;
 namespace AssetTracker.Controllers
 {
     /// <summary>
@@ -27,6 +28,7 @@ namespace AssetTracker.Controllers
         private readonly IPortfolioService _portfolioService;
         private readonly IUserSessionManager _userSessionManager;
         private readonly SymbolSubscriptionManager _symbolSubscriptionManager;
+        private readonly IPasswordService _passwordService;
 
 
         /// <summary>
@@ -39,6 +41,7 @@ namespace AssetTracker.Controllers
         /// <param name="portfolioService">Service for managing user portfolios.</param>
         /// <param name="userSessionManager">Service for managing user sessions.</param>
         /// <param name="configuration">Configuration for accessing app settings.</param>
+        /// <param name="passwordService">Service for password hashing and validation.</param>
         public AuthController(
             IUserService userService,
             IAuthService authService,
@@ -46,7 +49,8 @@ namespace AssetTracker.Controllers
             IWatchlistService watchlistService,
             IPortfolioService portfolioService,
             IUserSessionManager userSessionManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IPasswordService passwordService)
         {
             _userService = userService;
             _authService = authService;
@@ -55,13 +59,14 @@ namespace AssetTracker.Controllers
             _symbolSubscriptionManager = symbolSubscriptionManager;
             _userSessionManager = userSessionManager;
             _configuration = configuration;
+            _passwordService = passwordService;
         }
 
         /// <summary>
         /// Registers a new user with the provided details.
         /// Automatically logs in the user after successful registration.
         /// </summary>
-        /// <param name="model">Registration details including username, password, email, and timezone.</param>
+        /// <param name="model">Registration details including comprehensive user information.</param>
         /// <returns>Success message on registration and login, or error details.</returns>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest model)
@@ -71,16 +76,125 @@ namespace AssetTracker.Controllers
 
             try
             {
-                // Create a new user object
+                // Validate age requirement (must be 18 or older)
+                var age = DateTime.UtcNow.Year - model.DateOfBirth.Year - 
+                         (DateTime.UtcNow < model.DateOfBirth.AddYears(DateTime.UtcNow.Year - model.DateOfBirth.Year) ? 1 : 0);
+                if (age < 18)
+                {
+                    return BadRequest(new { message = "User must be at least 18 years old to register." });
+                }
+
+                // Create a new user object with comprehensive information
                 var user = new User
                 {
                     UserId = Guid.NewGuid(),
                     UserName = model.UserName,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
+                    MiddleName = model.MiddleName,
+                    DateOfBirth = model.DateOfBirth,
+                    Gender = model.Gender,
                     Email = model.Email,
-                    TimeZoneId = model.TimeZoneId
+                    SecondaryEmail = model.SecondaryEmail,
+                    PhoneNumber = model.PhoneNumber,
+                    MobileNumber = model.MobileNumber,
+                    
+                    // Address information
+                    ResidentialAddress = model.ResidentialAddress != null ? new Address
+                    {
+                        StreetAddress1 = model.ResidentialAddress.StreetAddress1,
+                        StreetAddress2 = model.ResidentialAddress.StreetAddress2,
+                        City = model.ResidentialAddress.City,
+                        State = model.ResidentialAddress.State,
+                        PostalCode = model.ResidentialAddress.PostalCode,
+                        Country = model.ResidentialAddress.Country
+                    } : null,
+                    MailingAddress = model.MailingAddress != null ? new Address
+                    {
+                        StreetAddress1 = model.MailingAddress.StreetAddress1,
+                        StreetAddress2 = model.MailingAddress.StreetAddress2,
+                        City = model.MailingAddress.City,
+                        State = model.MailingAddress.State,
+                        PostalCode = model.MailingAddress.PostalCode,
+                        Country = model.MailingAddress.Country
+                    } : null,
+                    CountryOfResidence = model.CountryOfResidence,
+                    Citizenship = model.Citizenship,
+                    TaxId = model.TaxId,
+
+                    // Employment & Financial Information
+                    EmploymentStatus = model.EmploymentStatus,
+                    EmployerName = model.EmployerName,
+                    JobTitle = model.JobTitle,
+                    AnnualIncome = model.AnnualIncome,
+                    NetWorth = model.NetWorth,
+                    LiquidNetWorth = model.LiquidNetWorth,
+                    InvestmentExperience = model.InvestmentExperience,
+                    InvestmentObjectives = model.InvestmentObjectives,
+                    RiskTolerance = model.RiskTolerance,
+                    InvestmentTimeHorizon = model.InvestmentTimeHorizon,
+
+                    // Account Information
+                    AccountType = model.AccountType,
+                    AccountStatus = AccountStatus.Pending, // Start with pending status
+                    TradingPermissions = new List<TradingPermission> { TradingPermission.Stocks }, // Basic permission
+                    MarginApprovalStatus = model.EnableMarginTrading ? MarginApprovalStatus.Pending : MarginApprovalStatus.NotRequested,
+                    OptionsApprovalStatus = model.EnableOptionsTrading ? OptionsApprovalStatus.Pending : OptionsApprovalStatus.NotRequested,
+                    CryptoApprovalStatus = model.EnableCryptoTrading ? CryptoApprovalStatus.Pending : CryptoApprovalStatus.NotRequested,
+
+                    // Compliance & KYC/AML
+                    KycStatus = KycStatus.NotStarted,
+                    AmlStatus = AmlStatus.NotStarted,
+                    IsPoliticallyExposedPerson = model.IsPoliticallyExposedPerson,
+                    SourceOfFundsStatus = SourceOfFundsStatus.NotStarted,
+
+                    // Preferences & Settings
+                    TimeZoneId = model.TimeZoneId,
+                    PreferredLanguage = model.PreferredLanguage,
+                    PreferredCurrency = model.PreferredCurrency,
+                    NotificationPreferences = new NotificationPreferences
+                    {
+                        EmailNotifications = model.NotificationPreferences.EmailNotifications,
+                        PushNotifications = model.NotificationPreferences.PushNotifications,
+                        SmsNotifications = model.NotificationPreferences.SmsNotifications,
+                        TradeConfirmations = model.NotificationPreferences.TradeConfirmations,
+                        MarginCallAlerts = model.NotificationPreferences.MarginCallAlerts,
+                        PriceAlerts = model.NotificationPreferences.PriceAlerts,
+                        NewsAlerts = model.NotificationPreferences.NewsAlerts,
+                        MarketingEmails = model.NotificationPreferences.MarketingEmails
+                    },
+                    TradingPreferences = new TradingPreferences
+                    {
+                        ConfirmTrades = model.TradingPreferences.ConfirmTrades,
+                        ShowPnL = model.TradingPreferences.ShowPnL,
+                        AutoSaveCharts = model.TradingPreferences.AutoSaveCharts,
+                        DefaultOrderType = model.TradingPreferences.DefaultOrderType,
+                        DefaultOrderDuration = model.TradingPreferences.DefaultOrderDuration
+                    },
+                    PrivacySettings = new PrivacySettings
+                    {
+                        SharePortfolioData = model.PrivacySettings.SharePortfolioData,
+                        ShareTradingActivity = model.PrivacySettings.ShareTradingActivity,
+                        AllowAnalytics = model.PrivacySettings.AllowAnalytics,
+                        AllowMarketing = model.PrivacySettings.AllowMarketing
+                    },
+
+                    // Security
+                    TwoFactorEnabled = model.EnableTwoFactor,
+                    SecurityQuestions = model.SecurityQuestions.Select(sq => new SecurityQuestion
+                    {
+                        Question = sq.Question,
+                        AnswerHash = _passwordService.HashPassword(sq.Answer, _passwordService.GenerateSalt()) // Hash the answer
+                    }).ToList(),
+
+                    // System fields
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    AccountOpenedDate = DateTime.UtcNow
                 };
+
+                // Add initial audit event
+                user.AddAuditEvent(AuditEventType.AccountCreated, "User account created during registration");
 
                 // Register the user and hash the password
                 await _userService.RegisterUserAsync(user, model.Password);
@@ -88,7 +202,12 @@ namespace AssetTracker.Controllers
                 // Automatically log in the newly registered user
                 await Login(new LoginRequest { UserName = model.UserName, Password = model.Password });
 
-                return Ok(new { message = "User registered and Logged in successfully" });
+                return Ok(new { 
+                    message = "User registered and logged in successfully",
+                    userId = user.UserId,
+                    accountStatus = user.AccountStatus.ToString(),
+                    nextSteps = "Complete KYC verification to enable trading"
+                });
             }
             catch (Exception ex)
             {

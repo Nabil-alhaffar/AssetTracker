@@ -100,5 +100,12 @@ namespace AssetTracker.Services.Interfaces
         /// <param name="timeZoneId">The new time zone identifier.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         Task UpdateUserTimeZoneAsync(Guid userId, string timeZoneId);
+
+        /// <summary>
+        /// Updates a user's information.
+        /// </summary>
+        /// <param name="user">The updated user object.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task UpdateUserAsync(User user);
     }
 }
