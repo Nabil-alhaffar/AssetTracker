@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the net worth range of a user.
     /// </summary>
+    ///
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum NetWorthRange
     {
         /// <summary>

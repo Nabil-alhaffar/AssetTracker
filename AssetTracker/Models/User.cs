@@ -404,6 +404,7 @@ namespace AssetTracker.Models
         /// <summary>
         /// User who created this account (for admin accounts).
         /// </summary>
+        [BsonRepresentation(BsonType.String)]
         public Guid? CreatedBy { get; set; }
 
         /// <summary>
@@ -414,6 +415,7 @@ namespace AssetTracker.Models
         /// <summary>
         /// User who last updated this account.
         /// </summary>
+        [BsonRepresentation(BsonType.String)]
         public Guid? UpdatedBy { get; set; }
 
         /// <summary>
@@ -424,6 +426,7 @@ namespace AssetTracker.Models
         /// <summary>
         /// User who deleted this account.
         /// </summary>
+        [BsonRepresentation(BsonType.String)]
         public Guid? DeletedBy { get; set; }
 
         /// <summary>
@@ -576,6 +579,7 @@ namespace AssetTracker.Models
     {
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         public string Note { get; set; } = string.Empty;
+        [BsonRepresentation(BsonType.String)]
         public Guid CreatedBy { get; set; }
         public ComplianceNoteType Type { get; set; }
     }
@@ -638,6 +642,7 @@ namespace AssetTracker.Models
         public AuditEventType EventType { get; set; }
         public string Description { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        [BsonRepresentation(BsonType.String)]
         public Guid? PerformedBy { get; set; }
         public string? IpAddress { get; set; }
         public string? UserAgent { get; set; }

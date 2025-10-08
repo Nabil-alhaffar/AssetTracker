@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents different trading permissions for users.
     /// </summary>
+    ///
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum TradingPermission
     {
         /// <summary>

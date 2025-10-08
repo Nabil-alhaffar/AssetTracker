@@ -115,15 +115,27 @@ namespace AssetTracker.Repositories.MongoDBRepositories
         /// <exception cref="InvalidOperationException">Thrown if the user is not found.</exception>
         public async Task UpdateUserAsync(User user)
         {
-            var result = await _userCollection.ReplaceOneAsync(
-                u => u.UserId == user.UserId,
-                user,
-                new ReplaceOptions { IsUpsert = false }
-            );
-
-            if (result.MatchedCount == 0)
+            try
             {
-                throw new InvalidOperationException("User not found.");
+                Console.WriteLine($"Attempting to update user with UserId: {user.UserId}");
+                
+                var result = await _userCollection.ReplaceOneAsync(
+                    u => u.UserId == user.UserId,
+                    user,
+                    new ReplaceOptions { IsUpsert = false }
+                );
+
+                Console.WriteLine($"Update result - MatchedCount: {result.MatchedCount}, ModifiedCount: {result.ModifiedCount}");
+
+                if (result.MatchedCount == 0)
+                {
+                    throw new InvalidOperationException($"User with ID {user.UserId} not found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateUserAsync for UserId {user.UserId}: {ex.Message}");
+                throw;
             }
         }
     }

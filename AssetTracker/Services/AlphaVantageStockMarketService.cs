@@ -222,7 +222,7 @@ namespace AssetTracker.Services
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"❌ Error fetching {indicator}: {ex.Message}");
+                        Console.WriteLine($" Error fetching {indicator}: {ex.Message}");
                     }
                 }).ToList();
 

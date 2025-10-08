@@ -66,6 +66,7 @@ namespace AssetTracker.Services
 
             decimal marginRequired = totalValue * portfolio.InitialMarginRequirement;
 
+            // Validate trade conditions
             switch (intent)
             {
                 case TradeIntent.BuyToOpen:
@@ -74,8 +75,6 @@ namespace AssetTracker.Services
 
                     if (portfolio.BuyingPower < totalValue)
                         return new TradeResponse(false, "Insufficient buying power.");
-
-                    portfolio.AvailableFunds -= totalValue;
                     break;
 
                 case TradeIntent.BuyToClose:
@@ -83,9 +82,6 @@ namespace AssetTracker.Services
                         return new TradeResponse(false, "No short position to close.");
                     if (-position.Quantity < tradeRequest.Quantity)
                         return new TradeResponse(false, "Trying to close more than shorted.");
-
-                    portfolio.AvailableFunds -= totalValue;
-                    portfolio.MarginUsed -= marginRequired;
                     break;
 
                 case TradeIntent.SellToOpen:
@@ -94,9 +90,6 @@ namespace AssetTracker.Services
 
                     if (portfolio.BuyingPower < marginRequired)
                         return new TradeResponse(false, "Insufficient buying power to short.");
-
-                    portfolio.MarginUsed += marginRequired;
-                    portfolio.AvailableFunds += totalValue;
                     break;
 
                 case TradeIntent.SellToClose:
@@ -104,8 +97,6 @@ namespace AssetTracker.Services
                         return new TradeResponse(false, "No long position to sell.");
                     if (position.Quantity < tradeRequest.Quantity)
                         return new TradeResponse(false, "Not enough shares to sell.");
-
-                    portfolio.AvailableFunds += totalValue;
                     break;
 
                 default:
@@ -123,9 +114,26 @@ namespace AssetTracker.Services
                 Timestamp = DateTime.UtcNow
             };
 
-            await _positionService.UpdatePositionAsync(order);
+            // Calculate fund changes
+            (decimal availableFundsDelta, decimal marginUsedDelta) fundChanges = (0, 0);
+            switch (intent)
+            {
+                case TradeIntent.BuyToOpen:
+                    fundChanges = (-totalValue, 0);
+                    break;
+                case TradeIntent.BuyToClose:
+                    fundChanges = (-totalValue, -marginRequired);
+                    break;
+                case TradeIntent.SellToOpen:
+                    fundChanges = (totalValue, marginRequired);
+                    break;
+                case TradeIntent.SellToClose:
+                    fundChanges = (totalValue, 0);
+                    break;
+            }
+
+            await _positionService.UpdatePositionAsync(order, fundChanges);
             await _orderRepository.AddOrderAsync(order);
-            await _portfolioService.UpdatePortfolioAsync(portfolio);
 
             return new TradeResponse(true, $"{intent} {tradeRequest.Quantity} shares of {tradeRequest.Symbol} at ${price}.");
         }

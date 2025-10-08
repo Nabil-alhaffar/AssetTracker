@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the investment objectives of a user.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum InvestmentObjective
     {
         /// <summary>

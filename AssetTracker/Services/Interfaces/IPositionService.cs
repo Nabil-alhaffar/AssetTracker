@@ -71,8 +71,9 @@ namespace AssetTracker.Services.Interfaces
         /// Updates a position based on the given order.
         /// </summary>
         /// <param name="order">The order information used to update the position.</param>
+        /// <param name="fundChanges">Optional fund changes to apply (AvailableFunds and MarginUsed deltas).</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task UpdatePositionAsync(Order order);
+        Task UpdatePositionAsync(Order order, (decimal availableFundsDelta, decimal marginUsedDelta)? fundChanges = null);
 
         // /// <summary>
         // /// Adds or updates a position in the portfolio.

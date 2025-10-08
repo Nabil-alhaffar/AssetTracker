@@ -1,13 +1,18 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the status of a user account.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AccountStatus
     {
         /// <summary>
         /// Account is pending approval.
         /// </summary>
+        ///
+        
         Pending,
 
         /// <summary>

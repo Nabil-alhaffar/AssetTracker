@@ -240,11 +240,19 @@ namespace AssetTracker.Services
         /// Updates a user's portfolio based on the given filled order.
         /// </summary>
         /// <param name="order">Order that affects the position.</param>
-        public async Task UpdatePositionAsync(Order order)
+        /// <param name="fundChanges">Optional fund changes to apply (AvailableFunds and MarginUsed deltas).</param>
+        public async Task UpdatePositionAsync(Order order, (decimal availableFundsDelta, decimal marginUsedDelta)? fundChanges = null)
         {
             var portfolio = await _portfolioRepository.GetUserPortfolioAsync(order.UserId);
             if (portfolio == null)
                 throw new KeyNotFoundException($"No portfolio found for user {order.UserId}");
+
+            // Apply fund changes if provided
+            if (fundChanges.HasValue)
+            {
+                portfolio.AvailableFunds += fundChanges.Value.availableFundsDelta;
+                portfolio.MarginUsed += fundChanges.Value.marginUsedDelta;
+            }
 
             var positions = portfolio.Positions;
 

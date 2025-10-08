@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the annual income range of a user.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum IncomeRange
     {
         /// <summary>

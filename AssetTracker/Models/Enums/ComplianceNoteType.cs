@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the type of compliance note.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum ComplianceNoteType
     {
         /// <summary>

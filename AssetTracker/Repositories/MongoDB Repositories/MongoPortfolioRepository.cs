@@ -53,15 +53,26 @@ namespace AssetTracker.Repositories.MongoDBRepositories
         /// <exception cref="InvalidOperationException">Thrown if the update fails.</exception>
         public async Task UpdatePortfolioAsync(Portfolio portfolio)
         {
-            var result = await _portfolioCollection.ReplaceOneAsync(
-                p => p.UserId == portfolio.UserId,
-                portfolio,
-                new ReplaceOptions { IsUpsert = true } // If the portfolio doesn't exist, it will be inserted
-            );
-
-            if (result.MatchedCount == 0 && result.ModifiedCount == 0)
+            try
             {
-                throw new InvalidOperationException("Portfolio update failed.");
+                var result = await _portfolioCollection.ReplaceOneAsync(
+                    p => p.UserId == portfolio.UserId,
+                    portfolio,
+                    new ReplaceOptions { IsUpsert = true } // If the portfolio doesn't exist, it will be inserted
+                );
+
+                // Log the result for debugging
+                Console.WriteLine($"Portfolio update for UserId {portfolio.UserId}: Matched={result.MatchedCount}, Modified={result.ModifiedCount}, Upserted={result.UpsertedId}");
+
+                if (result.MatchedCount == 0 && result.ModifiedCount == 0 && result.UpsertedId == null)
+                {
+                    throw new InvalidOperationException("Portfolio update failed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Portfolio update error for UserId {portfolio.UserId}: {ex.Message}");
+                throw;
             }
         }
 

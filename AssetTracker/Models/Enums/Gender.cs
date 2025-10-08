@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the gender of a user for demographic purposes.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum Gender
     {
         /// <summary>

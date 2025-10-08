@@ -7,6 +7,8 @@ namespace AssetTracker.Models.Enums
     /// <summary>
     /// Specifies the type of a trading position.
     /// </summary>
+    ///
+
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum PositionType
     {

@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the source of funds verification status of a user.
     /// </summary>
+    ///
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum SourceOfFundsStatus
     {
         /// <summary>

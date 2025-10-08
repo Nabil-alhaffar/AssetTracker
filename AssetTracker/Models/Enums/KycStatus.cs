@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the KYC (Know Your Customer) verification status of a user.
     /// </summary>
+    ///
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum KycStatus
     {
         /// <summary>

@@ -1,8 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the type of audit event.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum AuditEventType
     {
         /// <summary>
@@ -142,4 +146,4 @@ namespace AssetTracker.Models.Enums
         /// </summary>
         Other
     }
-} 
+}

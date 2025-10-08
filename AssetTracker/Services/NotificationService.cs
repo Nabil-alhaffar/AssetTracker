@@ -205,12 +205,12 @@ To resolve this margin call, you need to either:
 
 ⏰ Time is critical - please take action within 24 hours to avoid forced liquidation of positions.
 
-🔗 Login to your account: [Your App URL]
+🔗 Login to your account: [TradiumFinancial.com]
 
 If you have any questions, please contact our support team immediately.
 
 Best regards,
-Your Trading Platform Team
+Your Tradium Financial Platform Team
 
 ---
 This is an automated alert. Please do not reply to this email.

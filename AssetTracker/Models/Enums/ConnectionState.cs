@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace AssetTracker.Models.Enums
 {
     /// <summary>
     /// Represents the current state of a connection.
     /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+
     public enum ConnectionState
     {
         /// <summary>

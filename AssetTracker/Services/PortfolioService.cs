@@ -448,6 +448,201 @@ namespace AssetTracker.Services
 
         }
         /// <summary>
+        /// Calculates the appropriate margin limit for a user based on their profile and account type.
+        /// </summary>
+        /// <param name="userId">The user's unique identifier.</param>
+        /// <returns>The calculated margin limit.</returns>
+        public async Task<decimal> CalculateDynamicMarginLimitAsync(Guid userId)
+        {
+            var user = await _userService.GetUserAsync(userId);
+            if (user == null)
+                return 0;
+
+            // Base margin limit calculation
+            decimal baseMarginLimit = 0;
+
+            // Check if user has margin trading approval
+            if (user.MarginApprovalStatus != MarginApprovalStatus.Approved)
+            {
+                return 0; // No margin if not approved
+            }
+
+            // Calculate based on account equity and net worth
+            var portfolio = await GetPortfolioAsync(userId);
+            decimal accountEquity = portfolio?.Equity ?? 0;
+
+            // Base margin limit is typically 2x the account equity for approved margin accounts
+            baseMarginLimit = accountEquity * 2;
+
+            // Apply multipliers based on account type
+            switch (user.AccountType)
+            {
+                case AccountType.Individual:
+                    baseMarginLimit *= 1.0m; // Standard multiplier
+                    break;
+                case AccountType.Joint:
+                    baseMarginLimit *= 1.2m; // Slightly higher for joint accounts
+                    break;
+                case AccountType.Corporate:
+                case AccountType.LLC:
+                case AccountType.Partnership:
+                    baseMarginLimit *= 1.5m; // Higher for business accounts
+                    break;
+                case AccountType.Trust:
+                    baseMarginLimit *= 1.3m; // Moderate increase for trusts
+                    break;
+                case AccountType.IRA:
+                case AccountType.RothIRA:
+                case AccountType.SepIRA:
+                case AccountType.SimpleIRA:
+                case AccountType.FourZeroOneK:
+                case AccountType.FourZeroThreeB:
+                    // Retirement accounts typically have lower or no margin
+                    baseMarginLimit *= 0.5m;
+                    break;
+                case AccountType.Custodial:
+                    baseMarginLimit *= 0.3m; // Very limited for custodial accounts
+                    break;
+                default:
+                    baseMarginLimit *= 0.8m; // Conservative for other types
+                    break;
+            }
+
+            // Apply risk tolerance multiplier
+            switch (user.RiskTolerance)
+            {
+                case RiskTolerance.Conservative:
+                    baseMarginLimit *= 0.5m;
+                    break;
+                case RiskTolerance.Moderate:
+                    baseMarginLimit *= 0.8m;
+                    break;
+                case RiskTolerance.Aggressive:
+                    baseMarginLimit *= 1.2m;
+                    break;
+                case RiskTolerance.VeryAggressive:
+                    baseMarginLimit *= 1.5m;
+                    break;
+                default:
+                    baseMarginLimit *= 1.0m;
+                    break;
+            }
+
+            // Apply net worth multiplier
+            switch (user.NetWorth)
+            {
+                case NetWorthRange.LessThan10K:
+                    baseMarginLimit *= 0.3m;
+                    break;
+                case NetWorthRange.TenKTo25K:
+                    baseMarginLimit *= 0.5m;
+                    break;
+                case NetWorthRange.TwentyFiveKTo50K:
+                    baseMarginLimit *= 0.7m;
+                    break;
+                case NetWorthRange.FiftyKTo100K:
+                    baseMarginLimit *= 1.0m;
+                    break;
+                case NetWorthRange.OneHundredKTo250K:
+                    baseMarginLimit *= 1.2m;
+                    break;
+                case NetWorthRange.TwoFiftyKTo500K:
+                    baseMarginLimit *= 1.5m;
+                    break;
+                case NetWorthRange.FiveHundredKTo1M:
+                    baseMarginLimit *= 2.0m;
+                    break;
+                case NetWorthRange.OneMTo5M:
+                    baseMarginLimit *= 3.0m;
+                    break;
+                case NetWorthRange.FiveMTo10M:
+                    baseMarginLimit *= 4.0m;
+                    break;
+                case NetWorthRange.TenMTo25M:
+                    baseMarginLimit *= 5.0m;
+                    break;
+                case NetWorthRange.TwentyFiveMTo50M:
+                    baseMarginLimit *= 6.0m;
+                    break;
+                case NetWorthRange.FiftyMTo100M:
+                    baseMarginLimit *= 8.0m;
+                    break;
+                case NetWorthRange.OneHundredMTo500M:
+                    baseMarginLimit *= 10.0m;
+                    break;
+                case NetWorthRange.FiveHundredMTo1B:
+                    baseMarginLimit *= 15.0m;
+                    break;
+                case NetWorthRange.OneBillionPlus:
+                    baseMarginLimit *= 20.0m;
+                    break;
+                default:
+                    baseMarginLimit *= 1.0m;
+                    break;
+            }
+
+            // Apply investment experience multiplier
+            switch (user.InvestmentExperience)
+            {
+                case InvestmentExperience.Beginner:
+                    baseMarginLimit *= 0.3m;
+                    break;
+                case InvestmentExperience.Limited:
+                    baseMarginLimit *= 0.5m;
+                    break;
+                case InvestmentExperience.Moderate:
+                    baseMarginLimit *= 0.8m;
+                    break;
+                case InvestmentExperience.Experienced:
+                    baseMarginLimit *= 1.2m;
+                    break;
+                case InvestmentExperience.Expert:
+                    baseMarginLimit *= 1.5m;
+                    break;
+                default:
+                    baseMarginLimit *= 1.0m;
+                    break;
+            }
+
+            // Apply maximum leverage constraint if set
+            if (user.MaxLeverage > 0)
+            {
+                decimal maxMarginBasedOnLeverage = accountEquity * user.MaxLeverage;
+                baseMarginLimit = Math.Min(baseMarginLimit, maxMarginBasedOnLeverage);
+            }
+
+            // Minimum margin limit of $1,000 for approved accounts
+            if (baseMarginLimit > 0 && baseMarginLimit < 1000)
+            {
+                baseMarginLimit = 1000;
+            }
+
+            // Maximum margin limit cap of $50M (regulatory/risk management)
+            if (baseMarginLimit > 50_000_000)
+            {
+                baseMarginLimit = 50_000_000;
+            }
+
+            return Math.Round(baseMarginLimit, 2);
+        }
+
+        /// <summary>
+        /// Updates the margin limit for a user based on their current profile and portfolio.
+        /// </summary>
+        /// <param name="userId">The user's unique identifier.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task UpdateDynamicMarginLimitAsync(Guid userId)
+        {
+            var portfolio = await GetPortfolioAsync(userId);
+            if (portfolio == null)
+                return;
+
+            var newMarginLimit = await CalculateDynamicMarginLimitAsync(userId);
+            portfolio.MarginLimit = newMarginLimit;
+            await UpdatePortfolioAsync(portfolio);
+        }
+
+        /// <summary>
         /// Refreshes and stores the total portfolio values for all users for the current day.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
