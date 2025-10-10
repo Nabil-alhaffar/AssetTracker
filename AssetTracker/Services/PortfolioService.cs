@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AssetTracker.Models;
+using AssetTracker.Models.Enums;
 using AssetTracker.Repositories;
 using AssetTracker.Repositories.Interfaces;
 using AssetTracker.Services.Interfaces;
@@ -77,6 +78,9 @@ namespace AssetTracker.Services
                 // Get the full portfolio to access margin data
                 var portfolio = await GetPortfolioAsync(userId);
 
+                // Calculate dynamic margin limit
+                var dynamicMarginLimit = await CalculateDynamicMarginLimitAsync(userId);
+
                 // Store today's market value
                 //await _historicalPortfolioValueRepository.StoreMarketValueAsync(userId, DateOnly.FromDateTime(DateTime.Now), totalMarketValue);
 
@@ -91,8 +95,8 @@ namespace AssetTracker.Services
                     DayPNL = performance.PNL,
                     DayReturnPercentage = performance.ReturnPercentage,
                     MarginUsed = portfolio.MarginUsed,
-                    MarginLimit = portfolio.MarginLimit,
-                    BuyingPower = portfolio.BuyingPower,
+                    MarginLimit = dynamicMarginLimit, // Use calculated margin limit instead of stored value
+                    BuyingPower = cashBalance + (dynamicMarginLimit - portfolio.MarginUsed), // Recalculate buying power with dynamic limit
                     Equity = portfolio.Equity,
                     IsInMarginCall = portfolio.IsInMarginCall,
                     MaintenanceMarginRequirement = portfolio.MaintenanceMarginRequirement,
@@ -448,18 +452,31 @@ namespace AssetTracker.Services
 
         }
         /// <summary>
+        /// Refreshes and stores the total portfolio values for all users for the current day.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task RefreshTotalValuesForAllUsersAsync()
+        {
+            var users = await _portfolioRepository.GetAllUserIdsAsync(); 
+
+            foreach (var userId in users)
+            {
+                //var marketValue = await GetCurrentMarketValue(userId);
+                var totalValue = await GetCurrentTotalValue(userId);
+                await StoreTotalValueAsync(userId, totalValue);
+            }
+        }
+
+        /// <summary>
         /// Calculates the appropriate margin limit for a user based on their profile and account type.
         /// </summary>
         /// <param name="userId">The user's unique identifier.</param>
         /// <returns>The calculated margin limit.</returns>
-        public async Task<decimal> CalculateDynamicMarginLimitAsync(Guid userId)
+        private async Task<decimal> CalculateDynamicMarginLimitAsync(Guid userId)
         {
             var user = await _userService.GetUserAsync(userId);
             if (user == null)
                 return 0;
-
-            // Base margin limit calculation
-            decimal baseMarginLimit = 0;
 
             // Check if user has margin trading approval
             if (user.MarginApprovalStatus != MarginApprovalStatus.Approved)
@@ -467,12 +484,23 @@ namespace AssetTracker.Services
                 return 0; // No margin if not approved
             }
 
-            // Calculate based on account equity and net worth
+            // Calculate based on account equity
             var portfolio = await GetPortfolioAsync(userId);
             decimal accountEquity = portfolio?.Equity ?? 0;
 
             // Base margin limit is typically 2x the account equity for approved margin accounts
-            baseMarginLimit = accountEquity * 2;
+            // If equity is negative, use available funds as the base for calculation
+            decimal baseMarginLimit;
+            if (accountEquity <= 0)
+            {
+                // For negative equity, calculate based on available funds instead
+                decimal availableFunds = portfolio?.AvailableFunds ?? 0;
+                baseMarginLimit = availableFunds * 2; // Use 2x available funds as base
+            }
+            else
+            {
+                baseMarginLimit = accountEquity * 2;
+            }
 
             // Apply multipliers based on account type
             switch (user.AccountType)
@@ -529,75 +557,28 @@ namespace AssetTracker.Services
             }
 
             // Apply net worth multiplier
-            switch (user.NetWorth)
-            {
-                case NetWorthRange.LessThan10K:
-                    baseMarginLimit *= 0.3m;
-                    break;
-                case NetWorthRange.TenKTo25K:
-                    baseMarginLimit *= 0.5m;
-                    break;
-                case NetWorthRange.TwentyFiveKTo50K:
-                    baseMarginLimit *= 0.7m;
-                    break;
-                case NetWorthRange.FiftyKTo100K:
-                    baseMarginLimit *= 1.0m;
-                    break;
-                case NetWorthRange.OneHundredKTo250K:
-                    baseMarginLimit *= 1.2m;
-                    break;
-                case NetWorthRange.TwoFiftyKTo500K:
-                    baseMarginLimit *= 1.5m;
-                    break;
-                case NetWorthRange.FiveHundredKTo1M:
-                    baseMarginLimit *= 2.0m;
-                    break;
-                case NetWorthRange.OneMTo5M:
-                    baseMarginLimit *= 3.0m;
-                    break;
-                case NetWorthRange.FiveMTo10M:
-                    baseMarginLimit *= 4.0m;
-                    break;
-                case NetWorthRange.TenMTo25M:
-                    baseMarginLimit *= 5.0m;
-                    break;
-                case NetWorthRange.TwentyFiveMTo50M:
-                    baseMarginLimit *= 6.0m;
-                    break;
-                case NetWorthRange.FiftyMTo100M:
-                    baseMarginLimit *= 8.0m;
-                    break;
-                case NetWorthRange.OneHundredMTo500M:
-                    baseMarginLimit *= 10.0m;
-                    break;
-                case NetWorthRange.FiveHundredMTo1B:
-                    baseMarginLimit *= 15.0m;
-                    break;
-                case NetWorthRange.OneBillionPlus:
-                    baseMarginLimit *= 20.0m;
-                    break;
-                default:
-                    baseMarginLimit *= 1.0m;
-                    break;
-            }
+            
 
             // Apply investment experience multiplier
             switch (user.InvestmentExperience)
             {
-                case InvestmentExperience.Beginner:
+                case InvestmentExperience.Limited:
                     baseMarginLimit *= 0.3m;
                     break;
-                case InvestmentExperience.Limited:
+                case InvestmentExperience.Some:
                     baseMarginLimit *= 0.5m;
                     break;
                 case InvestmentExperience.Moderate:
                     baseMarginLimit *= 0.8m;
                     break;
-                case InvestmentExperience.Experienced:
+                case InvestmentExperience.Good:
                     baseMarginLimit *= 1.2m;
                     break;
-                case InvestmentExperience.Expert:
+                case InvestmentExperience.Extensive:
                     baseMarginLimit *= 1.5m;
+                    break;
+                case InvestmentExperience.Professional:
+                    baseMarginLimit *= 2m;
                     break;
                 default:
                     baseMarginLimit *= 1.0m;
@@ -624,38 +605,6 @@ namespace AssetTracker.Services
             }
 
             return Math.Round(baseMarginLimit, 2);
-        }
-
-        /// <summary>
-        /// Updates the margin limit for a user based on their current profile and portfolio.
-        /// </summary>
-        /// <param name="userId">The user's unique identifier.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdateDynamicMarginLimitAsync(Guid userId)
-        {
-            var portfolio = await GetPortfolioAsync(userId);
-            if (portfolio == null)
-                return;
-
-            var newMarginLimit = await CalculateDynamicMarginLimitAsync(userId);
-            portfolio.MarginLimit = newMarginLimit;
-            await UpdatePortfolioAsync(portfolio);
-        }
-
-        /// <summary>
-        /// Refreshes and stores the total portfolio values for all users for the current day.
-        /// </summary>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task RefreshTotalValuesForAllUsersAsync()
-        {
-            var users = await _portfolioRepository.GetAllUserIdsAsync(); 
-
-            foreach (var userId in users)
-            {
-                //var marketValue = await GetCurrentMarketValue(userId);
-                var totalValue = await GetCurrentTotalValue(userId);
-                await StoreTotalValueAsync(userId, totalValue);
-            }
         }
 
     }
