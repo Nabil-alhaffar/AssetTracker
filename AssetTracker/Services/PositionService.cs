@@ -252,6 +252,12 @@ namespace AssetTracker.Services
             {
                 portfolio.AvailableFunds += fundChanges.Value.availableFundsDelta;
                 portfolio.MarginUsed += fundChanges.Value.marginUsedDelta;
+                
+                // Ensure margin used is never negative
+                if (portfolio.MarginUsed < 0)
+                {
+                    portfolio.MarginUsed = 0;
+                }
             }
 
             var positions = portfolio.Positions;

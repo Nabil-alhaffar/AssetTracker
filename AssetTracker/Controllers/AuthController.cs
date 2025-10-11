@@ -372,13 +372,17 @@ namespace AssetTracker.Controllers
                 var user = await _userService.GetUserAsync(userId);
                 var refreshToken = Request.Cookies["refreshToken"];
 
+                // Add logging to debug infinite loop
+                Console.WriteLine($"Refresh token request for user {userId}: Cookie token exists: {!string.IsNullOrEmpty(refreshToken)}, DB token exists: {!string.IsNullOrEmpty(user?.RefreshToken)}, Tokens match: {user?.RefreshToken == refreshToken}, Expiry: {user?.RefreshTokenExpiryTime}");
+
                 // Validate refresh token
                 if (string.IsNullOrEmpty(refreshToken) ||
                     user == null ||
                     user.RefreshToken != refreshToken ||
                     user.RefreshTokenExpiryTime < DateTime.UtcNow)
                 {
-                    return Unauthorized();
+                    Console.WriteLine($"Refresh token validation failed for user {userId}");
+                    return Unauthorized(new { message = "Invalid or expired refresh token" });
                 }
 
                 // Generate new tokens
@@ -386,6 +390,13 @@ namespace AssetTracker.Controllers
                 var newRefreshToken = _authService.GenerateRefreshToken();
 
                 await _userService.UpdateUserRefreshTokenAsync(user.UserId, newRefreshToken, DateTime.UtcNow.AddDays(7));
+
+                // Delete old refresh token cookie first
+                Response.Cookies.Delete("refreshToken", new CookieOptions
+                {
+                    Path = "/",
+                    Domain = "ec2-18-188-45-142.us-east-2.compute.amazonaws.com"
+                });
 
                 // Save new refresh token in cookie
                 Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
